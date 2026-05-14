@@ -44,7 +44,7 @@
 - [ ] Confirms Technology Stack (`httpx`, `BeautifulSoup`, `Markdownify`, `pytest`)
 - [ ] Adheres to Coding Standards (PEP 8, Type Hinting, Clear Vocabulary)
 - [ ] Incorporates Integration Testing (Real links matching expected Markdown)
-- [ ] Respects Packaging and Distribution standards (`pyproject.toml`, `src/` layout)
+- [ ] Respects Packaging and Distribution standards (`pyproject.toml`, `src/` layout, `uv` for all dev workflow commands)
 
 ## Project Structure
 
