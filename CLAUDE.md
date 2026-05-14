@@ -43,6 +43,10 @@ uv run pytest -m integration   # integration tests (network required)
 uv run mypy src/               # type check
 ```
 
+## Recent Changes
+
+- 001-mdfetch-medium-extractor: Initial library release — `extract()` API, Medium provider, typed exceptions, auto-discovery routing, PyPI packaging, snapshot integration tests
+
 <!-- SPECKIT START -->
-**Active feature plan**: [specs/001-mdfetch-medium-extractor/plan.md](specs/001-mdfetch-medium-extractor/plan.md)
+**Active feature plan**: none
 <!-- SPECKIT END -->

@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-14
 
-**Status**: Draft
+**Status**: Completed
 
 **Input**: User description: "Draft the complete technical specification for the initial implementation of the `mdfetch` library, focusing strictly on the Medium platform as the first source."
 
