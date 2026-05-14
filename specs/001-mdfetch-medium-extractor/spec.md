@@ -73,7 +73,7 @@ A developer installs the `mdfetch` library from PyPI using pip, imports the extr
 - Q: When the article body is found but contains no extractable text, what should the library do? → A: Raise a descriptive error indicating no extractable text was found.
 - Q: When a `medium.com` URL points to a profile or tag page (not an article), what should the library do? → A: Raise a distinct error indicating the domain is supported but the page type is not an extractable article.
 - Q: Should the library emit any logging or diagnostic output? → A: No logging; all failure information communicated exclusively through exceptions. No verbose mode in v1.
-- Q: How should the library identify itself in HTTP requests, and should it respect robots.txt? → A: Use the default browser-like User-Agent string provided by the HTTP client; no custom header, no robots.txt checking in v1.
+- Q: How should the library identify itself in HTTP requests, and should it respect robots.txt? → A: Use an explicit browser-like User-Agent string (see FR-014); the UA must not identify the library by name or version. No robots.txt checking in v1.
 
 ## Requirements *(mandatory)*
 

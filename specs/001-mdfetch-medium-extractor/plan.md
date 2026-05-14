@@ -35,7 +35,7 @@ Build the initial release of `mdfetch`, a Python library that extracts article c
 - No JavaScript rendering; operates on static HTML only
 - No response caching; each call performs a fresh HTTP request
 - No rate-limit handling or authentication in v1
-- Default browser-like User-Agent (no custom header)
+- Explicit browser-like User-Agent string; MUST NOT identify the library by name or version (FR-014)
 - Network timeout: 30 seconds (fixed, not user-configurable in v1)
 
 **Scale/Scope**: Single-caller, single-threaded library call; no concurrency model required
