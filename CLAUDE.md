@@ -45,7 +45,7 @@ make test         # unit tests only
 make lint         # ruff check
 make format       # ruff format
 make build        # uv build (wheel + sdist)
-make upgrade-deps # uv sync --upgrade
+make upgrade-deps # uv sync --all-extras --upgrade
 make integration  # integration tests (network required)
 uv run mypy src/  # type check
 ```

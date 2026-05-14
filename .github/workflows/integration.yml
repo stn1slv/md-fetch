@@ -40,19 +40,16 @@ jobs:
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const date = new Date().toISOString().slice(0, 10);
 
-            const existing = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: "open",
-              labels: "integration",
+            const search = await github.rest.search.issuesAndPullRequests({
+              q: `repo:${context.repo.owner}/${context.repo.repo} is:issue is:open label:integration-failure`,
               per_page: 1,
             });
 
-            if (existing.data.length > 0) {
+            if (search.data.total_count > 0) {
               await github.rest.issues.createComment({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: existing.data[0].number,
+                issue_number: search.data.items[0].number,
                 body: `Integration tests failed again on ${date}.\n\n**Failed run:** ${runUrl}`,
               });
               return;
@@ -78,7 +75,7 @@ jobs:
               ].join("\n"),
             };
             try {
-              issueParams.labels = ["bug", "integration"];
+              issueParams.labels = ["bug", "integration-failure"];
               await github.rest.issues.create(issueParams);
             } catch {
               delete issueParams.labels;
