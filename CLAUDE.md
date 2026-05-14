@@ -11,11 +11,18 @@ src/mdfetch/
 ├── base.py           # BaseExtractor ABC
 ├── router.py         # Domain-to-provider routing
 └── providers/
-    └── medium.py     # MediumExtractor (medium.com + *.medium.com)
+    ├── __init__.py
+    ├── medium.py     # MediumExtractor (medium.com + *.medium.com)
+    └── devto.py      # DevToExtractor (dev.to)
 
 tests/
 ├── unit/             # pytest unit tests (no network)
-└── integration/      # pytest -m integration (real Medium URLs)
+└── integration/      # real network tests (Medium + dev.to URLs + snapshots)
+
+.github/workflows/
+├── ci.yml            # lint + unit tests on push/PR (Python 3.12–3.14)
+├── integration.yml   # scheduled integration tests every Friday 23:30 UTC
+└── publish.yml       # PyPI publish on release
 
 specs/                # Speckit feature specifications
 pyproject.toml        # hatchling build, uv package manager
@@ -38,15 +45,10 @@ make test         # unit tests only
 make lint         # ruff check
 make format       # ruff format
 make build        # uv build (wheel + sdist)
-make upgrade-deps # uv sync --upgrade
-uv run pytest -m integration   # integration tests (network required)
-uv run mypy src/               # type check
+make upgrade-deps # uv sync --all-extras --upgrade
+make integration  # integration tests (network required)
+uv run mypy src/  # type check
 ```
-
-## Recent Changes
-
-- 002-devto-provider: dev.to article extraction provider — `DevToExtractor`, cover image + embed→link handling, 17 new unit tests, 3 integration tests, version 0.2.0
-- 001-mdfetch-medium-extractor: Initial library release — `extract()` API, Medium provider, typed exceptions, auto-discovery routing, PyPI packaging, snapshot integration tests
 
 <!-- SPECKIT START -->
 **Active feature plan**: none
