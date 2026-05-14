@@ -30,6 +30,8 @@ from mdfetch import (
     EmptyContentError,
 )
 
+url = "https://medium.com/some-publication/article-slug-abc123"
+
 try:
     markdown = extract(url)
 except InvalidURLError as e:

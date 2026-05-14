@@ -25,6 +25,11 @@ class TestUrlValidation:
         with pytest.raises(InvalidURLError):
             route("https://")
 
+    def test_raises_for_empty_hostname(self) -> None:
+        # netloc is non-empty (":80") but hostname is None — must raise InvalidURLError
+        with pytest.raises(InvalidURLError):
+            route("https://:80/path")
+
     def test_raises_for_unsupported_domain(self) -> None:
         with pytest.raises(UnsupportedPlatformError):
             route("https://dev.to/some-post")

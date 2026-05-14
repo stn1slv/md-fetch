@@ -29,11 +29,11 @@ MEDIUM_TEST_CASES = [
 @pytest.mark.integration
 @pytest.mark.parametrize("url,snapshot", MEDIUM_TEST_CASES)
 def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
-    """Assert the extracted article body contains all content stored in the snapshot.
+    """Assert the extracted Markdown contains all content stored in the snapshot.
 
-    Snapshots hold only the article body (header stripped). Since extract() returns
-    header + body, ``snapshot_body in full_result`` is the natural containment check
-    and requires no fragile marker-based stripping in the test itself.
+    Snapshots are subsets of the full extraction output. The containment check
+    ``expected in result`` verifies the snapshot content is present without
+    requiring an exact match, making tests resilient to minor structural changes.
 
     Transient network failures (403, timeout) are handled by extract()'s built-in
     retry logic (3 retries, 2-second delay by default).

@@ -29,11 +29,13 @@ def route(url: str) -> BaseExtractor:
     """Return a provider instance for *url*, raising typed errors on failure."""
     parsed = urlparse(url)
 
-    if parsed.scheme not in ("http", "https") or not parsed.netloc:
-        raise InvalidURLError(f"Invalid URL: {url!r}", url=url)
-
-    # Use parsed.hostname (lowercased, port-stripped) for lookup; keep netloc for error messages
+    # Use parsed.hostname (lowercased, port-stripped) for routing and validation.
+    # Checking hostname rather than netloc correctly rejects edge cases like
+    # "https://:80/" where netloc is non-empty but hostname is None/empty.
     hostname = (parsed.hostname or "").lower()
+
+    if parsed.scheme not in ("http", "https") or not hostname:
+        raise InvalidURLError(f"Invalid URL: {url!r}", url=url)
 
     # Exact match first; fall back to subdomain suffix check so any provider whose
     # DOMAINS entry is a parent domain automatically handles its subdomains.
