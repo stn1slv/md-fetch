@@ -1,21 +1,3 @@
-[![Stanislav Deviatov](https://miro.medium.com/v2/resize:fill:64:64/1*lOb6dIQSz_Mrf8ty2PWc-Q.jpeg)](/?source=post_page---byline--5339cb35e609---------------------------------------)
-
-[Stanislav Deviatov](/?source=post_page---byline--5339cb35e609---------------------------------------)
-
-8 min read
-
-·
-
-Jan 5, 2026
-
---
-
-[Listen](https://medium.com/m/signin?actionUrl=https%3A%2F%2Fmedium.com%2Fplans%3Fdimension%3Dpost_audio_button%26postId%3D5339cb35e609&operation=register&redirect=https%3A%2F%2Fstn1slv.medium.com%2Fintegration-digest-december-2025-5339cb35e609&source=---header_actions--5339cb35e609---------------------post_audio_button------------------)
-
-Press enter or click to view image in full size
-
-![]()
-
 ### Articles
 
 🔍 [10 Tips for Improving Agentic Experience (AX)](https://nordicapis.com/10-tips-for-improving-agentic-experience-ax/)

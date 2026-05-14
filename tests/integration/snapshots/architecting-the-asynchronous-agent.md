@@ -1,23 +1,3 @@
-# Architecting the Asynchronous Agent: A Guide to MCP Tasks
-
-[![Stanislav Deviatov](https://miro.medium.com/v2/resize:fill:64:64/1*lOb6dIQSz_Mrf8ty2PWc-Q.jpeg)](/?source=post_page---byline--7348c6527233---------------------------------------)
-
-[Stanislav Deviatov](/?source=post_page---byline--7348c6527233---------------------------------------)
-
-15 min read
-
-·
-
-Jan 12, 2026
-
---
-
-[Listen](https://medium.com/m/signin?actionUrl=https%3A%2F%2Fmedium.com%2Fplans%3Fdimension%3Dpost_audio_button%26postId%3D7348c6527233&operation=register&redirect=https%3A%2F%2Fstn1slv.medium.com%2Farchitecting-the-asynchronous-agent-a-guide-to-mcp-tasks-7348c6527233&source=---header_actions--7348c6527233---------------------post_audio_button------------------)
-
-Press enter or click to view image in full size
-
-![]()
-
 ### 1. Introduction
 
 The release of the Model Context Protocol (MCP) specification version 2025–11–25 marks a turning point in the engineering of autonomous systems. For the first time since the protocol began, the specification has standardized a mechanism for handling durable, long-running operations. This capability is officially designated as **Tasks**. Note that this capability is currently considered **experimental**, and the design and behavior of tasks may evolve in future protocol versions.
