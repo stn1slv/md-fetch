@@ -55,7 +55,7 @@ class MediumExtractor(BaseExtractor):
 
     def convert_to_markdown(self, tag: Tag) -> str:
         """Convert cleaned article Tag to Markdown."""
-        md = markdownify(str(tag), heading_style="ATX", strip=["script", "style"])
+        md = markdownify(str(tag), heading_style="ATX", code_language="", strip=["script", "style"])
         md = md.strip()
         md = re.sub(r"\n{3,}", "\n\n", md)
 

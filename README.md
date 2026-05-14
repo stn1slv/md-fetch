@@ -59,17 +59,12 @@ Requires [uv](https://docs.astral.sh/uv/).
 ```bash
 make setup        # install dependencies
 make test         # run unit tests
+make integration  # run integration tests (requires network access)
 make lint         # ruff check
 make format       # ruff format
 make build        # build wheel + sdist
 make upgrade-deps # upgrade all dependencies
 make clean        # remove build artifacts
-```
-
-Run integration tests (requires network access):
-
-```bash
-uv run pytest -m integration
 ```
 
 ## Requirements

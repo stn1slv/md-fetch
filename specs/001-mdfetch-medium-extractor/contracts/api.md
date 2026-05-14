@@ -106,6 +106,7 @@ For developers extending the library with new providers (not part of the v1 publ
 ```python
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 class BaseExtractor(ABC):
     DOMAINS: frozenset[str]  # domains this provider handles
@@ -117,19 +118,19 @@ class BaseExtractor(ABC):
         """HTTP GET; raises FetchError / HTTPStatusError. Implemented in base class."""
 
     @abstractmethod
-    def clean_html(self, soup: BeautifulSoup) -> BeautifulSoup:
-        """Platform-specific: locate article body and strip noise elements."""
+    def clean_html(self, soup: BeautifulSoup) -> Tag:
+        """Platform-specific: locate article body, strip noise, return the root Tag."""
 
     @abstractmethod
-    def convert_to_markdown(self, soup: BeautifulSoup) -> str:
-        """Platform-specific: convert cleaned soup to Markdown string."""
+    def convert_to_markdown(self, tag: Tag) -> str:
+        """Platform-specific: convert cleaned Tag to Markdown string."""
 ```
 
 **Adding a new provider**:
 1. Create `src/mdfetch/providers/<platform>.py`
 2. Define a class inheriting `BaseExtractor`, set `DOMAINS`, implement `clean_html` and `convert_to_markdown`
-3. Register the class in `src/mdfetch/router.py`
-4. No changes to any other file required (Open/Closed Principle)
+3. Decorate the class with `@register` (imported from `mdfetch.router`)
+4. No other files need to change — the router auto-discovers all provider modules at import time (SC-006)
 
 ---
 

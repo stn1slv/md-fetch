@@ -46,7 +46,7 @@ packages = ["src/mdfetch"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--ignore=tests/integration"
+addopts = "-m 'not integration'"
 markers = [
     "integration: marks tests as integration tests requiring network access",
 ]

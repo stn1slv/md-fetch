@@ -1,10 +1,13 @@
-.PHONY: setup test lint format build clean upgrade-deps
+.PHONY: setup test integration lint format build clean upgrade-deps
 
 setup:
 	uv sync --all-extras
 
 test:
 	uv run pytest tests/unit/
+
+integration:
+	uv run pytest tests/integration/ --override-ini=addopts=
 
 lint:
 	uv run ruff check src/ tests/

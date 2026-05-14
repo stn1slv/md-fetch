@@ -54,8 +54,8 @@ except MdfetchError as e:
 # Unit tests only (fast, offline)
 make test
 
-# Include integration tests (requires internet access, uses real Medium URLs)
-pytest -m integration
+# Integration tests (requires internet access, uses real Medium URLs)
+make integration
 ```
 
 ## Project layout
@@ -78,5 +78,5 @@ tests/
 
 1. Create `src/mdfetch/providers/<platform>.py`
 2. Inherit from `BaseExtractor`, set `DOMAINS`, implement `clean_html` and `convert_to_markdown`
-3. Register the new class in `src/mdfetch/router.py`
-4. No other files need to change
+3. Decorate the class with `@register` (imported from `mdfetch.router`)
+4. No other files need to change — the router auto-discovers all provider modules at import time

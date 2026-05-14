@@ -16,7 +16,7 @@ class BaseExtractor(ABC):
 
     DOMAINS: frozenset[str] = frozenset()
 
-    # Standard browser UA — required for sites that block non-browser clients (see FR-014)
+    # FR-014: use a browser-like UA (no mdfetch-specific branding) so servers serve readable HTML
     _USER_AGENT = (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "

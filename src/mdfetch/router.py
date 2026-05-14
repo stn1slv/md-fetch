@@ -15,6 +15,12 @@ _REGISTRY: dict[str, type[BaseExtractor]] = {}
 def register(provider_cls: type[BaseExtractor]) -> type[BaseExtractor]:
     """Register *provider_cls* for each domain it declares."""
     for domain in provider_cls.DOMAINS:
+        existing = _REGISTRY.get(domain)
+        if existing is not None and existing is not provider_cls:
+            raise ValueError(
+                f"Domain {domain!r} is already registered to {existing.__name__!r}; "
+                f"cannot re-register to {provider_cls.__name__!r}"
+            )
         _REGISTRY[domain] = provider_cls
     return provider_cls
 
