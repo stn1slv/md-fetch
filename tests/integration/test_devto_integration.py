@@ -38,7 +38,7 @@ def test_extract_contains_snapshot(
     requiring an exact match, making tests resilient to minor structural changes.
 
     Retry count and delay are controlled via MDFETCH_RETRIES and MDFETCH_RETRY_DELAY
-    environment variables (defaults: 3 retries, 2.0 s delay with exponential backoff).
+    environment variables (defaults: 3 total attempts, 2.0 s base delay, exponential backoff).
     """
     expected = (SNAPSHOTS_DIR / snapshot).read_text(encoding="utf-8")
     result = extract(url, retries=http_retries, retry_delay=http_retry_delay)

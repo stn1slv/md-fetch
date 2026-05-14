@@ -107,8 +107,9 @@ class TestFetchErrors:
         with patch("httpx.Client", return_value=mock):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
                 with pytest.raises(HTTPStatusError):
-                    extractor.fetch_html("https://medium.com/article", retries=10, retry_delay=2.0)
+                    # 7 attempts, retry_delay=2.0: uncapped sequence would be
+                    # 2, 4, 8, 16, 32, 64 — last value must be clamped to 60
+                    extractor.fetch_html("https://medium.com/article", retries=7, retry_delay=2.0)
 
-        # No sleep should exceed _MAX_RETRY_DELAY (60 s)
-        for sleep_call in mock_sleep.call_args_list:
-            assert sleep_call.args[0] <= 60.0
+        delays = [c.args[0] for c in mock_sleep.call_args_list]
+        assert delays == [2.0, 4.0, 8.0, 16.0, 32.0, 60.0]

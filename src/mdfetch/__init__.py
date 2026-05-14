@@ -28,8 +28,9 @@ __all__ = [
 def extract(url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
     """Extract article content from *url* and return it as Markdown.
 
-    On transient network failures (timeouts, connection errors, non-2xx responses)
-    the request is retried up to *retries* times using exponential backoff starting
-    at *retry_delay* seconds (capped at 60 s). Set ``retries=1`` to disable retries.
+    On transient network failures (timeouts, connection errors, non-2xx responses) the
+    request is attempted up to *retries* times total (so ``retries=3`` means one initial
+    attempt plus two retries) using exponential backoff starting at *retry_delay* seconds
+    (capped at 60 s). Set ``retries=1`` to disable retries.
     """
     return route(url).extract(url, retries=retries, retry_delay=retry_delay)
