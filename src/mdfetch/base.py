@@ -39,7 +39,7 @@ class BaseExtractor(ABC):
             except FetchError as exc:
                 last_exc = exc
                 if attempt < retries - 1:
-                    time.sleep(retry_delay)
+                    time.sleep(retry_delay * (2**attempt))
         assert last_exc is not None
         raise last_exc
 
