@@ -1,0 +1,58 @@
+# Research: Medium Freedium Fallback
+
+**Branch**: `003-medium-freedium-fallback` | **Date**: 2026-05-14
+
+## Decision 1: Retry Loop and HTTPStatusError Inheritance
+
+**Decision**: Introduce a `_no_retry_status_codes: frozenset[int]` class attribute on `BaseExtractor`; `MediumExtractor` overrides it with `frozenset({403, 429})`.
+
+**Rationale**: `HTTPStatusError` is a subclass of `FetchError`. The current `fetch_html()` retry loop catches all `FetchError` instances — including `HTTPStatusError` — which means 403 and 429 are already retried three times before raising. The spec (FR-001/FR-002) requires immediate fallback on first 403/429 with no retries against `medium.com`. A `_no_retry_status_codes` class attribute lets each provider declare which status codes are terminal (no retry warranted), resolved inside the existing loop with a single `isinstance` check. This is the only path that avoids duplicating the retry logic.
+
+**Alternatives considered**:
+- Override `fetch_html()` fully in `MediumExtractor` — rejected because it duplicates the entire retry/backoff logic, violating Constitution I (no code duplication).
+- Catch the error after all retries exhaust in `extract()` — rejected because this adds unnecessary backoff latency for 403 (permanent) and 429 (rate-limited) before falling back.
+- Add a `no_retry_status_codes` parameter to `fetch_html()` — rejected because it changes the method signature for all callers; a class attribute is cleaner for provider-specific behaviour.
+
+## Decision 2: Fallback Implementation Location
+
+**Decision**: Override `extract()` in `MediumExtractor` to catch `HTTPStatusError` with status in `_no_retry_status_codes`, construct the Freedium URL, and call `fetch_html()` + `clean_html()` + `convert_to_markdown()` on it.
+
+**Rationale**: The fallback is Medium-specific logic. Keeping it in `MediumExtractor.extract()` follows the Open/Closed Principle: `BaseExtractor` is untouched beyond the `_no_retry_status_codes` hook. The full extraction pipeline (fetch → clean → convert) must run on the Freedium HTML, so overriding `extract()` is the right level.
+
+**Alternatives considered**:
+- Override `_do_fetch()` to transparently rewrite the URL — rejected because `_do_fetch()` has no knowledge of fallback logic; the override would need to duplicate error-detection logic from `extract()`.
+- Return the Freedium URL from a helper called inside the retry loop — rejected because it conflates URL routing with HTTP error handling.
+
+## Decision 3: Freedium URL Construction
+
+**Decision**: `freedium_url = f"https://freedium-mirror.cfd/{original_url}"`
+
+**Rationale**: The Freedium mirror service appends the full original URL as a path segment, including the scheme. This is the standard pattern for Freedium mirrors (e.g., `https://freedium-mirror.cfd/https://medium.com/...`). The original URL is passed as-is without percent-encoding since Freedium expects a human-readable URL.
+
+**Alternatives considered**: Stripping the scheme and prepending `https://` — rejected because the mirror expects the full original URL.
+
+## Decision 4: HTML Structure Compatibility
+
+**Decision**: Attempt to parse Freedium HTML with the existing `MediumExtractor.clean_html()` as-is. Document as a risk requiring integration test validation.
+
+**Rationale**: The spec assumption states Freedium's HTML is compatible with the existing Medium extractor. Freedium mirrors Medium's article HTML with minimal wrapping. If `clean_html()` raises `UnsupportedContentTypeError` (no `<article>` found), the error propagates to the caller with the original URL set — this is the correct fallback failure mode.
+
+**Alternatives considered**: A separate `clean_html_freedium()` method — deferred; implement only if integration tests reveal structural incompatibility.
+
+## Decision 5: Error Surfaced When Both Sources Fail
+
+**Decision**: When Freedium also fails, raise the `HTTPStatusError` (or `FetchError`) from the Freedium attempt. The original URL is preserved in `exc.url`.
+
+**Rationale**: The Freedium error is the last known failure and most actionable for callers. Setting `exc.url` to the original Medium URL (not the Freedium URL) avoids leaking the fallback internals through the public exception, consistent with FR-009 (fully transparent fallback).
+
+**Alternatives considered**: Re-raising the original `medium.com` error — rejected because it would misrepresent what was last attempted and obscure the Freedium failure mode for debugging.
+
+Wait — on reflection, the spec says FR-009 (fully transparent, no signal to caller). From the user's perspective they only know the original URL. Setting `exc.url` to the Freedium URL leaks an internal detail. The original Medium URL is the correct value for `exc.url`.
+
+## Decision 6: Integration Test Strategy
+
+**Decision**: Add a new `@pytest.mark.integration` test in `test_medium_integration.py` using a known paywalled Medium URL. Verify that `extract()` returns non-empty Markdown (not an assertion against a snapshot, since Freedium content may differ slightly).
+
+**Rationale**: Snapshot-based tests are fragile for Freedium content due to possible structural differences. A presence/non-empty assertion is sufficient to validate SC-001.
+
+**Alternatives considered**: Full snapshot comparison — deferred; add once HTML compatibility is confirmed stable.

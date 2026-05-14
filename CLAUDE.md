@@ -51,5 +51,5 @@ uv run mypy src/  # type check
 ```
 
 <!-- SPECKIT START -->
-**Active feature plan**: none
+**Active feature plan**: `specs/003-medium-freedium-fallback/plan.md`
 <!-- SPECKIT END -->
