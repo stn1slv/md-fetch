@@ -1,0 +1,64 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mdfetch"
+version = "0.1.0"
+description = "Extract article content from web platforms and return it as clean Markdown."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Stanislav Deviatov", email = "devyatov@gmail.com" }]
+keywords = ["markdown", "scraping", "medium", "article", "extraction"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Text Processing :: Markup :: Markdown",
+    "Topic :: Internet :: WWW/HTTP",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.27",
+    "beautifulsoup4>=4.12",
+    "lxml>=5.0",
+    "markdownify>=0.13",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.4",
+    "mypy>=1.9",
+]
+
+[project.urls]
+Homepage = "https://github.com/stn1slv/md-fetch"
+Source = "https://github.com/stn1slv/md-fetch"
+Issues = "https://github.com/stn1slv/md-fetch/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/mdfetch"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-m 'not integration'"
+markers = [
+    "integration: marks tests as integration tests requiring network access",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "C4"]
+ignore = []
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
