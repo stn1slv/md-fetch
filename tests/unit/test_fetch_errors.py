@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import httpx
 import pytest
@@ -91,3 +91,24 @@ class TestFetchErrors:
         with patch("httpx.Client", return_value=_make_stream_mock(body=oversized_body)):
             with pytest.raises(FetchError, match="exceeded"):
                 extractor.fetch_html("https://medium.com/article", retries=1)
+
+    def test_exponential_backoff_sleep_sequence(self, extractor: MediumExtractor) -> None:
+        mock = _make_stream_mock(status_code=503, is_success=False)
+        with patch("httpx.Client", return_value=mock):
+            with patch("mdfetch.base.time.sleep") as mock_sleep:
+                with pytest.raises(HTTPStatusError):
+                    extractor.fetch_html("https://medium.com/article", retries=4, retry_delay=1.0)
+
+        # 4 attempts → 3 inter-attempt sleeps: 1.0 * 2^0, 2^1, 2^2
+        assert mock_sleep.call_args_list == [call(1.0), call(2.0), call(4.0)]
+
+    def test_exponential_backoff_capped_at_max_delay(self, extractor: MediumExtractor) -> None:
+        mock = _make_stream_mock(status_code=503, is_success=False)
+        with patch("httpx.Client", return_value=mock):
+            with patch("mdfetch.base.time.sleep") as mock_sleep:
+                with pytest.raises(HTTPStatusError):
+                    extractor.fetch_html("https://medium.com/article", retries=10, retry_delay=2.0)
+
+        # No sleep should exceed _MAX_RETRY_DELAY (60 s)
+        for sleep_call in mock_sleep.call_args_list:
+            assert sleep_call.args[0] <= 60.0

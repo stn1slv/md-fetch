@@ -28,7 +28,9 @@ MEDIUM_TEST_CASES = [
 
 @pytest.mark.integration
 @pytest.mark.parametrize("url,snapshot", MEDIUM_TEST_CASES)
-def test_extract_contains_snapshot(url: str, snapshot: str, http_retries: int, http_retry_delay: float) -> None:
+def test_extract_contains_snapshot(
+    url: str, snapshot: str, http_retries: int, http_retry_delay: float
+) -> None:
     """Assert the extracted Markdown contains all content stored in the snapshot.
 
     Snapshots are subsets of the full extraction output. The containment check
