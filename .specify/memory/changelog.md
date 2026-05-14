@@ -2,6 +2,33 @@
 
 ---
 
+### mdfetch — dev.to Extractor — 2026-05-14
+
+**Branch**: `002-devto-provider`
+**Spec**: specs/002-devto-provider
+
+**What was added**:
+- `DevToExtractor` provider for `dev.to` articles, auto-discovered via `@register` decorator
+- Article body isolation from `<div id="article-body">` with cover image extracted from `<header class="crayons-article__header">` and prepended to output
+- `<iframe>` and liquid-tag embed (`ltag__*`) replacement with plain Markdown links (FR-019)
+- `UnsupportedContentTypeError` raised for non-article dev.to pages (profiles, tag listings)
+- 17 new unit tests in `tests/unit/test_devto_extractor.py`
+- 3 dev.to integration tests in `tests/integration/test_devto_integration.py` with snapshot golden files
+- Library version bumped from `0.1.0` to `0.2.0`
+- `"dev.to"` added to `pyproject.toml` keywords (T013)
+
+**New Components**:
+- `src/mdfetch/providers/devto.py` — DevToExtractor
+- `tests/unit/test_devto_extractor.py` — 17 unit tests
+- `tests/integration/test_devto_integration.py` — 3 integration tests
+- `tests/integration/snapshots/devto-integration-digest-december-2025.md`
+- `tests/integration/snapshots/devto-integration-digest-july-2025.md`
+- `tests/integration/snapshots/devto-integration-digest-march-2026.md`
+
+**Tasks Completed**: 13/13
+
+---
+
 ### mdfetch — Medium Extractor (Initial Release) — 2026-05-14
 
 **Branch**: `feature/first-draft`

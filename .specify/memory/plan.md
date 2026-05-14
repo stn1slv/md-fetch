@@ -1,7 +1,7 @@
 # mdfetch — Main Implementation Plan
 
 **Last Updated**: 2026-05-14
-**Sources**: [specs/001-mdfetch-medium-extractor/plan.md]
+**Sources**: [specs/001-mdfetch-medium-extractor/plan.md], [specs/002-devto-provider/plan.md]
 
 ---
 
@@ -47,6 +47,13 @@ MediumExtractor(BaseExtractor)    — src/mdfetch/providers/medium.py
 ├── DOMAINS = frozenset({"medium.com"})
 ├── clean_html() → removes nav, clap buttons, sidebars, share elements, post-footer, author bio
 └── convert_to_markdown() → markdownify with ATX headings, fenced code blocks
+
+DevToExtractor(BaseExtractor)     — src/mdfetch/providers/devto.py
+├── DOMAINS = frozenset({"dev.to"})
+├── clean_html() → locates div#article-body; raises UnsupportedContentTypeError if absent;
+│                  replaces iframes and ltag embeds with anchor links; strips empty anchor-name
+│                  elements; prepends h1 + cover image from crayons-article__header
+└── convert_to_markdown() → markdownify with ATX headings; collapses 3+ newlines to 2
 ```
 
 ### Router / Auto-Discovery
@@ -82,20 +89,26 @@ src/
     ├── base.py              # BaseExtractor ABC + fetch_html() + extract() template
     └── providers/
         ├── __init__.py      # Empty — auto-discovery handles registration
-        └── medium.py        # MediumExtractor
+        ├── medium.py        # MediumExtractor
+        └── devto.py         # DevToExtractor [002-devto-provider]
 
 tests/
 ├── unit/
 │   ├── test_router.py
 │   ├── test_medium_extractor.py
 │   ├── test_fetch_errors.py
-│   └── test_silent.py
+│   ├── test_silent.py
+│   └── test_devto_extractor.py   # [002-devto-provider]
 └── integration/
     ├── snapshots/           # Golden Markdown files (article body snapshots)
     │   ├── from-drift-to-parity.md
     │   ├── architecting-the-asynchronous-agent.md
-    │   └── integration-digest-december-2025.md
-    └── test_medium_integration.py
+    │   ├── integration-digest-december-2025.md
+    │   ├── devto-integration-digest-december-2025.md   # [002-devto-provider]
+    │   ├── devto-integration-digest-july-2025.md       # [002-devto-provider]
+    │   └── devto-integration-digest-march-2026.md      # [002-devto-provider]
+    ├── test_medium_integration.py
+    └── test_devto_integration.py    # [002-devto-provider]
 
 specs/                       # Speckit feature specifications
 pyproject.toml               # hatchling build backend, uv package manager
@@ -118,14 +131,16 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 
 ## Testing Strategy
 
-**Unit tests** (30 tests, offline):
+**Unit tests** (47 tests, offline):
 - Router: domain routing, subdomain suffix matching, duplicate registration, invalid URLs, unsupported platforms
 - MediumExtractor: clean_html, convert_to_markdown, empty content, non-article pages
+- DevToExtractor: clean_html (title/cover/heading/image preservation, iframe/ltag embed→link, anchor stripping, non-article error), convert_to_markdown (headings/code/lists/images, no raw HTML, empty content error) [002-devto-provider]
 - Fetch errors: HTTP 404, 503, timeout, connection error, size limit exceeded
 - Silent: no stdout/stderr output, no logging during extraction
 
-**Integration tests** (3 tests, network required):
+**Integration tests** (6 tests, network required):
 - Parametrized over 3 real stn1slv.medium.com articles
+- Parametrized over 3 real dev.to/stn1slv articles [002-devto-provider]
 - Snapshot-based containment check: `expected_body in extracted_result`
 - 3 retries with 2-second delay on `FetchError` (covers transient 403s/timeouts)
 - Run with: `make integration` or `uv run pytest tests/integration/ --override-ini=addopts=`
@@ -155,10 +170,14 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 |----------|--------|-----------|
 | HTTP client | `httpx` (sync) | Supports async in v2 without swapping dependency |
 | HTML parser | `lxml` | Fast, tolerant; BeautifulSoup backend |
-| Article targeting | `<article>` element | Stable semantic HTML5; consistent across Medium versions |
+| Article targeting (Medium) | `<article>` element | Stable semantic HTML5; consistent across Medium versions |
+| Article targeting (dev.to) | `div#article-body` | dev.to does not use `<article>`; the id-scoped div already excludes all chrome | [002-devto-provider]
+| dev.to cover image | Extracted from `header.crayons-article__header`, prepended to body | Cover image is outside the article body div — must be fetched separately | [002-devto-provider]
+| dev.to embed handling | Replace `<iframe>` and `ltag__*` divs with anchor links | Embeds must not be silently dropped (FR-019); plain links are durable | [002-devto-provider]
 | Markdown converter | `markdownify` with ATX + `code_language=""` | Fenced code blocks, standard headings |
 | Routing | `pkgutil.iter_modules` auto-discovery + `@register` | SC-006: one new file = one new platform |
 | Integration tests | Snapshot containment + retry | Durable against minor HTML changes; resilient to transient 403s |
+| test_router.py domain example | Changed from `dev.to` to `substack.com` for "unsupported domain" test | Once DevToExtractor registers `dev.to`, those tests would no longer raise UnsupportedPlatformError | [002-devto-provider]
 
 ---
 

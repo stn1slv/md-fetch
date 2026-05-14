@@ -45,6 +45,7 @@ uv run mypy src/               # type check
 
 ## Recent Changes
 
+- 002-devto-provider: dev.to article extraction provider — `DevToExtractor`, cover image + embed→link handling, 17 new unit tests, 3 integration tests, version 0.2.0
 - 001-mdfetch-medium-extractor: Initial library release — `extract()` API, Medium provider, typed exceptions, auto-discovery routing, PyPI packaging, snapshot integration tests
 
 <!-- SPECKIT START -->

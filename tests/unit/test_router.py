@@ -32,7 +32,13 @@ class TestUrlValidation:
 
     def test_raises_for_unsupported_domain(self) -> None:
         with pytest.raises(UnsupportedPlatformError):
-            route("https://dev.to/some-post")
+            route("https://substack.com/some-post")
+
+    def test_routes_dev_to(self) -> None:
+        from mdfetch.providers.devto import DevToExtractor
+
+        provider = route("https://dev.to/username/some-article")
+        assert isinstance(provider, DevToExtractor)
 
     def test_routes_medium_com(self) -> None:
         from mdfetch.providers.medium import MediumExtractor
@@ -60,5 +66,5 @@ class TestUrlValidation:
 
     def test_unsupported_error_includes_domain(self) -> None:
         with pytest.raises(UnsupportedPlatformError) as exc_info:
-            route("https://dev.to/post")
-        assert "dev.to" in exc_info.value.message
+            route("https://substack.com/post")
+        assert "substack.com" in exc_info.value.message

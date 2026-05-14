@@ -1,13 +1,13 @@
 # mdfetch — Main Specification
 
 **Last Updated**: 2026-05-14
-**Sources**: [specs/001-mdfetch-medium-extractor/spec.md]
+**Sources**: [specs/001-mdfetch-medium-extractor/spec.md], [specs/002-devto-provider/spec.md]
 
 ---
 
 ## Overview
 
-`mdfetch` is a Python library that extracts article content from web platforms and returns it as clean, well-structured Markdown. The library enforces a provider pattern — an abstract base defines the extraction contract, and each supported platform is implemented as a separate, independent provider. The initial release supports `medium.com` and its subdomains only.
+`mdfetch` is a Python library that extracts article content from web platforms and returns it as clean, well-structured Markdown. The library enforces a provider pattern — an abstract base defines the extraction contract, and each supported platform is implemented as a separate, independent provider. Supported platforms: `medium.com` (and subdomains), `dev.to`.
 
 ---
 
@@ -48,6 +48,41 @@ A developer installs `mdfetch` from PyPI with `pip install mdfetch`, imports `ex
 
 ---
 
+### US-004 — Extract a dev.to Article to Markdown (P1)
+[Source: specs/002-devto-provider]
+
+A developer retrieves the readable content of a dev.to article as clean Markdown by calling the same single library function used for Medium — passing only the article URL, with no additional configuration. The library routes the request to the dev.to provider, fetches the page, isolates the article body, strips all non-content elements, and returns formatted Markdown.
+
+**Acceptance Scenarios**:
+1. Given a valid, publicly accessible dev.to article URL, when `extract(url)` is called, then it returns a non-empty Markdown string containing the article's title and at least one paragraph, with no raw HTML tags.
+2. Given a valid dev.to article URL, the returned Markdown contains no navigation menus, reaction buttons, comment sections, or author sidebar widgets.
+3. Given a dev.to article with headings, code blocks, and lists, the returned Markdown preserves those structural elements as proper Markdown equivalents (`#`, ` ``` `, `-`).
+
+---
+
+### US-005 — Receive Meaningful Errors for Non-Article dev.to Pages (P2)
+[Source: specs/002-devto-provider]
+
+A developer passing a dev.to URL that points to a profile page, a tag listing, or a podcast page receives a clear, typed error indicating the dev.to domain is recognised but the page type is not extractable.
+
+**Acceptance Scenarios**:
+1. Given a dev.to URL pointing to an author profile page, `extract()` raises `UnsupportedContentTypeError` (domain recognised, content type not extractable).
+2. Given a dev.to URL pointing to a tag listing page (e.g., `dev.to/t/kafka`), `extract()` raises `UnsupportedContentTypeError`.
+3. Given a URL from a domain other than dev.to, `extract()` raises `UnsupportedPlatformError` (unchanged from existing behaviour).
+
+---
+
+### US-006 — Integration Tests Pass Against Real dev.to Article URLs (P3)
+[Source: specs/002-devto-provider]
+
+A developer runs the integration test suite and all dev.to integration tests pass against three reference articles. The tests confirm title, structural elements, and absence of HTML tags on live content.
+
+**Acceptance Scenarios**:
+1. When integration tests for the three reference dev.to URLs execute with a stable internet connection, all three pass without errors or assertion failures.
+2. For each reference dev.to article, the extraction function returns non-empty Markdown free of HTML tags and containing recognisable content from the article.
+
+---
+
 ## Functional Requirements
 
 ### Extraction
@@ -70,7 +105,14 @@ A developer installs `mdfetch` from PyPI with `pip install mdfetch`, imports `ex
 
 ### Packaging & Testing
 - **FR-009**: The library MUST be packaged and distributed via PyPI using modern Python packaging best practices, enabling installation through the standard package manager without additional steps.
-- **FR-010**: The test suite MUST include integration tests that supply real Medium article URLs to the extraction function and assert that the output matches expected Markdown structure and content.
+- **FR-010**: The test suite MUST include integration tests that supply real article URLs (Medium and dev.to) to the extraction function and assert that the output matches expected Markdown structure and content.
+
+### dev.to Platform
+- **FR-015**: The library MUST add `dev.to` to the provider router so that any URL with the `dev.to` domain is dispatched to the dev.to provider without any change to the caller's code. [Source: specs/002-devto-provider]
+- **FR-016**: The library MUST include a dev.to provider that fetches the article page, isolates the main article body from `<div id="article-body">`, removes all non-content elements (navigation, social reaction widgets, comments, author sidebar, tag links), and returns the body as Markdown. [Source: specs/002-devto-provider]
+- **FR-017**: The dev.to provider MUST produce Markdown that preserves both the cover image (from the article header) and all inline body images as Markdown image syntax (`![alt](url)`). [Source: specs/002-devto-provider]
+- **FR-018**: The dev.to provider MUST raise `UnsupportedContentTypeError` when a `dev.to` URL is provided but the page is not an article (e.g., an author profile, a tag listing, or an organisation page). [Source: specs/002-devto-provider]
+- **FR-019**: The dev.to provider MUST replace embedded third-party content (GitHub Gists, CodePen demos, YouTube videos, liquid-tag embeds) with a plain Markdown link to the embedded resource URL. Embeds must not be silently dropped. [Source: specs/002-devto-provider]
 
 ---
 
@@ -89,9 +131,9 @@ A developer installs `mdfetch` from PyPI with `pip install mdfetch`, imports `ex
 ### Provider (Internal)
 | Attribute | Type | Description |
 |-----------|------|-------------|
-| `DOMAINS` | `frozenset[str]` | Domain suffixes this provider handles (e.g., `{"medium.com"}`) |
+| `DOMAINS` | `frozenset[str]` | Domain suffixes this provider handles (e.g., `{"medium.com"}`, `{"dev.to"}`) |
 
-**Invariants**: Each domain suffix registered to exactly one provider. Stateless — every call is independent.
+**Invariants**: Each domain suffix registered to exactly one provider. Stateless — every call is independent. Registered providers: `MediumExtractor` (medium.com), `DevToExtractor` (dev.to).
 
 ### ExtractionResult (Output)
 | Attribute | Type | Description |
@@ -150,6 +192,11 @@ caller provides URL string
 - **Oversized responses**: Responses exceeding 10 MB are rejected with `FetchError` to prevent OOM.
 - **Profile/tag pages**: When a `medium.com` URL points to a non-article page, `UnsupportedContentTypeError` is raised (distinct from `UnsupportedPlatformError`).
 - **HTTP 403 / transient failures**: Integration tests use a 3-retry helper with 2-second delay to handle transient rate limits.
+- **dev.to profile pages**: When a `dev.to` URL points to an author profile (no `div#article-body`), `UnsupportedContentTypeError` is raised.
+- **dev.to tag listing pages**: When a `dev.to` URL points to a tag page (e.g., `dev.to/t/kafka`), `UnsupportedContentTypeError` is raised.
+- **dev.to liquid-tag embeds**: Embedded third-party widgets (GitHub Gists, CodePen, YouTube) serialised as `<div class="ltag__*" data-url="...">` are replaced with plain Markdown links; they are never silently dropped.
+- **dev.to cover image**: The cover image lives in `<header class="crayons-article__header">`, not in `div#article-body` — the provider explicitly extracts and prepends it.
+- **dev.to HTML structure changes**: If `div#article-body` is absent, `UnsupportedContentTypeError` is raised.
 
 ---
 
@@ -161,6 +208,12 @@ caller provides URL string
 - **SC-004**: The returned Markdown for an article with headings, lists, and code blocks preserves all three structural element types in correct Markdown syntax.
 - **SC-005**: 100% of integration tests pass against a curated set of real Medium article URLs at the time of initial release.
 - **SC-006**: Adding support for a second platform requires creating exactly one new file (one new provider class decorated with `@register`). The router auto-discovers all provider modules at import time; no changes to shared library code are required.
+- **SC-007**: A developer already using the library for Medium can extract a dev.to article without any code change — only the URL changes. [Source: specs/002-devto-provider]
+- **SC-008**: The extraction function returns a result for a standard dev.to article in under 10 seconds on a stable internet connection. [Source: specs/002-devto-provider]
+- **SC-009**: The returned Markdown for any of the three reference dev.to articles contains no raw HTML tags (verified by automated assertion). [Source: specs/002-devto-provider]
+- **SC-010**: The returned Markdown for a dev.to article with headings, lists, and code blocks preserves all three structural element types in correct Markdown syntax. [Source: specs/002-devto-provider]
+- **SC-011**: 100% of integration tests pass against the three provided reference dev.to article URLs at the time of release. [Source: specs/002-devto-provider]
+- **SC-012**: The dev.to provider is delivered as exactly one new file; no existing source files are modified (except `test_router.py` for expected domain-example maintenance when the provider registers `dev.to`). [Source: specs/002-devto-provider]
 
 ---
 
