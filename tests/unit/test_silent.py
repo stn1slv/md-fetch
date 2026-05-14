@@ -49,7 +49,7 @@ def test_no_stdout_during_successful_extraction(
     capsys: pytest.CaptureFixture[str], mock_medium_response: str
 ) -> None:
     with patch("httpx.Client", return_value=_stream_client_mock(mock_medium_response)):
-        extract("https://medium.com/article")
+        extract("https://medium.com/article", retries=1)
 
     captured = capsys.readouterr()
     assert captured.out == "", "Library must not write to stdout"
@@ -71,7 +71,7 @@ def test_no_logging_during_extraction(mock_medium_response: str) -> None:
 
     try:
         with patch("httpx.Client", return_value=_stream_client_mock(mock_medium_response)):
-            extract("https://medium.com/article")
+            extract("https://medium.com/article", retries=1)
     finally:
         root_logger.removeHandler(handler)
         root_logger.setLevel(old_level)

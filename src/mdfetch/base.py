@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from abc import ABC, abstractmethod
 
 import httpx
@@ -25,8 +26,25 @@ class BaseExtractor(ABC):
         "Chrome/120.0.0.0 Safari/537.36"
     )
 
-    def fetch_html(self, url: str) -> str:
-        """Fetch raw HTML from *url* using a 30-second timeout and a 10 MB size cap."""
+    def fetch_html(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
+        """Fetch raw HTML from *url* using a 30-second timeout and a 10 MB size cap.
+
+        Retries up to *retries* times on transient :class:`FetchError` (network errors,
+        timeouts, non-2xx responses), waiting *retry_delay* seconds between attempts.
+        """
+        last_exc: FetchError | None = None
+        for attempt in range(max(1, retries)):
+            try:
+                return self._do_fetch(url)
+            except FetchError as exc:
+                last_exc = exc
+                if attempt < retries - 1:
+                    time.sleep(retry_delay)
+        assert last_exc is not None
+        raise last_exc
+
+    def _do_fetch(self, url: str) -> str:
+        """Single HTTP fetch attempt (no retry logic)."""
         headers = {"User-Agent": self._USER_AGENT}
         try:
             with httpx.Client(timeout=30.0, follow_redirects=True) as client:
@@ -62,9 +80,9 @@ class BaseExtractor(ABC):
     def convert_to_markdown(self, tag: Tag) -> str:
         """Convert the cleaned Tag to a Markdown string."""
 
-    def extract(self, url: str) -> str:
+    def extract(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
         """Orchestrate fetch → clean → convert and return Markdown."""
-        html = self.fetch_html(url)
+        html = self.fetch_html(url, retries=retries, retry_delay=retry_delay)
         soup = BeautifulSoup(html, "lxml")
         try:
             cleaned = self.clean_html(soup)

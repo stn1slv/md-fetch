@@ -2,27 +2,11 @@
 
 from __future__ import annotations
 
-import time
 from pathlib import Path
 
 import pytest
 
 from mdfetch import extract
-from mdfetch.exceptions import FetchError
-
-
-def _extract_with_retry(url: str, *, retries: int = 3, delay: float = 2.0) -> str:
-    """Call extract(), retrying up to *retries* times on transient FetchError."""
-    last_exc: FetchError | None = None
-    for attempt in range(retries):
-        try:
-            return extract(url)
-        except FetchError as exc:
-            last_exc = exc
-            if attempt < retries - 1:
-                time.sleep(delay)
-    assert last_exc is not None
-    raise last_exc
 
 SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
 
@@ -50,9 +34,12 @@ def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
     Snapshots hold only the article body (header stripped). Since extract() returns
     header + body, ``snapshot_body in full_result`` is the natural containment check
     and requires no fragile marker-based stripping in the test itself.
+
+    Transient network failures (403, timeout) are handled by extract()'s built-in
+    retry logic (3 retries, 2-second delay by default).
     """
     expected = (SNAPSHOTS_DIR / snapshot).read_text(encoding="utf-8")
-    result = _extract_with_retry(url)
+    result = extract(url)
     assert expected in result, (
         f"Extracted content for {snapshot!r} does not contain the stored snapshot body.\n"
         f"To regenerate the snapshot, run:\n"

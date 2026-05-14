@@ -25,6 +25,11 @@ __all__ = [
 ]
 
 
-def extract(url: str) -> str:
-    """Extract article content from *url* and return it as Markdown."""
-    return route(url).extract(url)
+def extract(url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
+    """Extract article content from *url* and return it as Markdown.
+
+    On transient network failures (timeouts, connection errors, non-2xx responses)
+    the request is retried up to *retries* times with *retry_delay* seconds between
+    attempts. Set ``retries=1`` to disable retry behaviour.
+    """
+    return route(url).extract(url, retries=retries, retry_delay=retry_delay)

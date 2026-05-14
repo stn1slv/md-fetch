@@ -51,7 +51,7 @@ class TestFetchErrors:
         mock = _make_stream_mock(status_code=404, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with pytest.raises(HTTPStatusError) as exc_info:
-                extractor.fetch_html("https://medium.com/article")
+                extractor.fetch_html("https://medium.com/article", retries=1)
 
         assert exc_info.value.status_code == 404
 
@@ -59,7 +59,7 @@ class TestFetchErrors:
         mock = _make_stream_mock(status_code=503, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with pytest.raises(HTTPStatusError) as exc_info:
-                extractor.fetch_html("https://medium.com/article")
+                extractor.fetch_html("https://medium.com/article", retries=1)
 
         assert exc_info.value.status_code == 503
 
@@ -69,20 +69,20 @@ class TestFetchErrors:
             return_value=_make_stream_mock(stream_side_effect=httpx.TimeoutException("timed out")),
         ):
             with pytest.raises(FetchError):
-                extractor.fetch_html("https://medium.com/article")
+                extractor.fetch_html("https://medium.com/article", retries=1)
 
     def test_raises_fetch_error_on_connection_error(self, extractor: MediumExtractor) -> None:
         mock = _make_stream_mock(stream_side_effect=httpx.ConnectError("connection refused"))
         with patch("httpx.Client", return_value=mock):
             with pytest.raises(FetchError):
-                extractor.fetch_html("https://medium.com/article")
+                extractor.fetch_html("https://medium.com/article", retries=1)
 
     def test_http_status_error_is_fetch_error(self, extractor: MediumExtractor) -> None:
         """HTTPStatusError must be a subclass of FetchError for callers catching FetchError."""
         mock = _make_stream_mock(status_code=404, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with pytest.raises(FetchError):
-                extractor.fetch_html("https://medium.com/article")
+                extractor.fetch_html("https://medium.com/article", retries=1)
 
     def test_raises_fetch_error_when_response_exceeds_size_limit(
         self, extractor: MediumExtractor
@@ -90,4 +90,4 @@ class TestFetchErrors:
         oversized_body = b"x" * (11 * 1024 * 1024)  # 11 MB — over the 10 MB cap
         with patch("httpx.Client", return_value=_make_stream_mock(body=oversized_body)):
             with pytest.raises(FetchError, match="exceeded"):
-                extractor.fetch_html("https://medium.com/article")
+                extractor.fetch_html("https://medium.com/article", retries=1)
