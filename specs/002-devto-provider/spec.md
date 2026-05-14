@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-14
 
-**Status**: Draft
+**Status**: Completed
 
 **Input**: User description: "Let's implement support of dev.to platform in addition to medium."
 

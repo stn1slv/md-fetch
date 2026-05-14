@@ -9,7 +9,7 @@ description = "Extract article content from web platforms and return it as clean
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Stanislav Deviatov", email = "devyatov@gmail.com" }]
-keywords = ["markdown", "scraping", "medium", "article", "extraction"]
+keywords = ["markdown", "scraping", "medium", "dev.to", "article", "extraction"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
