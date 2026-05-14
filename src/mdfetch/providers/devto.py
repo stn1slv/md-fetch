@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import re
 
 from bs4 import BeautifulSoup
@@ -59,9 +60,9 @@ class DevToExtractor(BaseExtractor):
             h1 = header.find("h1")
             # Insert in reverse order so final order is h1 → cover_img → body content
             if isinstance(cover_img, Tag):
-                body.insert(0, cover_img.__copy__())
+                body.insert(0, copy.copy(cover_img))
             if isinstance(h1, Tag):
-                body.insert(0, h1.__copy__())
+                body.insert(0, copy.copy(h1))
 
         return body
 

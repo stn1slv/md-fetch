@@ -34,6 +34,12 @@ class TestUrlValidation:
         with pytest.raises(UnsupportedPlatformError):
             route("https://substack.com/some-post")
 
+    def test_routes_dev_to(self) -> None:
+        from mdfetch.providers.devto import DevToExtractor
+
+        provider = route("https://dev.to/username/some-article")
+        assert isinstance(provider, DevToExtractor)
+
     def test_routes_medium_com(self) -> None:
         from mdfetch.providers.medium import MediumExtractor
 
