@@ -13,7 +13,9 @@ pip install mdfetch
 ```python
 from mdfetch import extract
 
+# Works with any supported platform — just pass the URL
 markdown = extract("https://medium.com/some-publication/article-slug-abc123")
+markdown = extract("https://dev.to/username/article-slug")
 print(markdown)
 ```
 
@@ -53,6 +55,7 @@ except EmptyContentError as e:
 | Platform | Domains |
 |----------|---------|
 | Medium   | `medium.com`, `*.medium.com` |
+| dev.to   | `dev.to` |
 
 ## Development
 
