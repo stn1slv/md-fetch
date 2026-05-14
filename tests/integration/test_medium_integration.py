@@ -26,26 +26,19 @@ MEDIUM_TEST_CASES = [
 ]
 
 
-def _strip_header(md: str) -> str:
-    """Drop the Medium article header (avatar, byline, date, listen link, cover image).
-
-    The header consistently ends with an empty cover image placeholder ![]() before
-    the article body begins. Returns the original string unchanged if not found.
-    """
-    marker = "\n\n![]()"
-    idx = md.find(marker)
-    if idx == -1:
-        return md
-    return md[idx + len(marker):].lstrip("\n")
-
-
 @pytest.mark.integration
 @pytest.mark.parametrize("url,snapshot", MEDIUM_TEST_CASES)
 def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
+    """Assert the extracted article body contains all content stored in the snapshot.
+
+    Snapshots hold only the article body (header stripped). Since extract() returns
+    header + body, ``snapshot_body in full_result`` is the natural containment check
+    and requires no fragile marker-based stripping in the test itself.
+    """
     expected = (SNAPSHOTS_DIR / snapshot).read_text(encoding="utf-8")
-    result = _strip_header(extract(url))
+    result = extract(url)
     assert expected in result, (
-        f"Extracted body for {snapshot!r} does not contain the stored snapshot content.\n"
+        f"Extracted content for {snapshot!r} does not contain the stored snapshot body.\n"
         f"Run the following to update the snapshot if the change is intentional:\n"
         f"  uv run python -c \""
         f"from mdfetch import extract; "

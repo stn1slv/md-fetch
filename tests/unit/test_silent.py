@@ -24,21 +24,31 @@ def mock_medium_response() -> str:
     """
 
 
+def _stream_client_mock(html: str) -> MagicMock:
+    """Return a mock httpx.Client whose .stream() yields the given HTML body."""
+    body = html.encode("utf-8")
+
+    mock_response = MagicMock()
+    mock_response.is_success = True
+    mock_response.status_code = 200
+    mock_response.encoding = "utf-8"
+    mock_response.iter_bytes.return_value = iter([body])
+
+    mock_stream_ctx = MagicMock()
+    mock_stream_ctx.__enter__ = MagicMock(return_value=mock_response)
+    mock_stream_ctx.__exit__ = MagicMock(return_value=False)
+
+    mock_client = MagicMock()
+    mock_client.__enter__ = MagicMock(return_value=mock_client)
+    mock_client.__exit__ = MagicMock(return_value=False)
+    mock_client.stream.return_value = mock_stream_ctx
+    return mock_client
+
+
 def test_no_stdout_during_successful_extraction(
     capsys: pytest.CaptureFixture[str], mock_medium_response: str
 ) -> None:
-    mock_resp = MagicMock()
-    mock_resp.is_success = True
-    mock_resp.status_code = 200
-    mock_resp.text = mock_medium_response
-
-    with patch("httpx.Client") as mock_client_cls:
-        mock_client = MagicMock()
-        mock_client.__enter__ = MagicMock(return_value=mock_client)
-        mock_client.__exit__ = MagicMock(return_value=False)
-        mock_client.get.return_value = mock_resp
-        mock_client_cls.return_value = mock_client
-
+    with patch("httpx.Client", return_value=_stream_client_mock(mock_medium_response)):
         extract("https://medium.com/article")
 
     captured = capsys.readouterr()
@@ -47,11 +57,6 @@ def test_no_stdout_during_successful_extraction(
 
 
 def test_no_logging_during_extraction(mock_medium_response: str) -> None:
-    mock_resp = MagicMock()
-    mock_resp.is_success = True
-    mock_resp.status_code = 200
-    mock_resp.text = mock_medium_response
-
     log_records: list[logging.LogRecord] = []
 
     class CapturingHandler(logging.Handler):
@@ -65,13 +70,7 @@ def test_no_logging_during_extraction(mock_medium_response: str) -> None:
     root_logger.setLevel(logging.DEBUG)
 
     try:
-        with patch("httpx.Client") as mock_client_cls:
-            mock_client = MagicMock()
-            mock_client.__enter__ = MagicMock(return_value=mock_client)
-            mock_client.__exit__ = MagicMock(return_value=False)
-            mock_client.get.return_value = mock_resp
-            mock_client_cls.return_value = mock_client
-
+        with patch("httpx.Client", return_value=_stream_client_mock(mock_medium_response)):
             extract("https://medium.com/article")
     finally:
         root_logger.removeHandler(handler)

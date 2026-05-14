@@ -10,6 +10,8 @@ from bs4.element import Tag
 
 from mdfetch.exceptions import FetchError, HTTPStatusError, MdfetchError
 
+_MAX_RESPONSE_BYTES = 10 * 1024 * 1024  # 10 MB — guard against runaway responses
+
 
 class BaseExtractor(ABC):
     """Contract all platform-specific extractors must fulfil."""
@@ -24,24 +26,33 @@ class BaseExtractor(ABC):
     )
 
     def fetch_html(self, url: str) -> str:
-        """Fetch raw HTML from *url* using a 30-second timeout."""
+        """Fetch raw HTML from *url* using a 30-second timeout and a 10 MB size cap."""
         headers = {"User-Agent": self._USER_AGENT}
         try:
             with httpx.Client(timeout=30.0, follow_redirects=True) as client:
-                response = client.get(url, headers=headers)
+                with client.stream("GET", url, headers=headers) as response:
+                    if not response.is_success:
+                        raise HTTPStatusError(
+                            f"HTTP {response.status_code} fetching {url}",
+                            status_code=response.status_code,
+                            url=url,
+                        )
+                    chunks: list[bytes] = []
+                    total = 0
+                    for chunk in response.iter_bytes():
+                        total += len(chunk)
+                        if total > _MAX_RESPONSE_BYTES:
+                            raise FetchError(
+                                f"Response from {url} exceeded "
+                                f"{_MAX_RESPONSE_BYTES // (1024 * 1024)} MB limit",
+                                url=url,
+                            )
+                        chunks.append(chunk)
+                    return b"".join(chunks).decode(response.encoding or "utf-8", errors="replace")
         except httpx.TimeoutException as exc:
             raise FetchError(f"Request timed out: {url}", url=url) from exc
         except httpx.RequestError as exc:
             raise FetchError(f"Network error fetching {url}: {exc}", url=url) from exc
-
-        if not response.is_success:
-            raise HTTPStatusError(
-                f"HTTP {response.status_code} fetching {url}",
-                status_code=response.status_code,
-                url=url,
-            )
-
-        return response.text
 
     @abstractmethod
     def clean_html(self, soup: BeautifulSoup) -> Tag:

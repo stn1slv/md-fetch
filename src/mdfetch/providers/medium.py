@@ -46,8 +46,7 @@ class MediumExtractor(BaseExtractor):
             element.decompose()
 
         for section in article.find_all("section"):
-            raw = section.get("class")
-            classes: list[str] = raw if isinstance(raw, list) else ([raw] if raw else [])
+            classes: list[str] = section.get_attribute_list("class")
             if classes and any("author" in c.lower() or "bio" in c.lower() for c in classes):
                 section.decompose()
 
