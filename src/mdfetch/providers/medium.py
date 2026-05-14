@@ -17,7 +17,7 @@ from mdfetch.router import register
 class MediumExtractor(BaseExtractor):
     """Extracts article content from medium.com and its subdomains."""
 
-    DOMAINS: frozenset[str] = frozenset({"medium.com", "www.medium.com"})
+    DOMAINS: frozenset[str] = frozenset({"medium.com"})
 
     def clean_html(self, soup: BeautifulSoup) -> Tag:
         """Isolate the article body and strip all non-content elements."""
@@ -47,7 +47,7 @@ class MediumExtractor(BaseExtractor):
 
         for section in article.find_all("section"):
             raw = section.get("class")
-            classes: list[str] = raw if isinstance(raw, list) else []
+            classes: list[str] = raw if isinstance(raw, list) else ([raw] if raw else [])
             if classes and any("author" in c.lower() or "bio" in c.lower() for c in classes):
                 section.decompose()
 

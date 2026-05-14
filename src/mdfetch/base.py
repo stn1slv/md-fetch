@@ -8,7 +8,7 @@ import httpx
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 
-from mdfetch.exceptions import FetchError, HTTPStatusError
+from mdfetch.exceptions import FetchError, HTTPStatusError, MdfetchError
 
 
 class BaseExtractor(ABC):
@@ -55,5 +55,10 @@ class BaseExtractor(ABC):
         """Orchestrate fetch → clean → convert and return Markdown."""
         html = self.fetch_html(url)
         soup = BeautifulSoup(html, "lxml")
-        cleaned = self.clean_html(soup)
-        return self.convert_to_markdown(cleaned)
+        try:
+            cleaned = self.clean_html(soup)
+            return self.convert_to_markdown(cleaned)
+        except MdfetchError as exc:
+            if exc.url is None:
+                exc.url = url
+            raise

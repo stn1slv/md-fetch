@@ -1,4 +1,4 @@
-.PHONY: setup test integration lint format build clean upgrade-deps
+.PHONY: setup test integration lint typecheck format build clean upgrade-deps
 
 setup:
 	uv sync --all-extras
@@ -12,6 +12,9 @@ integration:
 lint:
 	uv run ruff check src/ tests/
 
+typecheck:
+	uv run mypy src/
+
 format:
 	uv run ruff format src/ tests/
 
@@ -19,7 +22,7 @@ build:
 	uv build
 
 clean:
-	rm -rf dist/ __pycache__ src/mdfetch/__pycache__ .ruff_cache .pytest_cache
+	rm -rf dist/ __pycache__ src/mdfetch/__pycache__ tests/__pycache__ .ruff_cache .pytest_cache .mypy_cache
 
 upgrade-deps:
 	uv sync --all-extras --upgrade

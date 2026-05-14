@@ -37,9 +37,9 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/stanislav-deviatov/mdfetch"
-Source = "https://github.com/stanislav-deviatov/mdfetch"
-Issues = "https://github.com/stanislav-deviatov/mdfetch/issues"
+Homepage = "https://github.com/stn1slv/md-fetch"
+Source = "https://github.com/stn1slv/md-fetch"
+Issues = "https://github.com/stn1slv/md-fetch/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/mdfetch"]
