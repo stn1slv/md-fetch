@@ -12,6 +12,7 @@ permissions:
 jobs:
   integration:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -38,10 +39,10 @@ jobs:
           script: |
             const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
             const date = new Date().toISOString().slice(0, 10);
-            await github.rest.issues.create({
+            const issueParams = {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: `fix: integration tests failed on ${date} — possible HTML structure change`,
+              title: `Integration tests failed on ${date} — possible HTML structure change`,
               body: [
                 "## Integration test failure",
                 "",
@@ -56,5 +57,11 @@ jobs:
                 "3. Update the relevant extractor in `src/mdfetch/providers/`.",
                 "4. Add or update snapshot fixtures in `tests/integration/` if needed.",
               ].join("\n"),
-              labels: ["bug", "integration"],
-            });
+            };
+            try {
+              issueParams.labels = ["bug", "integration"];
+              await github.rest.issues.create(issueParams);
+            } catch {
+              delete issueParams.labels;
+              await github.rest.issues.create(issueParams);
+            }
