@@ -19,10 +19,10 @@
 
 **Purpose**: Project scaffolding — directory layout, packaging configuration, development tooling.
 
-- [ ] T001 Create project directory structure: `src/mdfetch/`, `src/mdfetch/providers/`, `tests/unit/`, `tests/integration/`
-- [ ] T002 Create `pyproject.toml` with hatchling build backend, Python ≥3.10 constraint, and runtime dependencies (`httpx≥0.27`, `beautifulsoup4≥4.12`, `lxml≥5.0`, `markdownify≥0.13`) plus dev extras (`pytest≥8.0`, `ruff`); add `[tool.ruff]` section for lint/format configuration
-- [ ] T003 [P] Create `Makefile` with targets: `setup` (`uv sync`), `test` (`uv run pytest tests/unit/`), `lint` (`uv run ruff check src/ tests/`), `format` (`uv run ruff format src/ tests/`), `build` (`uv build`), `clean` (remove `dist/`, `__pycache__`); all targets that invoke Python tools MUST call them via `uv run <tool>`
-- [ ] T004 [P] Add pytest configuration to `pyproject.toml`: set `testpaths = ["tests"]`, register custom `integration` marker to separate unit from network-dependent tests; create `tests/conftest.py` with marker declaration
+- [x] T001 Create project directory structure: `src/mdfetch/`, `src/mdfetch/providers/`, `tests/unit/`, `tests/integration/`
+- [x] T002 Create `pyproject.toml` with hatchling build backend, Python ≥3.10 constraint, and runtime dependencies (`httpx≥0.27`, `beautifulsoup4≥4.12`, `lxml≥5.0`, `markdownify≥0.13`) plus dev extras (`pytest≥8.0`, `ruff`); add `[tool.ruff]` section for lint/format configuration
+- [x] T003 [P] Create `Makefile` with targets: `setup` (`uv sync`), `test` (`uv run pytest tests/unit/`), `lint` (`uv run ruff check src/ tests/`), `format` (`uv run ruff format src/ tests/`), `build` (`uv build`), `clean` (remove `dist/`, `__pycache__`); all targets that invoke Python tools MUST call them via `uv run <tool>`
+- [x] T004 [P] Add pytest configuration to `pyproject.toml`: set `testpaths = ["tests"]`, register custom `integration` marker to separate unit from network-dependent tests; create `tests/conftest.py` with marker declaration
 
 ---
 
@@ -32,10 +32,10 @@
 
 **⚠️ CRITICAL**: Exceptions, the base class, and the router skeleton must exist before any provider can be implemented.
 
-- [ ] T005 Implement `MdfetchError` exception hierarchy in `src/mdfetch/exceptions.py`: define `MdfetchError` (base, with `message: str` and `url: str | None`), `InvalidURLError`, `UnsupportedPlatformError`, `UnsupportedContentTypeError`, `FetchError`, `HTTPStatusError` (with `status_code: int`), `EmptyContentError` — all with strict type hints
-- [ ] T006 Implement `BaseExtractor` ABC in `src/mdfetch/base.py`: class-level `DOMAINS: frozenset[str]`; concrete `fetch_html(self, url: str) -> str` using `httpx.Client(timeout=30.0)` with default User-Agent, raising `FetchError` / `HTTPStatusError` on failure; abstract `clean_html` and `convert_to_markdown` with type-hinted signatures; concrete `extract(self, url: str) -> str` orchestrating all three steps
-- [ ] T007 [P] Implement router skeleton in `src/mdfetch/router.py`: `_REGISTRY: dict[str, type[BaseExtractor]] = {}`; `register(provider_cls)` function; `route(url: str) -> BaseExtractor` function that validates URL syntax (raising `InvalidURLError`), extracts `netloc`, looks up provider (raising `UnsupportedPlatformError` if missing), and returns a provider instance
-- [ ] T008 [P] Create `src/mdfetch/providers/__init__.py` (empty package marker)
+- [x] T005 Implement `MdfetchError` exception hierarchy in `src/mdfetch/exceptions.py`: define `MdfetchError` (base, with `message: str` and `url: str | None`), `InvalidURLError`, `UnsupportedPlatformError`, `UnsupportedContentTypeError`, `FetchError`, `HTTPStatusError` (with `status_code: int`), `EmptyContentError` — all with strict type hints
+- [x] T006 Implement `BaseExtractor` ABC in `src/mdfetch/base.py`: class-level `DOMAINS: frozenset[str]`; concrete `fetch_html(self, url: str) -> str` using `httpx.Client(timeout=30.0)` with default User-Agent, raising `FetchError` / `HTTPStatusError` on failure; abstract `clean_html` and `convert_to_markdown` with type-hinted signatures; concrete `extract(self, url: str) -> str` orchestrating all three steps
+- [x] T007 [P] Implement router skeleton in `src/mdfetch/router.py`: `_REGISTRY: dict[str, type[BaseExtractor]] = {}`; `register(provider_cls)` function; `route(url: str) -> BaseExtractor` function that validates URL syntax (raising `InvalidURLError`), extracts `netloc`, looks up provider (raising `UnsupportedPlatformError` if missing), and returns a provider instance
+- [x] T008 [P] Create `src/mdfetch/providers/__init__.py` (empty package marker)
 
 **Checkpoint**: Foundation ready — all three user story phases can now begin.
 
@@ -51,16 +51,16 @@
 
 > Write these tests FIRST and confirm they fail (red) before implementing.
 
-- [ ] T009 [P] [US1] Write unit tests for `MediumExtractor` happy path in `tests/unit/test_medium_extractor.py`: use an HTML fixture with `<article>` body containing headings, lists, and a code block; assert `clean_html` returns soup with noise removed; assert `convert_to_markdown` output contains `#`, ` ``` `, and `-` markers; assert no raw HTML tags remain
-- [ ] T010 [P] [US1] Write integration test skeleton in `tests/integration/test_medium_integration.py`: define `MEDIUM_TEST_URLS` list (3 real public Medium article URLs); write `test_extract_returns_markdown` asserting: non-empty string, no `<tag>` patterns (regex), at least one `# ` heading, length > 200 characters; mark with `@pytest.mark.integration`
+- [x] T009 [P] [US1] Write unit tests for `MediumExtractor` happy path in `tests/unit/test_medium_extractor.py`: use an HTML fixture with `<article>` body containing headings, lists, and a code block; assert `clean_html` returns soup with noise removed; assert `convert_to_markdown` output contains `#`, ` ``` `, and `-` markers; assert no raw HTML tags remain
+- [x] T010 [P] [US1] Write integration test skeleton in `tests/integration/test_medium_integration.py`: define `MEDIUM_TEST_URLS` list (3 real public Medium article URLs); write `test_extract_returns_markdown` asserting: non-empty string, no `<tag>` patterns (regex), at least one `# ` heading, length > 200 characters; mark with `@pytest.mark.integration`
 
 ### Implementation for User Story 1
 
-- [ ] T011 [US1] Implement `MediumExtractor.clean_html()` in `src/mdfetch/providers/medium.py`: `soup.find("article")` to locate body (raise `UnsupportedContentTypeError` if `None`); remove `<nav>`, `<button>` elements with `aria-label` containing `"clap"` or `"applaud"`, `<div data-testid="post-sidebar">`, social share `<div>`/`<button>` elements (selector: `data-testid` containing `"share"`), author biography `<section>` after article body, response/comment prompts (`data-testid` matching `"post-footer"`); return cleaned soup
-- [ ] T012 [US1] Implement `MediumExtractor.convert_to_markdown()` in `src/mdfetch/providers/medium.py`: call `markdownify(str(soup), heading_style="ATX", strip=["script", "style"])`; strip leading/trailing whitespace and collapse runs of 3+ blank lines to 2; raise `EmptyContentError` if result is empty after stripping; return final string
-- [ ] T013 [US1] Register `MediumExtractor` in `src/mdfetch/router.py`: add `"medium.com"` and `"www.medium.com"` to `_REGISTRY`; ensure `username.medium.com` subdomains match by checking `netloc.endswith(".medium.com") or netloc == "medium.com"`
-- [ ] T014 [US1] Implement `extract()` public function and re-export all exception classes in `src/mdfetch/__init__.py`: `extract(url: str) -> str` delegates to `route(url).extract(url)`; `__all__` includes `extract`, `MdfetchError`, `InvalidURLError`, `UnsupportedPlatformError`, `UnsupportedContentTypeError`, `FetchError`, `HTTPStatusError`, `EmptyContentError`
-- [ ] T015 [US1] Run `pytest -m integration` against the 3 curated Medium article URLs defined in T010 and confirm all assertions pass (green)
+- [x] T011 [US1] Implement `MediumExtractor.clean_html()` in `src/mdfetch/providers/medium.py`: `soup.find("article")` to locate body (raise `UnsupportedContentTypeError` if `None`); remove `<nav>`, `<button>` elements with `aria-label` containing `"clap"` or `"applaud"`, `<div data-testid="post-sidebar">`, social share `<div>`/`<button>` elements (selector: `data-testid` containing `"share"`), author biography `<section>` after article body, response/comment prompts (`data-testid` matching `"post-footer"`); return cleaned soup
+- [x] T012 [US1] Implement `MediumExtractor.convert_to_markdown()` in `src/mdfetch/providers/medium.py`: call `markdownify(str(soup), heading_style="ATX", strip=["script", "style"])`; strip leading/trailing whitespace and collapse runs of 3+ blank lines to 2; raise `EmptyContentError` if result is empty after stripping; return final string
+- [x] T013 [US1] Register `MediumExtractor` in `src/mdfetch/router.py`: add `"medium.com"` and `"www.medium.com"` to `_REGISTRY`; ensure `username.medium.com` subdomains match by checking `netloc.endswith(".medium.com") or netloc == "medium.com"`
+- [x] T014 [US1] Implement `extract()` public function and re-export all exception classes in `src/mdfetch/__init__.py`: `extract(url: str) -> str` delegates to `route(url).extract(url)`; `__all__` includes `extract`, `MdfetchError`, `InvalidURLError`, `UnsupportedPlatformError`, `UnsupportedContentTypeError`, `FetchError`, `HTTPStatusError`, `EmptyContentError`
+- [x] T015 [US1] Run `pytest -m integration` against the 3 curated Medium article URLs defined in T010 and confirm all assertions pass (green)
 
 **Checkpoint**: User Story 1 fully functional — `extract()` works end-to-end on real Medium articles.
 
@@ -76,15 +76,15 @@
 
 > Write these tests FIRST and confirm they fail (red) before implementing the missing pieces.
 
-- [ ] T016 [P] [US2] Write unit tests for URL validation errors in `tests/unit/test_router.py`: assert `route("not-a-url")` raises `InvalidURLError`; assert `route("ftp://medium.com/article")` raises `InvalidURLError` (bad scheme); assert `route("https://dev.to/post")` raises `UnsupportedPlatformError`
-- [ ] T017 [P] [US2] Write unit tests for `UnsupportedContentTypeError` in `tests/unit/test_medium_extractor.py`: provide HTML fixture with no `<article>` element (e.g., a tag page); assert `MediumExtractor().clean_html(soup)` raises `UnsupportedContentTypeError`
-- [ ] T018 [P] [US2] Write unit tests for HTTP error propagation in `tests/unit/test_medium_extractor.py`: mock `httpx.Client.get` to return HTTP 404 and assert `FetchError` (or `HTTPStatusError` with `status_code=404`) is raised; mock a connection timeout and assert `FetchError` is raised
+- [x] T016 [P] [US2] Write unit tests for URL validation errors in `tests/unit/test_router.py`: assert `route("not-a-url")` raises `InvalidURLError`; assert `route("ftp://medium.com/article")` raises `InvalidURLError` (bad scheme); assert `route("https://dev.to/post")` raises `UnsupportedPlatformError`
+- [x] T017 [P] [US2] Write unit tests for `UnsupportedContentTypeError` in `tests/unit/test_medium_extractor.py`: provide HTML fixture with no `<article>` element (e.g., a tag page); assert `MediumExtractor().clean_html(soup)` raises `UnsupportedContentTypeError`
+- [x] T018 [P] [US2] Write unit tests for HTTP error propagation in `tests/unit/test_medium_extractor.py`: mock `httpx.Client.get` to return HTTP 404 and assert `FetchError` (or `HTTPStatusError` with `status_code=404`) is raised; mock a connection timeout and assert `FetchError` is raised
 
 ### Implementation for User Story 2
 
-- [ ] T019 [US2] Harden URL validation in `src/mdfetch/router.py`: use `urllib.parse.urlparse` to validate scheme is `http` or `https` and `netloc` is non-empty; raise `InvalidURLError` with message including the offending URL for all invalid cases
-- [ ] T020 [US2] Verify `UnsupportedContentTypeError` path in `src/mdfetch/providers/medium.py`: confirm the `soup.find("article") is None` guard (from T011) raises `UnsupportedContentTypeError` with message `"URL is not an article page"`; verify `EmptyContentError` path in `convert_to_markdown` (from T012) includes the URL in its message
-- [ ] T021 [US2] Run `pytest tests/unit/` and confirm all error scenario tests pass (green)
+- [x] T019 [US2] Harden URL validation in `src/mdfetch/router.py`: use `urllib.parse.urlparse` to validate scheme is `http` or `https` and `netloc` is non-empty; raise `InvalidURLError` with message including the offending URL for all invalid cases
+- [x] T020 [US2] Verify `UnsupportedContentTypeError` path in `src/mdfetch/providers/medium.py`: confirm the `soup.find("article") is None` guard (from T011) raises `UnsupportedContentTypeError` with message `"URL is not an article page"`; verify `EmptyContentError` path in `convert_to_markdown` (from T012) includes the URL in its message
+- [x] T021 [US2] Run `pytest tests/unit/` and confirm all error scenario tests pass (green)
 
 **Checkpoint**: All typed exceptions work correctly — callers can distinguish every failure mode.
 
@@ -98,11 +98,11 @@
 
 ### Implementation for User Story 3
 
-- [ ] T022 [US3] Finalize `pyproject.toml` metadata: add `description`, `readme = "README.md"`, `license`, `authors`, `keywords`, `classifiers` (Python version, license, topic), `[project.urls]` (Homepage, Source, Issues)
-- [ ] T023 [US3] Create `README.md` with install instructions (`pip install mdfetch`), a minimal usage example, and a link to the quickstart guide
-- [ ] T024 [P] [US3] Run `uv build` (or `make build`) and verify the wheel and sdist are produced without errors in `dist/`
-- [ ] T025 [P] [US3] Create a temporary environment with `uv venv`, install the built wheel via `uv pip install dist/mdfetch-*.whl`, and verify `from mdfetch import extract` succeeds and `extract("https://medium.com/...")` returns a non-empty Markdown string
-- [ ] T026 [US3] Walk through `quickstart.md` step-by-step in the clean `venv` and confirm all code examples execute without error
+- [x] T022 [US3] Finalize `pyproject.toml` metadata: add `description`, `readme = "README.md"`, `license`, `authors`, `keywords`, `classifiers` (Python version, license, topic), `[project.urls]` (Homepage, Source, Issues)
+- [x] T023 [US3] Create `README.md` with install instructions (`pip install mdfetch`), a minimal usage example, and a link to the quickstart guide
+- [x] T024 [P] [US3] Run `uv build` (or `make build`) and verify the wheel and sdist are produced without errors in `dist/`
+- [x] T025 [P] [US3] Create a temporary environment with `uv venv`, install the built wheel via `uv pip install dist/mdfetch-*.whl`, and verify `from mdfetch import extract` succeeds and `extract("https://medium.com/...")` returns a non-empty Markdown string
+- [x] T026 [US3] Walk through `quickstart.md` step-by-step in the clean `venv` and confirm all code examples execute without error
 
 **Checkpoint**: Library installable and usable from PyPI distribution artifact.
 
@@ -112,12 +112,12 @@
 
 **Purpose**: Final quality pass across all stories.
 
-- [ ] T027 [P] Write unit test in `tests/unit/test_silent.py` asserting FR-013: call `extract()` on a mock HTTP response and assert `sys.stdout` and `sys.stderr` are empty (use `capsys` pytest fixture); assert no Python `logging` handlers emit output during a successful extraction
-- [ ] T028 [P] Add one-line docstrings to all public classes and functions (`BaseExtractor`, `MediumExtractor`, `extract`, each exception class) in their respective files
-- [ ] T029 [P] Run `make lint` (`uv run ruff check src/ tests/`) and fix all reported issues
-- [ ] T030 [P] Run `make format` (`uv run ruff format src/ tests/`) and ensure consistent style
-- [ ] T031 Run full test suite: `make test` (unit) then `uv run pytest -m integration` — confirm zero failures
-- [ ] T032 [P] Verify `uv run mypy src/` reports no errors on the `src/mdfetch/` package
+- [x] T027 [P] Write unit test in `tests/unit/test_silent.py` asserting FR-013: call `extract()` on a mock HTTP response and assert `sys.stdout` and `sys.stderr` are empty (use `capsys` pytest fixture); assert no Python `logging` handlers emit output during a successful extraction
+- [x] T028 [P] Add one-line docstrings to all public classes and functions (`BaseExtractor`, `MediumExtractor`, `extract`, each exception class) in their respective files
+- [x] T029 [P] Run `make lint` (`uv run ruff check src/ tests/`) and fix all reported issues
+- [x] T030 [P] Run `make format` (`uv run ruff format src/ tests/`) and ensure consistent style
+- [x] T031 Run full test suite: `make test` (unit) then `uv run pytest -m integration` — confirm zero failures
+- [x] T032 [P] Verify `uv run mypy src/` reports no errors on the `src/mdfetch/` package
 
 ---
 
