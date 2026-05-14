@@ -52,6 +52,26 @@ except EmptyContentError as e:
 |----------|---------|
 | Medium   | `medium.com`, `*.medium.com` |
 
+## Development
+
+Requires [uv](https://docs.astral.sh/uv/).
+
+```bash
+make setup        # install dependencies
+make test         # run unit tests
+make lint         # ruff check
+make format       # ruff format
+make build        # build wheel + sdist
+make upgrade-deps # upgrade all dependencies
+make clean        # remove build artifacts
+```
+
+Run integration tests (requires network access):
+
+```bash
+uv run pytest -m integration
+```
+
 ## Requirements
 
 - Python 3.10+
