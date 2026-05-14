@@ -6,6 +6,7 @@ from abc import ABC, abstractmethod
 
 import httpx
 from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 from mdfetch.exceptions import FetchError, HTTPStatusError
 
@@ -15,7 +16,7 @@ class BaseExtractor(ABC):
 
     DOMAINS: frozenset[str] = frozenset()
 
-    # Browser-like UA so web servers serve normal HTML (FR-014: no mdfetch-specific branding)
+    # Standard browser UA — required for sites that block non-browser clients (see FR-014)
     _USER_AGENT = (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
         "AppleWebKit/537.36 (KHTML, like Gecko) "
@@ -43,12 +44,12 @@ class BaseExtractor(ABC):
         return response.text
 
     @abstractmethod
-    def clean_html(self, soup: BeautifulSoup) -> BeautifulSoup:
-        """Remove non-content elements and return the cleaned soup."""
+    def clean_html(self, soup: BeautifulSoup) -> Tag:
+        """Isolate the article body, strip non-content elements, and return the root Tag."""
 
     @abstractmethod
-    def convert_to_markdown(self, soup: BeautifulSoup) -> str:
-        """Convert the cleaned soup to a Markdown string."""
+    def convert_to_markdown(self, tag: Tag) -> str:
+        """Convert the cleaned Tag to a Markdown string."""
 
     def extract(self, url: str) -> str:
         """Orchestrate fetch → clean → convert and return Markdown."""

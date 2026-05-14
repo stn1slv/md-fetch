@@ -92,7 +92,7 @@ A developer installs the `mdfetch` library from PyPI using pip, imports the extr
 - **FR-011**: The library MUST raise a descriptive error when the article body is located but yields no extractable text content (e.g., the page contains only images or embeds with no readable text).
 - **FR-012**: The library MUST raise a distinct error — separate from the "unsupported platform" error — when a `medium.com` URL is provided but the page is not an article (e.g., an author profile or tag page). The error must indicate that the domain is recognised but the content type cannot be extracted.
 - **FR-013**: The library MUST NOT emit any logging, print output, or diagnostic messages. All failure information is communicated exclusively through raised exceptions.
-- **FR-014**: HTTP requests made by the library MUST use the default browser-like User-Agent string provided by the HTTP client. No custom User-Agent header is set, and the library does not check or respect `robots.txt` in v1.
+- **FR-014**: HTTP requests made by the library MUST use a standard browser-like User-Agent string so that web servers return readable HTML. The User-Agent MUST NOT identify the library by name or version. The library does not check or respect `robots.txt` in v1.
 
 ### Key Entities
 
@@ -109,7 +109,7 @@ A developer installs the `mdfetch` library from PyPI using pip, imports the extr
 - **SC-003**: The returned Markdown for a standard Medium article contains no raw HTML tags (verified by automated assertion).
 - **SC-004**: The returned Markdown for an article with headings, lists, and code blocks preserves all three structural element types in correct Markdown syntax.
 - **SC-005**: 100% of integration tests pass against a curated set of real Medium article URLs at the time of initial release.
-- **SC-006**: Adding support for a second platform in the future requires creating exactly one new file (one new provider class) with no modifications to shared library code.
+- **SC-006**: Adding support for a second platform in the future requires creating exactly one new file (one new provider class decorated with `@register`). The router auto-discovers all provider modules at import time; no changes to shared library code are required.
 
 ## Assumptions
 
