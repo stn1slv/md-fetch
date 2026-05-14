@@ -56,9 +56,11 @@
   - `test_no_raw_html_tags` — regex confirms no `<tag>` in output (excluding Markdown autolinks)
   - `test_strips_empty_anchor_links` — headings do not contain empty `[]()` fragments
 
-- [ ] T004 [US1] Add unit test for iframe→link in `tests/unit/test_devto_extractor.py`:
-  - Fixture article HTML with `<iframe src="https://gist.github.com/...">`  inside `div#article-body`
-  - Assert output Markdown contains `https://gist.github.com/...` as a plain link and no `<iframe>`
+- [ ] T004 [US1] Add unit tests for embed→link conversion in `tests/unit/test_devto_extractor.py`:
+  - Fixture article HTML with `<iframe src="https://gist.github.com/...">` inside `div#article-body`
+  - `test_iframe_replaced_with_link` — assert output Markdown contains `https://gist.github.com/...` as a plain link and no `<iframe>`
+  - Fixture article HTML with `<div class="ltag__github-readme" data-url="https://github.com/...">` inside `div#article-body`
+  - `test_liquid_tag_replaced_with_link` — assert output Markdown contains `https://github.com/...` as a plain link and no `ltag` div content
 
 **Checkpoint**: At this point, `extract("https://dev.to/...")` returns clean Markdown for any valid article — US1 fully functional.
 
@@ -73,8 +75,10 @@
 ### Tests for User Story 2
 
 - [ ] T005 [US2] Add error-path unit tests to `tests/unit/test_devto_extractor.py`:
-  - Fixture `profile_html`: HTML with no `div#article-body` (simulates profile/tag page)
+  - Fixture `profile_html`: HTML with no `div#article-body` (simulates author profile page)
   - `test_raises_unsupported_content_type_for_profile` — `clean_html(profile_soup)` raises `UnsupportedContentTypeError`
+  - Fixture `tag_listing_html`: HTML with no `div#article-body` (simulates `https://dev.to/t/kafka` tag listing page)
+  - `test_raises_unsupported_content_type_for_tag_listing` — `clean_html(tag_listing_soup)` raises `UnsupportedContentTypeError`
   - Fixture `empty_article_html`: `<div id="article-body"></div>` with no text
   - `test_raises_empty_content_error_for_blank_body` — `convert_to_markdown(cleaned)` raises `EmptyContentError`
 
