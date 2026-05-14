@@ -34,7 +34,7 @@ jobs:
         run: make lint
 
       - name: Run typecheck
-        run: make typecheck
+        run: uv run mypy --python-version ${{ matrix.python-version }} src/
 
       - name: Run unit tests
         run: make test
