@@ -26,14 +26,30 @@ MEDIUM_TEST_CASES = [
 ]
 
 
+def _strip_header(md: str) -> str:
+    """Drop the Medium article header (avatar, byline, date, listen link, cover image).
+
+    The header consistently ends with an empty cover image placeholder ![]() before
+    the article body begins. Everything after that marker is the comparable content.
+    Returns the original string unchanged if the marker is not found.
+    """
+    marker = "\n\n![]()"
+    idx = md.find(marker)
+    if idx == -1:
+        return md
+    return md[idx + len(marker):].lstrip("\n")
+
+
 @pytest.mark.integration
 @pytest.mark.parametrize("url,snapshot", MEDIUM_TEST_CASES)
 def test_extract_matches_snapshot(url: str, snapshot: str) -> None:
-    expected = (SNAPSHOTS_DIR / snapshot).read_text(encoding="utf-8")
-    result = extract(url)
+    expected = _strip_header((SNAPSHOTS_DIR / snapshot).read_text(encoding="utf-8"))
+    result = _strip_header(extract(url))
     assert result == expected, (
-        f"Extracted content for {snapshot!r} does not match the stored snapshot.\n"
-        f"Run `uv run python -c \"from mdfetch import extract; "
-        f"open('tests/integration/snapshots/{snapshot}', 'w').write(extract('{url}'))\"` "
-        f"to update the snapshot if the article content has legitimately changed."
+        f"Article body for {snapshot!r} does not match the stored snapshot.\n"
+        f"Run the following to update the snapshot if the change is intentional:\n"
+        f"  uv run python -c \""
+        f"from mdfetch import extract; "
+        f"open('tests/integration/snapshots/{snapshot}', 'w').write(extract('{url}'))"
+        f"\""
     )
