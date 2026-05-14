@@ -117,7 +117,7 @@ A developer installs the `mdfetch` library from PyPI using pip, imports the extr
 - Medium articles used in integration testing are publicly accessible (not behind a paywall); paywalled content handling is out of scope for this initial release.
 - The library does not cache responses; each call to the extraction function performs a fresh network request.
 - Rate limiting or authentication with Medium's servers is out of scope for this initial release.
-- The library supports Python 3.10 and later; compatibility with older Python versions is not required.
+- The library supports Python 3.12 and later; compatibility with older Python versions is not required.
 - The initial release supports only the Medium platform; the provider pattern ensures future platforms can be added without changing existing code.
 - Network timeouts will use a sensible default (e.g., 30 seconds); this value is not user-configurable in v1.
 - The library operates on publicly accessible HTML; it does not execute JavaScript or render dynamic content.

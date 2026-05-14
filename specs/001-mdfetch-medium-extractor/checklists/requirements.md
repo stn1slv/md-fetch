@@ -33,7 +33,7 @@
 ## Notes
 
 - "Markdown" is used as the product output format name (not an implementation detail).
-- Python 3.10 scope is recorded as an Assumption (scope boundary, not implementation choice).
+- Python 3.12 scope is recorded as an Assumption (scope boundary, not implementation choice).
 - FR-009 uses product-level language for packaging ("modern Python packaging best practices").
 - Clarification session (2026-05-14) added FR-011 through FR-014 and resolved all edge case questions.
 - All items pass after one spec revision cycle and one clarification session.

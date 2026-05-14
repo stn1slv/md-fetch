@@ -7,7 +7,7 @@
 
 ## Technical Context
 
-**Language/Version**: Python 3.10+
+**Language/Version**: Python 3.12+
 
 **Primary Dependencies**:
 | Package | Version Constraint | Role |
@@ -26,7 +26,7 @@
 
 **Testing**: pytest; unit tests for routing and extraction logic; integration tests using real Medium article URLs with snapshot-based containment checks and retry logic.
 
-**Target Platform**: Cross-platform PyPI library (Linux, macOS, Windows); Python 3.10+
+**Target Platform**: Cross-platform PyPI library (Linux, macOS, Windows); Python 3.12+
 
 **Project Type**: library
 

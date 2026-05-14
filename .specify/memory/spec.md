@@ -170,6 +170,6 @@ caller provides URL string
 - Medium articles used in integration testing are publicly accessible (not behind a paywall).
 - No response caching; each call performs a fresh network request.
 - Rate limiting or authentication with Medium's servers is out of scope for v1.
-- The library supports Python 3.10 and later.
+- The library supports Python 3.12 and later.
 - The library operates on publicly accessible HTML; it does not execute JavaScript or render dynamic content.
 - Network timeouts use a fixed default of 30 seconds (not user-configurable in v1).

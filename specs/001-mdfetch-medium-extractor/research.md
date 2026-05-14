@@ -93,7 +93,7 @@ build-backend = "hatchling.build"
 name = "mdfetch"
 version = "0.1.0"
 description = "Extract Medium articles as clean Markdown"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.27",
     "beautifulsoup4>=4.12",

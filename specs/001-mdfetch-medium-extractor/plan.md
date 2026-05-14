@@ -10,7 +10,7 @@ Build the initial release of `mdfetch`, a Python library that extracts article c
 
 ## Technical Context
 
-**Language/Version**: Python 3.10+
+**Language/Version**: Python 3.12+
 
 **Primary Dependencies**:
 - `httpx` — HTTP client for fetching article pages (sync interface)
@@ -25,7 +25,7 @@ Build the initial release of `mdfetch`, a Python library that extracts article c
 
 **Testing**: pytest; unit tests for routing and extraction logic; integration tests using real Medium article URLs
 
-**Target Platform**: Cross-platform PyPI library (Linux, macOS, Windows); Python 3.10+
+**Target Platform**: Cross-platform PyPI library (Linux, macOS, Windows); Python 3.12+
 
 **Project Type**: library
 
