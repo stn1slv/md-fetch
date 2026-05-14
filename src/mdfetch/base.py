@@ -12,6 +12,7 @@ from bs4.element import Tag
 from mdfetch.exceptions import FetchError, HTTPStatusError, MdfetchError
 
 _MAX_RESPONSE_BYTES = 10 * 1024 * 1024  # 10 MB — guard against runaway responses
+_MAX_RETRY_DELAY = 60.0  # seconds — cap exponential backoff to avoid unbounded sleeps
 
 
 class BaseExtractor(ABC):
@@ -29,8 +30,9 @@ class BaseExtractor(ABC):
     def fetch_html(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
         """Fetch raw HTML from *url* using a 30-second timeout and a 10 MB size cap.
 
-        Retries up to *retries* times on transient :class:`FetchError` (network errors,
-        timeouts, non-2xx responses), waiting *retry_delay* seconds between attempts.
+        Makes up to *retries* total attempts on transient :class:`FetchError` (network
+        errors, timeouts, non-2xx responses) using exponential backoff: the wait before
+        attempt *n* is ``min(60, retry_delay * 2 ** n)`` seconds.
         """
         last_exc: FetchError | None = None
         for attempt in range(max(1, retries)):
@@ -39,7 +41,7 @@ class BaseExtractor(ABC):
             except FetchError as exc:
                 last_exc = exc
                 if attempt < retries - 1:
-                    time.sleep(retry_delay)
+                    time.sleep(min(_MAX_RETRY_DELAY, retry_delay * (2**attempt)))
         assert last_exc is not None
         raise last_exc
 
