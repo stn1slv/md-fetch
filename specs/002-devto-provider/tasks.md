@@ -18,7 +18,7 @@
 
 **Purpose**: Verify baseline is green before adding any new code
 
-- [ ] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
+- [x] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
 
 ---
 
@@ -38,14 +38,14 @@
 
 ### Implementation for User Story 1
 
-- [ ] T002 [US1] Implement `DevToExtractor` in `src/mdfetch/providers/devto.py`:
+- [x] T002 [US1] Implement `DevToExtractor` in `src/mdfetch/providers/devto.py`:
   - Declare `DOMAINS = frozenset({"dev.to"})` and apply `@register`
   - `clean_html`: locate `div#article-body`; extract `<h1>` and cover `<img class="crayons-article__cover__image">` from `<header class="crayons-article__header">` and prepend to body; strip empty `<a name="...">` anchor links inside headings; replace `<iframe>` tags with `<a href="{src}">{src}</a>`; replace liquid-tag embeds (class matching `ltag`) with plain links; raise `UnsupportedContentTypeError` if `div#article-body` absent
   - `convert_to_markdown`: call `markdownify` with `heading_style="ATX"`, `strip=["script", "style"]`; strip result; collapse 3+ newlines to 2; raise `EmptyContentError` if blank
 
 ### Tests for User Story 1
 
-- [ ] T003 [US1] Write unit tests for happy path in `tests/unit/test_devto_extractor.py`:
+- [x] T003 [US1] Write unit tests for happy path in `tests/unit/test_devto_extractor.py`:
   - Fixture with minimal article HTML: `<header class="crayons-article__header">` containing `<h1>` + `<img class="crayons-article__cover__image">` and `<div id="article-body">` containing heading, paragraph, code block, list, inline image
   - `test_preserves_title` — `# Title` present in Markdown
   - `test_preserves_cover_image` — `![Cover image...](https://...)` present
@@ -56,7 +56,7 @@
   - `test_no_raw_html_tags` — regex confirms no `<tag>` in output (excluding Markdown autolinks)
   - `test_strips_empty_anchor_links` — headings do not contain empty `[]()` fragments
 
-- [ ] T004 [US1] Add unit tests for embed→link conversion in `tests/unit/test_devto_extractor.py`:
+- [x] T004 [US1] Add unit tests for embed→link conversion in `tests/unit/test_devto_extractor.py`:
   - Fixture article HTML with `<iframe src="https://gist.github.com/...">` inside `div#article-body`
   - `test_iframe_replaced_with_link` — assert output Markdown contains `https://gist.github.com/...` as a plain link and no `<iframe>`
   - Fixture article HTML with `<div class="ltag__github-readme" data-url="https://github.com/...">` inside `div#article-body`
@@ -74,7 +74,7 @@
 
 ### Tests for User Story 2
 
-- [ ] T005 [US2] Add error-path unit tests to `tests/unit/test_devto_extractor.py`:
+- [x] T005 [US2] Add error-path unit tests to `tests/unit/test_devto_extractor.py`:
   - Fixture `profile_html`: HTML with no `div#article-body` (simulates author profile page)
   - `test_raises_unsupported_content_type_for_profile` — `clean_html(profile_soup)` raises `UnsupportedContentTypeError`
   - Fixture `tag_listing_html`: HTML with no `div#article-body` (simulates `https://dev.to/t/kafka` tag listing page)
@@ -96,7 +96,7 @@
 
 ### Implementation for User Story 3
 
-- [ ] T006 [US3] Generate snapshots for the three reference articles by running extraction and saving output:
+- [x] T006 [US3] Generate snapshots for the three reference articles by running extraction and saving output:
   ```
   uv run python -c "from mdfetch import extract; open('tests/integration/snapshots/devto-integration-digest-december-2025.md','w').write(extract('https://dev.to/stn1slv/integration-digest-for-december-2025-5dlp'))"
   uv run python -c "from mdfetch import extract; open('tests/integration/snapshots/devto-integration-digest-july-2025.md','w').write(extract('https://dev.to/stn1slv/integration-digest-for-july-2025-4lk9'))"
@@ -104,13 +104,13 @@
   ```
   Inspect each snapshot file — confirm non-empty, Markdown formatted, title present, no raw HTML.
 
-- [ ] T007 [US3] Write `tests/integration/test_devto_integration.py` mirroring the Medium integration test pattern:
+- [x] T007 [US3] Write `tests/integration/test_devto_integration.py` mirroring the Medium integration test pattern:
   - `DEVTO_TEST_CASES` list of `(url, snapshot_filename)` tuples for all three reference articles
   - `@pytest.mark.integration @pytest.mark.parametrize` over `DEVTO_TEST_CASES`
   - `test_extract_contains_snapshot`: read snapshot, call `extract(url)`, assert `expected in result`
   - Include snapshot regeneration hint in assertion message
 
-- [ ] T008 [US3] Run `uv run pytest -m integration tests/integration/test_devto_integration.py -v` and confirm all 3 tests pass
+- [x] T008 [US3] Run `uv run pytest -m integration tests/integration/test_devto_integration.py -v` and confirm all 3 tests pass
 
 **Checkpoint**: All three integration tests green — US3 fully functional, feature complete.
 
@@ -120,10 +120,10 @@
 
 **Purpose**: Final quality gate across all new files before marking feature done.
 
-- [ ] T009 [P] Run `make lint` (`ruff check`) on new files and fix any reported issues in `src/mdfetch/providers/devto.py` and test files
-- [ ] T010 [P] Run `make format` (`ruff format`) on new files to ensure consistent style
-- [ ] T011 [P] Run `uv run mypy src/` and fix any type errors in `src/mdfetch/providers/devto.py` (zero errors required)
-- [ ] T012 Run `make test` and confirm all unit tests pass with no regressions
+- [x] T009 [P] Run `make lint` (`ruff check`) on new files and fix any reported issues in `src/mdfetch/providers/devto.py` and test files
+- [x] T010 [P] Run `make format` (`ruff format`) on new files to ensure consistent style
+- [x] T011 [P] Run `uv run mypy src/` and fix any type errors in `src/mdfetch/providers/devto.py` (zero errors required)
+- [x] T012 Run `make test` and confirm all unit tests pass with no regressions
 
 ---
 
