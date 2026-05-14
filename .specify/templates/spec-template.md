@@ -87,11 +87,9 @@
 
 ### Functional Requirements
 
-- **FR-001**: System MUST [specific capability, e.g., "allow users to create accounts"]
-- **FR-002**: System MUST [specific capability, e.g., "validate email addresses"]
-- **FR-003**: Users MUST be able to [key interaction, e.g., "reset their password"]
-- **FR-004**: System MUST [data requirement, e.g., "persist user preferences"]
-- **FR-005**: System MUST [behavior, e.g., "log all security events"]
+- **FR-001**: System MUST extract content from URLs using a provider pattern base class.
+- **FR-002**: System MUST format returned content as clean Markdown using `Markdownify`.
+- **FR-003**: System MUST [specific capability, e.g., "handle rate limits for Medium"]
 
 *Example of marking unclear requirements:*
 

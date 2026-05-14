@@ -40,7 +40,11 @@
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+- [ ] Validates Provider Pattern Architecture (No code duplication, adheres to Open/Closed Principle)
+- [ ] Confirms Technology Stack (`httpx`, `BeautifulSoup`, `Markdownify`, `pytest`)
+- [ ] Adheres to Coding Standards (PEP 8, Type Hinting, Clear Vocabulary)
+- [ ] Incorporates Integration Testing (Real links matching expected Markdown)
+- [ ] Respects Packaging and Distribution standards (`pyproject.toml`, `src/` layout)
 
 ## Project Structure
 

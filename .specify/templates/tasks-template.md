@@ -84,8 +84,8 @@ Examples of foundational tasks (adjust based on your project):
 
 > **NOTE: Write these tests FIRST, ensure they FAIL before implementation**
 
-- [ ] T010 [P] [US1] Contract test for [endpoint] in tests/contract/test_[name].py
-- [ ] T011 [P] [US1] Integration test for [user journey] in tests/integration/test_[name].py
+- [ ] T010 [P] [US1] Integration test for [platform url] in tests/integration/test_[platform].py using real links
+- [ ] T011 [P] [US1] Unit test for [extractor] in tests/unit/test_[platform].py
 
 ### Implementation for User Story 1
 
