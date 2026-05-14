@@ -47,9 +47,7 @@ def route(url: str) -> BaseExtractor:
                 break
 
     if provider_cls is None:
-        raise UnsupportedPlatformError(
-            f"No provider registered for domain {hostname!r}", url=url
-        )
+        raise UnsupportedPlatformError(f"No provider registered for domain {hostname!r}", url=url)
 
     return provider_cls()
 

@@ -44,7 +44,7 @@ Build the initial release of `mdfetch`, a Python library that extracts article c
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- [x] Validates Provider Pattern Architecture — `BaseExtractor` ABC with abstract `fetch_html`, `clean_html`, `convert_to_markdown`; `MediumExtractor` inherits; shared HTTP and conversion logic in base class only
+- [x] Validates Provider Pattern Architecture — `BaseExtractor` ABC with concrete `fetch_html` (shared HTTP logic) and abstract `clean_html`, `convert_to_markdown`; `MediumExtractor` inherits; shared HTTP and conversion logic in base class only
 - [x] Confirms Technology Stack — `httpx`, `beautifulsoup4`/`lxml`, `markdownify`, `pytest`, `ruff` are the only permitted dependencies
 - [x] Adheres to Coding Standards — PEP 8, strict type hints on all functions/methods, clear English identifiers and docstrings
 - [x] Incorporates Integration Testing — FR-010 mandates integration tests with real Medium URLs asserting expected Markdown structure
@@ -83,8 +83,9 @@ src/
 tests/
 ├── unit/
 │   ├── test_router.py
-│   ├── test_exceptions.py
-│   └── test_medium_extractor.py
+│   ├── test_medium_extractor.py
+│   ├── test_fetch_errors.py
+│   └── test_silent.py
 └── integration/
     └── test_medium_integration.py
 
