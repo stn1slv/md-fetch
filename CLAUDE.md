@@ -48,5 +48,5 @@ uv run mypy src/               # type check
 - 001-mdfetch-medium-extractor: Initial library release — `extract()` API, Medium provider, typed exceptions, auto-discovery routing, PyPI packaging, snapshot integration tests
 
 <!-- SPECKIT START -->
-**Active feature plan**: none
+**Active feature plan**: [specs/002-devto-provider/plan.md](specs/002-devto-provider/plan.md)
 <!-- SPECKIT END -->
