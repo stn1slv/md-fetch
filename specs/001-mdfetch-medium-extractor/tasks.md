@@ -20,8 +20,8 @@
 **Purpose**: Project scaffolding — directory layout, packaging configuration, development tooling.
 
 - [ ] T001 Create project directory structure: `src/mdfetch/`, `src/mdfetch/providers/`, `tests/unit/`, `tests/integration/`
-- [ ] T002 Create `pyproject.toml` with hatchling build backend, Python ≥3.10 constraint, and runtime dependencies (`httpx≥0.27`, `beautifulsoup4≥4.12`, `lxml≥5.0`, `markdownify≥0.13`) plus dev extras (`pytest≥8.0`)
-- [ ] T003 [P] Create `Makefile` with targets: `setup`, `test`, `lint`, `format`, `build`, `clean`
+- [ ] T002 Create `pyproject.toml` with hatchling build backend, Python ≥3.10 constraint, and runtime dependencies (`httpx≥0.27`, `beautifulsoup4≥4.12`, `lxml≥5.0`, `markdownify≥0.13`) plus dev extras (`pytest≥8.0`, `ruff`); add `[tool.ruff]` section for lint/format configuration
+- [ ] T003 [P] Create `Makefile` with targets: `setup` (`uv sync`), `test` (`uv run pytest tests/unit/`), `lint` (`uv run ruff check src/ tests/`), `format` (`uv run ruff format src/ tests/`), `build` (`uv build`), `clean` (remove `dist/`, `__pycache__`); all targets that invoke Python tools MUST call them via `uv run <tool>`
 - [ ] T004 [P] Add pytest configuration to `pyproject.toml`: set `testpaths = ["tests"]`, register custom `integration` marker to separate unit from network-dependent tests; create `tests/conftest.py` with marker declaration
 
 ---
@@ -100,8 +100,8 @@
 
 - [ ] T022 [US3] Finalize `pyproject.toml` metadata: add `description`, `readme = "README.md"`, `license`, `authors`, `keywords`, `classifiers` (Python version, license, topic), `[project.urls]` (Homepage, Source, Issues)
 - [ ] T023 [US3] Create `README.md` with install instructions (`pip install mdfetch`), a minimal usage example, and a link to the quickstart guide
-- [ ] T024 [P] [US3] Run `python -m build` (or `make build`) and verify the wheel and sdist are produced without errors in `dist/`
-- [ ] T025 [P] [US3] Create a temporary `venv`, install the built wheel (`pip install dist/mdfetch-*.whl`), and verify `from mdfetch import extract` succeeds and `extract("https://medium.com/...")` returns a non-empty Markdown string
+- [ ] T024 [P] [US3] Run `uv build` (or `make build`) and verify the wheel and sdist are produced without errors in `dist/`
+- [ ] T025 [P] [US3] Create a temporary environment with `uv venv`, install the built wheel via `uv pip install dist/mdfetch-*.whl`, and verify `from mdfetch import extract` succeeds and `extract("https://medium.com/...")` returns a non-empty Markdown string
 - [ ] T026 [US3] Walk through `quickstart.md` step-by-step in the clean `venv` and confirm all code examples execute without error
 
 **Checkpoint**: Library installable and usable from PyPI distribution artifact.
@@ -112,11 +112,12 @@
 
 **Purpose**: Final quality pass across all stories.
 
-- [ ] T027 [P] Add one-line docstrings to all public classes and functions (`BaseExtractor`, `MediumExtractor`, `extract`, each exception class) in their respective files
-- [ ] T028 [P] Run `make lint` (e.g., `ruff check src/ tests/`) and fix all reported issues
-- [ ] T029 [P] Run `make format` (e.g., `ruff format src/ tests/`) and ensure consistent style
-- [ ] T030 Run full test suite: `make test` (unit) then `pytest -m integration` (integration) — confirm zero failures
-- [ ] T031 [P] Verify `mypy src/` (or equivalent type checker) reports no errors on the `src/mdfetch/` package
+- [ ] T027 [P] Write unit test in `tests/unit/test_silent.py` asserting FR-013: call `extract()` on a mock HTTP response and assert `sys.stdout` and `sys.stderr` are empty (use `capsys` pytest fixture); assert no Python `logging` handlers emit output during a successful extraction
+- [ ] T028 [P] Add one-line docstrings to all public classes and functions (`BaseExtractor`, `MediumExtractor`, `extract`, each exception class) in their respective files
+- [ ] T029 [P] Run `make lint` (`uv run ruff check src/ tests/`) and fix all reported issues
+- [ ] T030 [P] Run `make format` (`uv run ruff format src/ tests/`) and ensure consistent style
+- [ ] T031 Run full test suite: `make test` (unit) then `uv run pytest -m integration` — confirm zero failures
+- [ ] T032 [P] Verify `uv run mypy src/` reports no errors on the `src/mdfetch/` package
 
 ---
 

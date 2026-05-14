@@ -17,6 +17,9 @@ Build the initial release of `mdfetch`, a Python library that extracts article c
 - `beautifulsoup4` + `lxml` — HTML parsing and article-body targeting
 - `markdownify` — HTML-to-Markdown conversion
 - `pytest` — test runner (unit + integration)
+- `ruff` — linter and formatter (dev tooling)
+
+**Package Manager**: `uv` — all local development workflows (install, run, test, lint, format, build) MUST use `uv`. Direct use of `pip`, `venv`, or `pip-tools` is prohibited in development commands.
 
 **Storage**: N/A — stateless library; no persistence layer
 
@@ -42,10 +45,10 @@ Build the initial release of `mdfetch`, a Python library that extracts article c
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
 - [x] Validates Provider Pattern Architecture — `BaseExtractor` ABC with abstract `fetch_html`, `clean_html`, `convert_to_markdown`; `MediumExtractor` inherits; shared HTTP and conversion logic in base class only
-- [x] Confirms Technology Stack — `httpx`, `beautifulsoup4`/`lxml`, `markdownify`, `pytest` are the only permitted dependencies
+- [x] Confirms Technology Stack — `httpx`, `beautifulsoup4`/`lxml`, `markdownify`, `pytest`, `ruff` are the only permitted dependencies
 - [x] Adheres to Coding Standards — PEP 8, strict type hints on all functions/methods, clear English identifiers and docstrings
 - [x] Incorporates Integration Testing — FR-010 mandates integration tests with real Medium URLs asserting expected Markdown structure
-- [x] Respects Packaging and Distribution — `pyproject.toml` + `src/mdfetch/` layout; distribution via PyPI
+- [x] Respects Packaging and Distribution — `pyproject.toml` + `src/mdfetch/` layout; distribution via PyPI; all dev workflow Makefile targets invoke tools via `uv run <tool>`; `uv` replaces `pip`/`venv`/`pip-tools`
 
 **Gate result**: PASS — no violations. Proceed to Phase 0.
 

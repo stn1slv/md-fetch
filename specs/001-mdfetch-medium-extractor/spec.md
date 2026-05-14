@@ -85,14 +85,14 @@ A developer installs the `mdfetch` library from PyPI using pip, imports the extr
 - **FR-004**: The library MUST route extraction requests to the correct provider based on the URL's domain without requiring the caller to specify the provider explicitly. For v1, routing recognises only `medium.com` and its subdomains (e.g., `username.medium.com`); custom-domain Medium publications are out of scope.
 - **FR-005**: The library MUST raise a descriptive error when given a URL whose domain has no registered provider.
 - **FR-006**: The library MUST raise a descriptive error when a network request fails (connection error, timeout, non-2xx HTTP status).
-- **FR-011**: The library MUST raise a descriptive error when the article body is located but yields no extractable text content (e.g., the page contains only images or embeds with no readable text).
-- **FR-012**: The library MUST raise a distinct error — separate from the "unsupported platform" error — when a `medium.com` URL is provided but the page is not an article (e.g., an author profile or tag page). The error must indicate that the domain is recognised but the content type cannot be extracted.
-- **FR-013**: The library MUST NOT emit any logging, print output, or diagnostic messages. All failure information is communicated exclusively through raised exceptions.
-- **FR-014**: HTTP requests made by the library MUST use the default browser-like User-Agent string provided by the HTTP client. No custom User-Agent header is set, and the library does not check or respect `robots.txt` in v1.
 - **FR-007**: The library MUST raise a descriptive error when given a URL that is syntactically invalid.
 - **FR-008**: The library MUST produce Markdown that preserves the structural hierarchy of the source article, including headings, code blocks, inline code, lists, and blockquotes.
 - **FR-009**: The library MUST be packaged and distributed via PyPI using modern Python packaging best practices, enabling installation through the standard package manager without additional steps.
 - **FR-010**: The test suite MUST include integration tests that supply real Medium article URLs to the extraction function and assert that the output matches expected Markdown structure and content.
+- **FR-011**: The library MUST raise a descriptive error when the article body is located but yields no extractable text content (e.g., the page contains only images or embeds with no readable text).
+- **FR-012**: The library MUST raise a distinct error — separate from the "unsupported platform" error — when a `medium.com` URL is provided but the page is not an article (e.g., an author profile or tag page). The error must indicate that the domain is recognised but the content type cannot be extracted.
+- **FR-013**: The library MUST NOT emit any logging, print output, or diagnostic messages. All failure information is communicated exclusively through raised exceptions.
+- **FR-014**: HTTP requests made by the library MUST use the default browser-like User-Agent string provided by the HTTP client. No custom User-Agent header is set, and the library does not check or respect `robots.txt` in v1.
 
 ### Key Entities
 
