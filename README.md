@@ -71,4 +71,4 @@ make clean        # remove build artifacts
 
 ## Requirements
 
-- Python 3.10+
+- Python 3.12+

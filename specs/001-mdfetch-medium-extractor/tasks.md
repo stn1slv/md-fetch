@@ -20,7 +20,7 @@
 **Purpose**: Project scaffolding — directory layout, packaging configuration, development tooling.
 
 - [x] T001 Create project directory structure: `src/mdfetch/`, `src/mdfetch/providers/`, `tests/unit/`, `tests/integration/`
-- [x] T002 Create `pyproject.toml` with hatchling build backend, Python ≥3.10 constraint, and runtime dependencies (`httpx≥0.27`, `beautifulsoup4≥4.12`, `lxml≥5.0`, `markdownify≥0.13`) plus dev extras (`pytest≥8.0`, `ruff`); add `[tool.ruff]` section for lint/format configuration
+- [x] T002 Create `pyproject.toml` with hatchling build backend, Python ≥3.12 constraint, and runtime dependencies (`httpx≥0.27`, `beautifulsoup4≥4.12`, `lxml≥5.0`, `markdownify≥0.13`) plus dev extras (`pytest≥8.0`, `ruff`); add `[tool.ruff]` section for lint/format configuration
 - [x] T003 [P] Create `Makefile` with targets: `setup` (`uv sync`), `test` (`uv run pytest tests/unit/`), `lint` (`uv run ruff check src/ tests/`), `format` (`uv run ruff format src/ tests/`), `build` (`uv build`), `clean` (remove `dist/`, `__pycache__`); all targets that invoke Python tools MUST call them via `uv run <tool>`
 - [x] T004 [P] Add pytest configuration to `pyproject.toml`: set `testpaths = ["tests"]`, register custom `integration` marker to separate unit from network-dependent tests; create `tests/conftest.py` with marker declaration
 
