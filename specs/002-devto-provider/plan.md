@@ -73,7 +73,11 @@ tests/integration/
 └── test_devto_integration.py   # NEW — integration tests (real URLs)
 ```
 
-No existing source files are modified.
+No existing library source files are modified (`src/mdfetch/` unchanged).
+
+**Side effect documented**: `tests/unit/test_router.py` required a one-line update — its "unsupported domain" example used `dev.to`, which became a supported domain once this provider was registered. The two test cases were updated to use `substack.com` instead. This is an expected consequence of any new provider registration.
+
+**Version**: Library version bumped from `0.1.0` to `0.2.0` in `pyproject.toml` at time of release.
 
 ## Implementation Specification
 
@@ -156,3 +160,6 @@ Integration tests mirror the Medium pattern:
 ## Complexity Tracking
 
 *No constitution violations — section left intentionally blank.*
+
+### Revision: Implementation Sync 2026-05-14
+- Reason: Documented two implementation side-effects not captured in the original plan: (1) `tests/unit/test_router.py` required domain-example update when dev.to became a registered provider; (2) library version bumped from 0.1.0 to 0.2.0 at release. `pyproject.toml` keywords gap (missing "dev.to") tracked as T013.

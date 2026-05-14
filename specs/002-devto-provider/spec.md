@@ -112,3 +112,6 @@ A developer runs the integration test suite and all dev.to integration tests pas
 - The library's existing HTTP client configuration (User-Agent, timeout) is reused by the dev.to provider without modification.
 - dev.to renders its article content in static HTML accessible without JavaScript execution; the provider does not need a headless browser.
 - The three reference URLs (`/integration-digest-for-december-2025-5dlp`, `/integration-digest-for-july-2025-4lk9`, `/integration-digest-for-march-2026-599p`) remain publicly accessible during development and testing.
+
+### Revision: Implementation Sync 2026-05-14
+- Reason: All acceptance criteria verified as correctly implemented. Minor documentation drift reconciled: FR-007 wording clarified in plan.md ("no existing library source files") to account for the necessary `test_router.py` update; version bump (0.1.0 → 0.2.0) documented; `pyproject.toml` keywords gap added as T013.

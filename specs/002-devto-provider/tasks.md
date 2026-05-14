@@ -188,6 +188,14 @@
 
 ---
 
+## Remediation: Gaps
+
+*Discovered via `/speckit-reconcile-run check everything` on 2026-05-14.*
+
+- [ ] T013 Add `"dev.to"` to the `keywords` list in `pyproject.toml` so the package is discoverable for dev.to-related searches on PyPI [Sync: Gap Report]
+
+---
+
 ## Notes
 
 - `[P]` tasks work on different concerns — safe to run in parallel
