@@ -131,3 +131,6 @@ Section headings inside `div.body.markup` use `<h1 class="header-anchor-post">` 
 ## Complexity Tracking
 
 No constitution violations. Table omitted.
+
+### Revision: Implementation Sync 2026-05-15
+- Reason: Feature fully implemented and all tests green. Supplementary change: `tests/unit/test_router.py` unsupported-domain fixtures updated from `substack.com` to `wordpress.com` (registering SubstackExtractor made the original fixtures route successfully rather than raise `UnsupportedPlatformError`). All 5 constitution gates confirmed passing post-implementation.

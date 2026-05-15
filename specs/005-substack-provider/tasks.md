@@ -21,9 +21,9 @@ description: "Task list for Substack platform provider implementation"
 
 **Purpose**: Create new provider and test file stubs.
 
-- [ ] T001 Create `src/mdfetch/providers/substack.py` with module docstring, `from __future__ import annotations`, and all required imports (`re`, `BeautifulSoup`, `Tag`, `markdownify`, `BaseExtractor`, `EmptyContentError`, `UnsupportedContentTypeError`, `register`)
-- [ ] T002 [P] Create `tests/unit/test_substack_extractor.py` with module docstring, imports (`pytest`, `BeautifulSoup`, `SubstackExtractor`), and an empty `extractor` fixture
-- [ ] T003 [P] Create `tests/integration/test_substack_integration.py` with module docstring, imports (`pytest`, `Path`, `extract`), `SNAPSHOTS_DIR` constant, and empty `SUBSTACK_TEST_CASES` list
+- [x] T001 Create `src/mdfetch/providers/substack.py` with module docstring, `from __future__ import annotations`, and all required imports (`re`, `BeautifulSoup`, `Tag`, `markdownify`, `BaseExtractor`, `EmptyContentError`, `UnsupportedContentTypeError`, `register`)
+- [x] T002 [P] Create `tests/unit/test_substack_extractor.py` with module docstring, imports (`pytest`, `BeautifulSoup`, `SubstackExtractor`), and an empty `extractor` fixture
+- [x] T003 [P] Create `tests/integration/test_substack_integration.py` with module docstring, imports (`pytest`, `Path`, `extract`), `SNAPSHOTS_DIR` constant, and empty `SUBSTACK_TEST_CASES` list
 
 **Checkpoint**: Files exist; project structure matches plan.
 
@@ -35,8 +35,8 @@ description: "Task list for Substack platform provider implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Add `SubstackExtractor(BaseExtractor)` class to `src/mdfetch/providers/substack.py` with `@register` decorator, `DOMAINS: frozenset[str] = frozenset({"substack.com"})`, and stub bodies for `clean_html` and `convert_to_markdown` (raise `NotImplementedError`)
-- [ ] T005 [P] Add routing unit tests in `tests/unit/test_substack_extractor.py`: verify `route("https://getkafkanated.substack.com/p/x")` returns a `SubstackExtractor` instance; verify `route("https://substack.com/")` also routes to `SubstackExtractor`; import `route` from `mdfetch.router`; assert `SubstackExtractor._no_retry_status_codes == frozenset()` to lock in FR-010 (HTTP 429 retried, not raised immediately)
+- [x] T004 Add `SubstackExtractor(BaseExtractor)` class to `src/mdfetch/providers/substack.py` with `@register` decorator, `DOMAINS: frozenset[str] = frozenset({"substack.com"})`, and stub bodies for `clean_html` and `convert_to_markdown` (raise `NotImplementedError`)
+- [x] T005 [P] Add routing unit tests in `tests/unit/test_substack_extractor.py`: verify `route("https://getkafkanated.substack.com/p/x")` returns a `SubstackExtractor` instance; verify `route("https://substack.com/")` also routes to `SubstackExtractor`; import `route` from `mdfetch.router`; assert `SubstackExtractor._no_retry_status_codes == frozenset()` to lock in FR-010 (HTTP 429 retried, not raised immediately)
 
 **Checkpoint**: `make test` passes (stubs present); routing is verified.
 
@@ -50,16 +50,16 @@ description: "Task list for Substack platform provider implementation"
 
 ### Implementation for User Story 1
 
-- [ ] T006 [US1] Implement `clean_html(self, soup: BeautifulSoup) -> Tag` in `src/mdfetch/providers/substack.py`:
+- [x] T006 [US1] Implement `clean_html(self, soup: BeautifulSoup) -> Tag` in `src/mdfetch/providers/substack.py`:
   1. Find `div.body.markup`; raise `UnsupportedContentTypeError("URL is not an article page — no article body element found")` if absent
   2. Strip all `div.subscription-widget-wrap` elements inside the body
   3. Find `h1.post-title` in `div.post-header`; if present, insert as first child of body
   4. Find `h3.subtitle` in `div.post-header`; if present, insert after title (before body content)
   5. Return the body tag
-- [ ] T007 [US1] Implement embed conversion inside `clean_html` in `src/mdfetch/providers/substack.py`:
+- [x] T007 [US1] Implement embed conversion inside `clean_html` in `src/mdfetch/providers/substack.py`:
   1. For each `iframe` in body: replace with `<a href=src>src</a>` using `src` or `data-src` attribute; decompose if no src
   2. For each `div[data-component-name]` where `data-component-name` is not `"SubscribeWidget"` or `"Image2ToDOM"`: replace with `<a href>url</a>` using first available `href`, `data-url`, or `src` attribute; decompose if no URL found
-- [ ] T008 [US1] Implement `convert_to_markdown(self, tag: Tag) -> str` in `src/mdfetch/providers/substack.py`:
+- [x] T008 [US1] Implement `convert_to_markdown(self, tag: Tag) -> str` in `src/mdfetch/providers/substack.py`:
   1. Call `markdownify(str(tag), heading_style="ATX", code_language="", strip=["script", "style"])`
   2. Strip leading/trailing whitespace
   3. Collapse three or more consecutive blank lines to one blank line using `re.sub(r"\n{3,}", "\n\n", md)`
@@ -68,17 +68,17 @@ description: "Task list for Substack platform provider implementation"
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Add unit tests for `clean_html` happy path in `tests/unit/test_substack_extractor.py`:
+- [x] T009 [P] [US1] Add unit tests for `clean_html` happy path in `tests/unit/test_substack_extractor.py`:
   - Fixture: minimal HTML with `div.post-header > h1.post-title` + `h3.subtitle`, `div.available-content > div.body.markup` containing a paragraph and `div.subscription-widget-wrap`
   - Assert returned tag is `div.body.markup`
   - Assert `div.subscription-widget-wrap` is absent from returned tag
   - Assert returned tag starts with `h1` containing title text
   - Assert `h3` subtitle is second element
-- [ ] T010 [P] [US1] Add unit tests for `convert_to_markdown` in `tests/unit/test_substack_extractor.py`:
+- [x] T010 [P] [US1] Add unit tests for `convert_to_markdown` in `tests/unit/test_substack_extractor.py`:
   - Assert output starts with `# ` heading (title)
   - Assert no triple blank lines in output
   - Assert images rendered as `![alt](url)` Markdown syntax
-- [ ] T011 [US1] Add integration test for free article in `tests/integration/test_substack_integration.py`:
+- [x] T011 [US1] Add integration test for free article in `tests/integration/test_substack_integration.py`:
   - Add `("https://getkafkanated.substack.com/p/kafka-deserves-topic-types", "substack-kafka-topic-types.md")` to `SUBSTACK_TEST_CASES`
   - Add `@pytest.mark.integration @pytest.mark.parametrize` test function `test_extract_contains_snapshot` matching the pattern in `test_devto_integration.py`
   - Generate snapshot file `tests/integration/snapshots/substack-kafka-topic-types.md` by running: `uv run python -c "from mdfetch import extract; open('tests/integration/snapshots/substack-kafka-topic-types.md','w').write(extract('https://getkafkanated.substack.com/p/kafka-deserves-topic-types'))"`
@@ -97,11 +97,11 @@ description: "Task list for Substack platform provider implementation"
 
 ### Tests for User Story 2
 
-- [ ] T012 [P] [US2] Add unit test for paywalled post in `tests/unit/test_substack_extractor.py`:
+- [x] T012 [P] [US2] Add unit test for paywalled post in `tests/unit/test_substack_extractor.py`:
   - Fixture: HTML where `div.body.markup` contains two paragraphs of prose followed by a `div.subscription-widget-wrap` as the last element
   - Assert `extract()` (or `clean_html` + `convert_to_markdown`) returns non-empty Markdown
   - Assert the string `"Subscribe"` does not appear in the output
-- [ ] T013 [US2] Add integration test for CTA stripping (and paywalled behaviour) in `tests/integration/test_substack_integration.py`:
+- [x] T013 [US2] Add integration test for CTA stripping (and paywalled behaviour) in `tests/integration/test_substack_integration.py`:
   - Add `("https://pragmaticapi.substack.com/p/api-trends-for-2025-the-evolution", "substack-api-trends-2025.md")` to `SUBSTACK_TEST_CASES` — this URL verifies that inline `div.subscription-widget-wrap` CTAs are stripped from a real article
   - Generate snapshot: `uv run python -c "from mdfetch import extract; open('tests/integration/snapshots/substack-api-trends-2025.md','w').write(extract('https://pragmaticapi.substack.com/p/api-trends-for-2025-the-evolution'))"`
   - **Note**: this article's content is publicly accessible (free article with inline CTAs). For a true paywalled-post integration test, source a Substack URL that returns a truncated body (where the subscription widget is the final element and less than ~300 words precede it); add it as an additional entry when found. The unit test in T012 covers the paywalled-truncation logic using an HTML fixture.
@@ -120,13 +120,13 @@ description: "Task list for Substack platform provider implementation"
 
 ### Tests for User Story 3
 
-- [ ] T014 [P] [US3] Add unit test for `UnsupportedContentTypeError` in `tests/unit/test_substack_extractor.py`:
+- [x] T014 [P] [US3] Add unit test for `UnsupportedContentTypeError` in `tests/unit/test_substack_extractor.py`:
   - Fixture: HTML with no `div.body.markup` element (e.g., a homepage-like structure)
   - Assert `clean_html(soup)` raises `UnsupportedContentTypeError`
-- [ ] T015 [P] [US3] Add unit test for `EmptyContentError` in `tests/unit/test_substack_extractor.py`:
+- [x] T015 [P] [US3] Add unit test for `EmptyContentError` in `tests/unit/test_substack_extractor.py`:
   - Fixture: HTML with `div.body.markup` present but containing only whitespace
   - Assert calling `convert_to_markdown` on the cleaned tag raises `EmptyContentError`
-- [ ] T016 [US3] Add integration test for non-article URL in `tests/integration/test_substack_integration.py`:
+- [x] T016 [US3] Add integration test for non-article URL in `tests/integration/test_substack_integration.py`:
   - Separate test function (not parametrized with snapshots) that calls `extract("https://getkafkanated.substack.com/")` and asserts `UnsupportedContentTypeError` is raised
 
 **Checkpoint**: All three user stories independently functional; all unit and integration tests pass.
@@ -135,10 +135,11 @@ description: "Task list for Substack platform provider implementation"
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T017 [P] Run `uv run mypy src/mdfetch/providers/substack.py` and fix any type errors until output is clean with zero errors
-- [ ] T018 [P] Run `make lint` and fix any ruff violations in `src/mdfetch/providers/substack.py`, `tests/unit/test_substack_extractor.py`, and `tests/integration/test_substack_integration.py`
-- [ ] T019 Run `make test` and confirm all unit tests pass (green baseline)
-- [ ] T020 Run `make integration` and confirm all integration tests pass including the three new Substack tests
+- [x] T017 [P] Run `uv run mypy src/mdfetch/providers/substack.py` and fix any type errors until output is clean with zero errors
+- [x] T018 [P] Run `make lint` and fix any ruff violations in `src/mdfetch/providers/substack.py`, `tests/unit/test_substack_extractor.py`, and `tests/integration/test_substack_integration.py`
+- [x] T019 Run `make test` and confirm all unit tests pass (green baseline)
+- [x] T020 Run `make integration` and confirm all integration tests pass including the three new Substack tests
+- [x] T021 [Sync: Gap Report] Update unsupported-domain test fixtures in `tests/unit/test_router.py` from `substack.com` to `wordpress.com` — registering `SubstackExtractor` caused the original fixtures to route successfully instead of raising `UnsupportedPlatformError`
 
 ---
 

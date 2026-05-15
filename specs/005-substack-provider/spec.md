@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-15
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "let's add a support of substack.com platform"
 
@@ -71,7 +71,7 @@ A developer accidentally passes a Substack URL that does not point to an article
 - **FR-002**: The system MUST extract the main article body from a Substack post page and return it as clean Markdown.
 - **FR-003**: The system MUST strip all non-content elements from the article page before conversion, including: navigation headers, subscription call-to-action blocks, paywall nag prompts, social share buttons, author bio sections, comment sections, and page footers.
 - **FR-004**: The system MUST prepend the article title as a top-level Markdown heading (`# Title`) from the page header element (`h1.post-title`). Because Substack's HTML structure places the post title outside the article body (`div.body.markup`) at all times, unconditional prepend from the header achieves exactly-once inclusion without a body-scan deduplication step.
-- **FR-005**: The system MUST preserve the article's structural content: headings (all levels), paragraphs, ordered and unordered lists, inline code, fenced code blocks, blockquotes, hyperlinks, and images.
+- **FR-005**: The system MUST preserve the article's structural content: headings (all levels), paragraphs, ordered and unordered lists, inline code, fenced code blocks, blockquotes, hyperlinks, images, and article subtitle (when present as `h3.subtitle` in the post header).
 - **FR-006**: The system MUST raise `UnsupportedContentTypeError` when the fetched page does not contain a recognisable Substack article body element.
 - **FR-007**: The system MUST raise `EmptyContentError` when the article body is present but yields no extractable text after stripping.
 - **FR-008**: For paywalled posts, the system MUST silently extract only the publicly visible free-preview section (content before the paywall divider) without raising an exception and without appending any truncation marker, provided the preview contains at least some text.
@@ -112,3 +112,6 @@ A developer accidentally passes a Substack URL that does not point to an article
 - Footnotes rendered in Substack's HTML will be handled on a best-effort basis by `markdownify`; no special footnote normalisation (beyond what markdownify provides by default) is required for v1.
 - No authentication is required; only publicly accessible (free or free-preview) content is targeted.
 - The implementation follows the existing provider pattern: one new file `src/mdfetch/providers/substack.py`, no changes to shared infrastructure.
+
+### Revision: Implementation Sync 2026-05-15
+- Reason: Feature fully implemented and all tests green. Status updated from Draft to Implemented. FR-005 updated to reflect subtitle (`h3.subtitle`) inclusion confirmed during implementation. FR-004 clarified to reflect unconditional prepend (structurally guaranteed by Substack's DOM).
