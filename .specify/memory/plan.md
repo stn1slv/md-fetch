@@ -38,15 +38,23 @@
 
 ```
 BaseExtractor (ABC)               — src/mdfetch/base.py
-├── fetch_html(url) → str         — concrete: streaming HTTP with 30s timeout, 10 MB cap
+├── _no_retry_status_codes: frozenset[int] = frozenset()  — codes that skip retry; overridden by providers
+├── fetch_html(url, *, retries, retry_delay, _no_retry_codes=None) → str
+│                                 — streaming HTTP, 30s timeout, 10 MB cap;
+│                                   codes in _no_retry_codes (or class attribute) raise immediately
 ├── clean_html(soup) → Tag        — abstract: platform-specific HTML isolation
 ├── convert_to_markdown(tag) → str— abstract: platform-specific Markdown conversion
 └── extract(url) → str            — concrete template method (orchestrates the above)
 
 MediumExtractor(BaseExtractor)    — src/mdfetch/providers/medium.py
 ├── DOMAINS = frozenset({"medium.com"})
+├── _FREEDIUM_BASE = "https://freedium-mirror.cfd/"
+├── _no_retry_status_codes = frozenset({403, 429})  — immediate fallback, no medium.com retry
 ├── clean_html() → removes nav, clap buttons, sidebars, share elements, post-footer, author bio
-└── convert_to_markdown() → markdownify with ATX headings, fenced code blocks
+├── convert_to_markdown() → markdownify with ATX headings, fenced code blocks
+├── _parse_freedium(soup) → remaps h4→h3/h5→h4/h6→h5; finds div.main-content; convert_to_markdown
+└── extract() → override: on 403/429 calls fetch_html(freedium_url, _no_retry_codes=frozenset());
+                           exc.url always set to original Medium URL on any Freedium failure
 
 DevToExtractor(BaseExtractor)     — src/mdfetch/providers/devto.py
 ├── DOMAINS = frozenset({"dev.to"})
@@ -131,17 +139,17 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 
 ## Testing Strategy
 
-**Unit tests** (47 tests, offline):
+**Unit tests** (65 tests, offline):
 - Router: domain routing, subdomain suffix matching, duplicate registration, invalid URLs, unsupported platforms
-- MediumExtractor: clean_html, convert_to_markdown, empty content, non-article pages
+- MediumExtractor: clean_html, convert_to_markdown, empty content, non-article pages, _parse_freedium (heading remap, missing main-content), fallback on 403/429 (URL construction, exc.url contract, no-sleep on 429), no-fallback on 200, UnsupportedContentTypeError.url on Freedium path [003-medium-freedium-fallback]
 - DevToExtractor: clean_html (title/cover/heading/image preservation, iframe/ltag embed→link, anchor stripping, non-article error), convert_to_markdown (headings/code/lists/images, no raw HTML, empty content error) [002-devto-provider]
-- Fetch errors: HTTP 404, 503, timeout, connection error, size limit exceeded
+- Fetch errors: HTTP 404, 503, timeout, connection error, size limit exceeded; `_no_retry_status_codes` immediate-raise + `_no_retry_codes` override [003-medium-freedium-fallback]
 - Silent: no stdout/stderr output, no logging during extraction
 
 **Integration tests** (6 tests, network required):
-- Parametrized over 3 real stn1slv.medium.com articles
+- Parametrized over 3 real stn1slv.medium.com articles (including a known paywalled URL that exercises the Freedium fallback when medium.com returns 403) [003-medium-freedium-fallback]
 - Parametrized over 3 real dev.to/stn1slv articles [002-devto-provider]
-- Snapshot-based containment check: `expected_body in extracted_result`
+- Snapshot-based containment check: `expected_body in extracted_result` — tests pass regardless of whether medium.com or Freedium served the content (heading normalisation ensures identical output)
 - 3 retries with 2-second delay on `FetchError` (covers transient 403s/timeouts)
 - Run with: `make integration` or `uv run pytest tests/integration/ --override-ini=addopts=`
 - Excluded from default `pytest` run via `addopts = "-m 'not integration'"` in pyproject.toml
@@ -178,6 +186,9 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 | Routing | `pkgutil.iter_modules` auto-discovery + `@register` | SC-006: one new file = one new platform |
 | Integration tests | Snapshot containment + retry | Durable against minor HTML changes; resilient to transient 403s |
 | test_router.py domain example | Changed from `dev.to` to `substack.com` for "unsupported domain" test | Once DevToExtractor registers `dev.to`, those tests would no longer raise UnsupportedPlatformError | [002-devto-provider]
+| Medium 403/429 fallback | Override `extract()` in `MediumExtractor`; `_no_retry_status_codes=frozenset({403,429})` on class | Immediate fallback with no medium.com retries; `BaseExtractor` extended with `_no_retry_codes` param for thread safety | [003-medium-freedium-fallback]
+| Freedium HTML parsing | Dedicated `_parse_freedium()` method; `div.main-content`; h4→h3 remap | Freedium HTML is structurally incompatible with `clean_html()` (no `<article>`); heading remap ensures snapshot tests pass for both paths | [003-medium-freedium-fallback]
+| Freedium exc.url contract | `inner_exc.url = url` unconditionally; error message is source-agnostic ("Fallback page…") | Preserves transparent-fallback contract (FR-028); `exc.url` is the authoritative field; message content is internal | [003-medium-freedium-fallback]
 
 ---
 
@@ -188,3 +199,7 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 - [x] Coding Standards — PEP 8, strict type hints, `mypy --strict` passes
 - [x] Integration Testing — real Medium URLs, snapshot-based containment assertions
 - [x] Packaging and Distribution — `pyproject.toml` + `src/` layout + `hatchling`; all Makefile targets use `uv run`
+
+---
+
+*Last Updated: 2026-05-15 | Sources appended: [specs/003-medium-freedium-fallback/plan.md]*

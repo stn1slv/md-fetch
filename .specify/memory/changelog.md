@@ -2,6 +2,28 @@
 
 ---
 
+### mdfetch — Medium Freedium Fallback — 2026-05-15
+
+**Branch**: `003-medium-freedium-fallback`
+**Spec**: specs/003-medium-freedium-fallback
+
+**What was added**:
+- Transparent fallback to `https://freedium-mirror.cfd/` when medium.com returns HTTP 403 (paywall) or HTTP 429 (rate limit) — caller sees no difference in the `extract()` interface
+- `_no_retry_status_codes: frozenset[int]` class attribute on `BaseExtractor`; codes in this set skip retry/backoff and raise immediately (defaults to `frozenset()` — safe for all existing providers)
+- `_no_retry_codes: frozenset[int] | None = None` keyword-only parameter on `fetch_html()` for per-call override without instance mutation (thread-safe)
+- `_parse_freedium(soup)` method on `MediumExtractor`: locates `div.main-content`, remaps h4→h3/h5→h4/h6→h5, converts to Markdown; heading remap ensures output is structurally identical to the direct medium.com path
+- `extract()` override on `MediumExtractor`: on 403/429, fetches `freedium_url` with `_no_retry_codes=frozenset()`, routes to `_parse_freedium()`; always sets `exc.url` to the original Medium URL on failure
+- 18 new unit tests across `test_medium_extractor.py` (TestParseFreedium, TestFreediumFallback, TestRateLimitFallback, TestNoFallbackOnSuccess) and `test_fetch_errors.py`
+- Integration test suite now resilient to medium.com 403 responses — paywalled URL included in snapshot tests
+
+**New Components**:
+- Changes to `src/mdfetch/base.py` — `_no_retry_status_codes` attribute + `_no_retry_codes` param on `fetch_html()`
+- Changes to `src/mdfetch/providers/medium.py` — `_parse_freedium()` + `extract()` override + Freedium constants
+
+**Tasks Completed**: 12/12
+
+---
+
 ### mdfetch — dev.to Extractor — 2026-05-14
 
 **Branch**: `002-devto-provider`

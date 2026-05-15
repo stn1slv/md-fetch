@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-14
 
-**Status**: Clarified
+**Status**: Completed
 
 **Input**: User description: "I want implement fallback for medium articles using https://freedium-mirror.cfd/ resource. It should be used when medium.com returns 403 or 429"
 

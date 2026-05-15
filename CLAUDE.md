@@ -51,5 +51,5 @@ uv run mypy src/  # type check
 ```
 
 <!-- SPECKIT START -->
-**Active feature plan**: `specs/003-medium-freedium-fallback/plan.md`
+**Recent changes**: `003-medium-freedium-fallback` — Transparent Freedium mirror fallback for Medium 403/429 responses; `_no_retry_status_codes` hook on `BaseExtractor`; `_parse_freedium()` with h4→h3 heading remap on `MediumExtractor`
 <!-- SPECKIT END -->
