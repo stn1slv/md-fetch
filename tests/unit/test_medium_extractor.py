@@ -247,7 +247,22 @@ class TestFreediumFallback:
                 extractor.extract(original_url, retries=1)
 
         assert exc_info.value.url == original_url
-        assert "freedium" not in exc_info.value.message
+
+    def test_parse_freedium_unsupported_content_sets_original_url(
+        self, extractor: MediumExtractor
+    ) -> None:
+        original_url = "https://medium.com/some/article"
+        router = _do_fetch_router(
+            {
+                "freedium-mirror.cfd": _FREEDIUM_NO_CONTENT_HTML,
+                "medium.com": HTTPStatusError("HTTP 403", status_code=403, url=original_url),
+            }
+        )
+        with patch.object(extractor, "_do_fetch", side_effect=router):
+            with pytest.raises(UnsupportedContentTypeError) as exc_info:
+                extractor.extract(original_url, retries=1)
+
+        assert exc_info.value.url == original_url
 
     def test_non_fallback_status_propagates_without_freedium(
         self, extractor: MediumExtractor

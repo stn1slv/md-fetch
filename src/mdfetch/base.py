@@ -28,24 +28,30 @@ class BaseExtractor(ABC):
         "Chrome/120.0.0.0 Safari/537.36"
     )
 
-    def fetch_html(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
+    def fetch_html(
+        self,
+        url: str,
+        *,
+        retries: int = 3,
+        retry_delay: float = 2.0,
+        _no_retry_codes: frozenset[int] | None = None,
+    ) -> str:
         """Fetch raw HTML from *url* using a 30-second timeout and a 10 MB size cap.
 
         Makes up to *retries* total attempts on transient :class:`FetchError` (network
         errors, timeouts, non-2xx responses) using exponential backoff: the wait before
         attempt *n* is ``min(60, retry_delay * 2 ** n)`` seconds.  Status codes listed
         in :attr:`_no_retry_status_codes` are raised immediately without any retry or
-        sleep.
+        sleep.  Pass ``_no_retry_codes`` to override the class-level set for this call
+        only (used internally to disable the override on Freedium fetches).
         """
+        no_retry = self._no_retry_status_codes if _no_retry_codes is None else _no_retry_codes
         last_exc: FetchError | None = None
         for attempt in range(max(1, retries)):
             try:
                 return self._do_fetch(url)
             except FetchError as exc:
-                if (
-                    isinstance(exc, HTTPStatusError)
-                    and exc.status_code in self._no_retry_status_codes
-                ):
+                if isinstance(exc, HTTPStatusError) and exc.status_code in no_retry:
                     raise
                 last_exc = exc
                 if attempt < retries - 1:
