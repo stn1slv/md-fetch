@@ -86,3 +86,7 @@ A developer runs `make integration` locally or in CI without setting any `MDFETC
 - The Freedium fallback (introduced in PR #7) adequately handles the Medium 403/429 rate-limiting that originally motivated exponential backoff. Fixed delay at 3 retries is therefore sufficient for CI reliability.
 - The `http_retries` and `http_retry_delay` fixtures in `conftest.py` are used only in `test_medium_integration.py` and `test_devto_integration.py`; no other test files depend on them.
 - The `timeout-minutes: 30` setting in `integration.yml` can remain as-is — it provides adequate headroom even with fixed delay retries.
+
+### Revision: Implementation Sync 2026-05-15
+- Stale "backoff" terminology found in two docstrings in `tests/unit/test_fetch_errors.py` (lines 98, 123); these are test comments not covered by FR-004 or FR-007 and require a targeted cleanup task.
+- `test_status_code_not_in_no_retry_set_still_retries` verifies sleep count but not sleep value; US1 AC1 ("sleeps exactly `retry_delay` seconds") implies a value assertion is also needed.

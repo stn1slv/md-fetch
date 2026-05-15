@@ -71,7 +71,16 @@
 - [X] T011 Run `uv run mypy src/` to confirm zero type errors after docstring and code changes
 - [X] T012 Run `make lint` to confirm ruff check passes with no violations
 - [X] T013 Verify no remaining references to `_MAX_RETRY_DELAY`, `MDFETCH_RETRIES`, or `MDFETCH_RETRY_DELAY` anywhere in the codebase by running `grep -r "MAX_RETRY_DELAY\|MDFETCH_RETRIES\|MDFETCH_RETRY_DELAY" src/ tests/ .github/`
-- [ ] T014 Run `make integration` without any `MDFETCH_*` env vars set and confirm all 6 integration tests pass (verifies SC-002)
+- [X] T014 Run `make integration` without any `MDFETCH_*` env vars set and confirm all 6 integration tests pass (verifies SC-002)
+
+---
+
+## Remediation: Gaps
+
+*Added by Implementation Sync 2026-05-15*
+
+- [X] T015 [P] [US1] Update stale "backoff" docstrings in `tests/unit/test_fetch_errors.py`: line 98 "no backoff sleep" → "no retry sleep"; line 123 "trigger backoff" → "trigger retry with fixed delay" [Sync: Gap Report]
+- [X] T016 [US1] Add sleep-value assertion to `test_status_code_not_in_no_retry_set_still_retries` in `tests/unit/test_fetch_errors.py` — add `assert mock_sleep.call_args_list == [call(1.0), call(1.0)]` after the call_count check (verifies US1 AC1: "sleeps exactly retry_delay seconds") [Sync: Gap Report]
 
 ---
 

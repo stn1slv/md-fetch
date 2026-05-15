@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import httpx
 import pytest
@@ -95,7 +95,7 @@ class TestFetchErrors:
     def test_no_retry_status_codes_raises_immediately_without_sleep(
         self, extractor: MediumExtractor
     ) -> None:
-        """Status codes in _no_retry_status_codes must raise immediately, no backoff sleep."""
+        """Status codes in _no_retry_status_codes must raise immediately, no retry sleep."""
         mock = _make_stream_mock(status_code=403, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
@@ -120,7 +120,7 @@ class TestFetchErrors:
     def test_status_code_not_in_no_retry_set_still_retries(
         self, extractor: MediumExtractor
     ) -> None:
-        """Status codes NOT in _no_retry_status_codes (e.g. 503) must still trigger backoff."""
+        """Status codes NOT in _no_retry_status_codes must still trigger retry with fixed delay."""
         mock = _make_stream_mock(status_code=503, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
@@ -128,3 +128,4 @@ class TestFetchErrors:
                     extractor.fetch_html("https://medium.com/article", retries=3, retry_delay=1.0)
 
         assert mock_sleep.call_count == 2  # 3 attempts → 2 sleeps
+        assert mock_sleep.call_args_list == [call(1.0), call(1.0)]  # fixed delay, not exponential

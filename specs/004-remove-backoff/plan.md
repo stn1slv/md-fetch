@@ -67,7 +67,7 @@ src/mdfetch/
 └── __init__.py                    # update docstring (remove exponential reference)
 
 tests/
-├── unit/test_fetch_errors.py      # remove 2 backoff tests
+├── unit/test_fetch_errors.py      # remove 2 backoff tests; update 2 stale "backoff" docstrings; add sleep-value assertion to test_status_code_not_in_no_retry_set_still_retries
 └── integration/
     ├── conftest.py                # remove os import + env var reads; simplify/remove fixtures
     ├── test_medium_integration.py # remove fixture params; inline retries=3, retry_delay=2.0
@@ -135,8 +135,12 @@ Rationale: the fixtures existed solely to expose env-var configurability. Withou
 |------|--------|
 | `src/mdfetch/base.py` | Remove `_MAX_RETRY_DELAY = 60.0`; change `time.sleep(min(_MAX_RETRY_DELAY, retry_delay * (2**attempt)))` → `time.sleep(retry_delay)`; update docstring |
 | `src/mdfetch/__init__.py` | Update docstring: replace "exponential backoff starting at *retry_delay* seconds" |
-| `tests/unit/test_fetch_errors.py` | Delete `test_exponential_backoff_sleep_sequence` and `test_exponential_backoff_capped_at_max_delay` |
+| `tests/unit/test_fetch_errors.py` | Delete `test_exponential_backoff_sleep_sequence` and `test_exponential_backoff_capped_at_max_delay`; update 2 stale "backoff" docstrings; add sleep-value assertion to `test_status_code_not_in_no_retry_set_still_retries` |
 | `tests/integration/conftest.py` | Remove `import os`, remove both fixtures (or delete file if empty) |
 | `tests/integration/test_medium_integration.py` | Remove `http_retries`/`http_retry_delay` fixture params; inline `retries=3, retry_delay=2.0` |
 | `tests/integration/test_devto_integration.py` | Same as above |
 | `.github/workflows/integration.yml` | Remove `MDFETCH_RETRIES: "6"` and `MDFETCH_RETRY_DELAY: "2.0"` from `env:` block |
+
+### Revision: Implementation Sync 2026-05-15
+- Two stale "backoff" docstrings in `tests/unit/test_fetch_errors.py` were not captured in the original plan; added to key-changes table.
+- `test_status_code_not_in_no_retry_set_still_retries` lacked a sleep-value assertion; added to key-changes table to close the AC1 gap.
