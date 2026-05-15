@@ -171,10 +171,11 @@ class TestParseFreedium:
         assert "Section One" in md
         assert "First paragraph" in md
 
-    def test_headings_rendered_as_h4(self, extractor: MediumExtractor) -> None:
+    def test_headings_remapped_to_h3(self, extractor: MediumExtractor) -> None:
         soup = BeautifulSoup(_FREEDIUM_ARTICLE_HTML, "lxml")
         md = extractor._parse_freedium(soup)
-        assert "####" in md
+        assert "###" in md
+        assert "####" not in md
 
     def test_raises_when_main_content_missing(self, extractor: MediumExtractor) -> None:
         soup = BeautifulSoup(_FREEDIUM_NO_CONTENT_HTML, "lxml")

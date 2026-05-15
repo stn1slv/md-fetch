@@ -80,6 +80,11 @@ class MediumExtractor(BaseExtractor):
             raise UnsupportedContentTypeError(
                 "Freedium page missing main-content element",
             )
+        # Freedium renders section headings one level deeper than medium.com (h4 vs h3).
+        # Remap so the output heading levels match the medium.com direct path.
+        for level in (4, 5, 6):
+            for tag in list(content.find_all(f"h{level}")):
+                tag.name = f"h{level - 1}"
         return self.convert_to_markdown(content)
 
     def extract(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
