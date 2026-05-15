@@ -70,7 +70,7 @@ A developer accidentally passes a Substack URL that does not point to an article
 - **FR-001**: The system MUST route all `substack.com` and `*.substack.com` URLs to the Substack provider using the existing domain-registration mechanism.
 - **FR-002**: The system MUST extract the main article body from a Substack post page and return it as clean Markdown.
 - **FR-003**: The system MUST strip all non-content elements from the article page before conversion, including: navigation headers, subscription call-to-action blocks, paywall nag prompts, social share buttons, author bio sections, comment sections, and page footers.
-- **FR-004**: The system MUST ensure the article title appears exactly once as a top-level Markdown heading (`# Title`) in the output: prepend it from the page header element only when the article body does not already contain an `<h1>` matching the title; if the title is already present in the body, it MUST NOT be duplicated.
+- **FR-004**: The system MUST prepend the article title as a top-level Markdown heading (`# Title`) from the page header element (`h1.post-title`). Because Substack's HTML structure places the post title outside the article body (`div.body.markup`) at all times, unconditional prepend from the header achieves exactly-once inclusion without a body-scan deduplication step.
 - **FR-005**: The system MUST preserve the article's structural content: headings (all levels), paragraphs, ordered and unordered lists, inline code, fenced code blocks, blockquotes, hyperlinks, and images.
 - **FR-006**: The system MUST raise `UnsupportedContentTypeError` when the fetched page does not contain a recognisable Substack article body element.
 - **FR-007**: The system MUST raise `EmptyContentError` when the article body is present but yields no extractable text after stripping.
@@ -101,7 +101,7 @@ A developer accidentally passes a Substack URL that does not point to an article
 - Q: When `extract()` encounters a paywalled post, what should it return? → A: Return only the free-preview content silently (no truncation marker, no exception).
 - Q: Should HTTP 429 from Substack be retried or raised immediately? → A: Retry up to the configured retry count (treat 429 like any transient error).
 - Q: What should the extractor do with rich embeds (tweets, YouTube videos, etc.)? → A: Convert embeds to plain anchor links (same as dev.to iframe handling).
-- Q: If the article title appears inside the body HTML, should the extractor still prepend it from the header? → A: Include title exactly once — prepend from header only when not already present in the body.
+- Q: If the article title appears inside the body HTML, should the extractor still prepend it from the header? → A: Include title exactly once — prepend unconditionally from the header, as Substack's HTML structure always places `h1.post-title` outside `div.body.markup`, making duplication structurally impossible.
 
 ## Assumptions
 

@@ -51,7 +51,17 @@ uv run mypy src/  # type check
 ```
 
 <!-- SPECKIT START -->
-## Recent Changes
+## Active Feature
 
-- **004-remove-backoff**: Removed exponential backoff from `fetch_html`; restored fixed-delay retries (`retry_delay` seconds per attempt, constant between attempts). Deleted `MDFETCH_RETRIES`/`MDFETCH_RETRY_DELAY` env-var support from CI and integration fixtures; hardcoded `retries=3, retry_delay=2.0` in all integration tests. Deleted `tests/integration/conftest.py`.
+**005-substack-provider** — Add Substack platform extractor
+Plan: [specs/005-substack-provider/plan.md](specs/005-substack-provider/plan.md)
+
+Key implementation details:
+- New file: `src/mdfetch/providers/substack.py` — `SubstackExtractor(BaseExtractor)`, `DOMAINS = frozenset({"substack.com"})`
+- Extraction root: `div.body.markup` (inside `div.available-content`)
+- Title: prepend `h1.post-title` from `div.post-header`; subtitle: prepend `h3.subtitle` if present
+- Strip: `div.subscription-widget-wrap` (inline CTAs + paywall terminal widget)
+- Embeds: replace `iframe` and unknown `div[data-component-name]` with plain anchor links
+- HTTP 429: retried (no `_no_retry_status_codes` override)
+- Tests: `tests/unit/test_substack.py` + `tests/integration/test_substack_integration.py`
 <!-- SPECKIT END -->
