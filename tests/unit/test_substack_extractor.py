@@ -113,6 +113,23 @@ IFRAME_EMBED_HTML = """
 </body></html>
 """
 
+COMPONENT_EMBED_HTML = """
+<html><body>
+  <div class="post-header">
+    <h1 class="post-title published">Component Embed Test</h1>
+  </div>
+  <div class="available-content">
+    <div class="body markup">
+      <p>Before component embed.</p>
+      <div data-component-name="EmbedPost" data-url="https://other.substack.com/p/some-post">
+        Linked post preview content
+      </div>
+      <p>After component embed.</p>
+    </div>
+  </div>
+</body></html>
+"""
+
 
 # ---------------------------------------------------------------------------
 # clean_html — happy path (T009)
@@ -163,6 +180,23 @@ def test_clean_html_converts_iframe_to_anchor(extractor: SubstackExtractor) -> N
     assert result.find("iframe") is None
     link = result.find("a", href="https://www.youtube.com/embed/abc123")
     assert link is not None
+
+
+def test_clean_html_converts_component_embed_to_anchor(extractor: SubstackExtractor) -> None:
+    """FR-011: non-safe data-component-name divs are replaced with anchor links."""
+    soup = BeautifulSoup(COMPONENT_EMBED_HTML, "lxml")
+    result = extractor.clean_html(soup)
+    assert result.find(attrs={"data-component-name": "EmbedPost"}) is None
+    link = result.find("a", href="https://other.substack.com/p/some-post")
+    assert link is not None
+
+
+def test_convert_to_markdown_renders_component_embed_as_link(extractor: SubstackExtractor) -> None:
+    """FR-011: component embed URL appears as a Markdown link in the output."""
+    soup = BeautifulSoup(COMPONENT_EMBED_HTML, "lxml")
+    tag = extractor.clean_html(soup)
+    md = extractor.convert_to_markdown(tag)
+    assert "https://other.substack.com/p/some-post" in md
 
 
 # ---------------------------------------------------------------------------
