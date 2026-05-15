@@ -78,7 +78,7 @@ class MediumExtractor(BaseExtractor):
         content = soup.find("div", class_="main-content")
         if not isinstance(content, Tag):
             raise UnsupportedContentTypeError(
-                "Freedium page missing main-content element",
+                "Fallback page missing main-content element",
             )
         # Freedium renders section headings one level deeper than medium.com (h4 vs h3).
         # Remap so the output heading levels match the medium.com direct path.
