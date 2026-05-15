@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import unicodedata
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
@@ -25,6 +26,9 @@ class MediumExtractor(BaseExtractor):
     DOMAINS: frozenset[str] = frozenset({"medium.com"})
     _FREEDIUM_BASE = "https://freedium-mirror.cfd/"
     _no_retry_status_codes: frozenset[int] = frozenset({403, 429})
+    # Smart-quote characters that Medium serves but Freedium replaces with ASCII;
+    # canonicalize so both extraction paths yield identical text.
+    _SMART_QUOTE_MAP = str.maketrans({"‘": "'", "’": "'", "“": '"', "”": '"'})
 
     def clean_html(self, soup: BeautifulSoup) -> Tag:
         """Isolate the article body and strip all non-content elements."""
@@ -61,16 +65,42 @@ class MediumExtractor(BaseExtractor):
         return article
 
     def convert_to_markdown(self, tag: Tag) -> str:
-        """Convert cleaned article Tag to Markdown."""
+        """Convert cleaned article Tag to Markdown.
+
+        Mutates *tag* in place by rewriting ``<br>`` elements inside ``<pre>``/
+        ``<code>`` to literal ``\\n`` text nodes before conversion.  Callers must
+        not reuse *tag* after this method returns.
+        """
+        # Medium emits <br> inside <pre>/<code> for code-block line breaks;
+        # markdownify would render those as trailing-two-space hard-break syntax,
+        # which Freedium (using plain '\n') does not produce.  Rewrite at the DOM
+        # level so the two paths yield identical fenced-code output, while
+        # leaving <br> in prose untouched (preserving its hard-break semantics).
+        for br in tag.select("pre br, code br"):
+            br.replace_with("\n")
+
         md = markdownify(str(tag), heading_style="ATX", code_language="", strip=["script", "style"])
         md = md.strip()
         md = re.sub(r"\n{3,}", "\n\n", md)
+        md = self._normalize(md)
 
         if not md:
             raise EmptyContentError(
                 "Article body contained no extractable text content",
             )
 
+        return md
+
+    def _normalize(self, md: str) -> str:
+        """Canonicalize text so direct-Medium and Freedium-fallback paths agree.
+
+        Medium serves typographic quotes (``’ “ ”``); Freedium's mirror serves
+        ASCII quotes.  Without normalization the two paths produce inequivalent
+        Markdown for the same article.  NFC ensures equivalent codepoint
+        sequences compare equal.
+        """
+        md = unicodedata.normalize("NFC", md)
+        md = md.translate(self._SMART_QUOTE_MAP)
         return md
 
     def _parse_freedium(self, soup: BeautifulSoup) -> str:

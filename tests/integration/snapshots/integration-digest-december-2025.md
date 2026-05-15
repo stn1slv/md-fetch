@@ -12,19 +12,19 @@
 
 *Presents IRL (Intelligent Rate Limiting): a production-ready middleware for agentic AI that replaces opaque 429 responses with contrastive, actionable feedback, weighted fair queuing for equitable quotas, carbon-aware workload shifting, and immutable audit logs. Implements GraphQL/Apollo, Redis token buckets, Docker/Kubernetes and provides benchmarks (50k agents, 12.5k req/s, P95 87ms) and source links for enterprise integration use.*
 
-🔍 [Jepsen’s test report for NATS 2.12.1](https://jepsen.io/analyses/nats-2.12.1)
+🔍 [Jepsen's test report for NATS 2.12.1](https://jepsen.io/analyses/nats-2.12.1)
 
 *Jepsen demonstrates that NATS JetStream 2.12.1 can lose acknowledged writes and enter persistent split-brain when .blk or snapshot files are corrupted or when the default fsync policy defers disk flushes; tests (LXC/Antithesis + LazyFS) produce reproducible data-loss windows and filed issues, recommending changing fsync to always or documenting the risk.*
 
 🔍 [MCP Elicitation: Human-in-the-Loop for MCP Servers](https://dzone.com/articles/mcp-elicitation-human-in-the-loop-for-mcp-servers)
 
-*This tutorial details MCP’s elicitation feature (June 18, 2025) and provides protocol JSON-RPC examples plus a complete TypeScript implementation using Mastra, Bun/Hono, and assistant-ui. It shows how servers send JSON Schema-based elicitation/create requests, how clients respond (accept/decline/cancel), and presents a practical promise-store workaround to maintain session continuity over one-way HTTP streams so agents can pause for human confirmation without losing MCP execution state.*
+*This tutorial details MCP's elicitation feature (June 18, 2025) and provides protocol JSON-RPC examples plus a complete TypeScript implementation using Mastra, Bun/Hono, and assistant-ui. It shows how servers send JSON Schema-based elicitation/create requests, how clients respond (accept/decline/cancel), and presents a practical promise-store workaround to maintain session continuity over one-way HTTP streams so agents can pause for human confirmation without losing MCP execution state.*
 
 🔍 [n8n Event-Sourced Workflows: Exactly-Once Integrations with Outbox/Inboxes](https://medium.com/@2nick2patel2/n8n-event-sourced-workflows-exactly-once-integrations-with-outbox-inboxes-946f4d75b105)
 
 *Demonstrates how to implement event-sourced workflows in n8n by persisting intents to an event log and using outbox (for outbound side-effects) and inbox (for inbound deduplication) patterns so low-code automations can avoid double-charges and duplicate notifications; valuable for architects needing pragmatic exactly-once behavior on at-least-once platforms.*
 
-🔍 [Queue Consumer Limits: The Invisible Bottleneck You’re Not Measuring](https://levelup.gitconnected.com/queue-consumer-limits-the-invisible-bottleneck-youre-not-measuring-a493a8c09e8a)
+🔍 [Queue Consumer Limits: The Invisible Bottleneck You're Not Measuring](https://levelup.gitconnected.com/queue-consumer-limits-the-invisible-bottleneck-youre-not-measuring-a493a8c09e8a)
 
 *Identifies a subtle, enterprise-relevant queue failure mode where producer rate exceeds consumer capacity and common throughput/backlog metrics fail to reveal the problem. The piece models the R <= C and R > C regimes, explains why consumers may not consume at expected rates, and emphasizes monitoring consumer pop rate and processing latency as diagnostic signals to detect and mitigate this invisible bottleneck.*
 
@@ -32,7 +32,7 @@
 
 *Up-to-date 2025 survey of eight API specifications mapping legacy, mainstream, and emerging standards. The piece highlights Arazzo for describing multi-call workflows and the Model Context Protocol for enabling LLMs/agents to discover and invoke tools, framing a shift toward AI-aware API design while providing a practical comparative table for architects evaluating standards.*
 
-🔍 [Why MCP Shouldn’t Wrap an API One-to-One](https://nordicapis.com/why-mcp-shouldnt-wrap-an-api-one-to-one/)
+🔍 [Why MCP Shouldn't Wrap an API One-to-One](https://nordicapis.com/why-mcp-shouldnt-wrap-an-api-one-to-one/)
 
 *This timely piece argues against one-to-one MCP wrappers and prescribes treating MCP as an agent SDK: define intent-level methods, combine related API calls into single workflows, use natural-language-friendly verbs, and enforce tight input/output schemas while limiting exposure. The approach reduces agent confusion, guardrails behavior, simplifies orchestration, and lowers maintenance and security risk compared with exposing raw API surfaces.*
 
@@ -114,7 +114,7 @@
 
 🤝 [IBM to Acquire Confluent](https://www.confluent.io/blog/ibm-to-acquire-confluent/)
 
-*Confluent announced an all-cash acquisition by IBM (Dec 8, 2025), aiming to combine Confluent’s Kafka-based streaming platform with IBM’s hybrid-enterprise reach to deliver a unified real-time data foundation for cloud, microservices, and AI. Enterprise architects should reassess streaming deployment, vendor lock-in risk, and integration roadmaps as products and support models may consolidate under IBM.*
+*Confluent announced an all-cash acquisition by IBM (Dec 8, 2025), aiming to combine Confluent's Kafka-based streaming platform with IBM's hybrid-enterprise reach to deliver a unified real-time data foundation for cloud, microservices, and AI. Enterprise architects should reassess streaming deployment, vendor lock-in risk, and integration roadmaps as products and support models may consolidate under IBM.*
 
 ### Releases
 

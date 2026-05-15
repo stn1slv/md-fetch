@@ -51,5 +51,7 @@ uv run mypy src/  # type check
 ```
 
 <!-- SPECKIT START -->
-**Active plan**: `specs/004-remove-backoff/plan.md` — Remove exponential backoff and env-var retry config; restore fixed-delay retries; delete `MDFETCH_RETRIES`/`MDFETCH_RETRY_DELAY` env vars from CI and integration test fixtures
+## Recent Changes
+
+- **004-remove-backoff**: Removed exponential backoff from `fetch_html`; restored fixed-delay retries (`retry_delay` seconds per attempt, constant between attempts). Deleted `MDFETCH_RETRIES`/`MDFETCH_RETRY_DELAY` env-var support from CI and integration fixtures; hardcoded `retries=3, retry_delay=2.0` in all integration tests. Deleted `tests/integration/conftest.py`.
 <!-- SPECKIT END -->

@@ -2,6 +2,23 @@
 
 ---
 
+### mdfetch — Remove Exponential Backoff — 2026-05-15
+
+**Branch**: `004-remove-backoff`
+**Spec**: specs/004-remove-backoff
+
+**What was added**:
+- Fixed-delay retry behaviour: `fetch_html` now sleeps exactly `retry_delay` seconds between attempts (previously exponential `retry_delay × 2ⁿ`, capped at 60 s). The change makes retry timing predictable for callers and aligns with the Freedium fallback that already absorbs 403/429 errors.
+- Removed `MDFETCH_RETRIES` and `MDFETCH_RETRY_DELAY` env-var support from integration test fixtures (`conftest.py` deleted) and CI workflow (`integration.yml`). Integration tests now hardcode `retries=3, retry_delay=2.0`.
+- Deleted two unit tests (`test_exponential_backoff_sleep_sequence`, `test_exponential_backoff_capped_at_max_delay`) that verified the removed exponential schedule. Added sleep-value assertion to `test_status_code_not_in_no_retry_set_still_retries` to close the FR-029 gap.
+
+**New Components**:
+- No new files. Pure removal: `tests/integration/conftest.py` deleted; `_MAX_RETRY_DELAY` constant removed from `src/mdfetch/base.py`.
+
+**Tasks Completed**: 16/16
+
+---
+
 ### mdfetch — Medium Freedium Fallback — 2026-05-15
 
 **Branch**: `003-medium-freedium-fallback`

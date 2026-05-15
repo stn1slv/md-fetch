@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-15
 
-**Status**: Draft
+**Status**: Completed
 
 **Input**: User description: "let's deprecate and remove the exponential backoff and env.variables which was implemented in https://github.com/stn1slv/md-fetch/pull/6"
 

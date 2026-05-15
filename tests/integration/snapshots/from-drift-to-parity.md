@@ -2,7 +2,7 @@
 
 As AI-assisted code generation matures, the industry is moving toward a pattern that reverses the traditional development workflow: instead of writing code first and documenting later, you write the **specification** first and let an AI agent generate the implementation. This approach is known as **Spec-Driven Development (SDD)**.
 
-Tools like GitHub’s [Spec-Kit](https://github.com/github/spec-kit) make this workflow practical. The developer creates a `spec.md` (what to build: user stories, acceptance criteria), a `plan.md` (how to build it: architecture, dependencies, routing), and a `tasks.md` (the step-by-step breakdown). Each feature lives in its own folder (e.g., `specs/006-invoice-settings/`), and the standard pipeline is a linear chain of commands:
+Tools like GitHub's [Spec-Kit](https://github.com/github/spec-kit) make this workflow practical. The developer creates a `spec.md` (what to build: user stories, acceptance criteria), a `plan.md` (how to build it: architecture, dependencies, routing), and a `tasks.md` (the step-by-step breakdown). Each feature lives in its own folder (e.g., `specs/006-invoice-settings/`), and the standard pipeline is a linear chain of commands:
 
 ```
 /speckit.specify → /speckit.plan → /speckit.tasks → /speckit.implement
@@ -28,7 +28,7 @@ The obvious fix is to re-run the full specify-plan-implement cycle. But that is 
 
 The second blind spot appears after the feature is merged. The Spec-Kit pipeline ends at `/speckit.implement`. Once a feature branch lands in main, the framework considers the job done. The feature's spec folder becomes a historical artifact: a snapshot of what the team built during one sprint.
 
-We are trained to think in terms of *tasks* rather than *systems*. We write a spec for a feature, merge it, and move on. After several sprints, the project accumulates a dozen of these disconnected folders. If a new developer (or an AI agent) asks, “How does the invoicing module work right now?”, there is no single document to answer that question. They have to reconstruct the picture from scattered feature specs and the codebase itself. There is no consolidated **source of truth** for the current state of the product.
+We are trained to think in terms of *tasks* rather than *systems*. We write a spec for a feature, merge it, and move on. After several sprints, the project accumulates a dozen of these disconnected folders. If a new developer (or an AI agent) asks, "How does the invoicing module work right now?", there is no single document to answer that question. They have to reconstruct the picture from scattered feature specs and the codebase itself. There is no consolidated **source of truth** for the current state of the product.
 
 This is analogous to the lifecycle management problem in **Architecture Decision Records (ADRs)**, where every decision carries a status: proposed, accepted, superseded. Without an equivalent mechanism for specifications, feature folders accumulate indefinitely with no clear indication of which artifacts represent current reality and which have been partially or fully replaced by later work.
 
@@ -42,19 +42,19 @@ But no ready-made solution existed. The core framework provided the forward pipe
 
 The realization was straightforward: the ecosystem did not need better generation tools. It needed **feedback loops**. Specifically, it needed two of them, operating at different stages of the development lifecycle.
 
-I designed an architectural pattern called **Double-Loop Parity** and implemented it as two Spec-Kit extensions. The term “parity” is deliberate: the goal is not just synchronization (updating artifacts to match code), but maintaining ongoing equivalence between what the specification says and what the system actually does.
+I designed an architectural pattern called **Double-Loop Parity** and implemented it as two Spec-Kit extensions. The term "parity" is deliberate: the goal is not just synchronization (updating artifacts to match code), but maintaining ongoing equivalence between what the specification says and what the system actually does.
 
 * **Inner Loop (Reconcile):** Operates during active development. Closes the gap between the evolving implementation and the feature-level specification artifacts.
 * **Outer Loop (Archive):** Operates after merge. Consolidates finalized feature knowledge into a single, canonical project-level memory.
 
-Spec-Kit’s extension system allows adding new commands without modifying the core framework. Each extension is a standalone repository with a YAML manifest (`extension.yml`) declaring its commands and dependencies, plus one or more command files that define the execution logic. The two extensions described below follow this architecture.
+Spec-Kit's extension system allows adding new commands without modifying the core framework. Each extension is a standalone repository with a YAML manifest (`extension.yml`) declaring its commands and dependencies, plus one or more command files that define the execution logic. The two extensions described below follow this architecture.
 
 ### 3.1 The Inner Loop: Reconcile
 
 The [Reconcile extension](https://github.com/stn1slv/spec-kit-reconcile) is a **post-implementation gap closer**. It runs during active feature development, after the initial implementation has revealed discrepancies between the plan and reality. Instead of manually rewriting markdown files or re-running the entire pipeline, the developer feeds the extension a natural-language description of what drifted:
 
 ```
-/speckit.reconcile.run "Backend exists, but React screen is unreachable;  
+/speckit.reconcile.run "Backend exists, but React screen is unreachable;
 need sidebar link and route"
 ```
 
@@ -62,17 +62,17 @@ The command executes a five-step workflow:
 
 1. **Discovery and Setup:** Resolves the active feature directory and validates that the required artifacts (`spec.md`, `plan.md`, `tasks.md`) exist. Optionally loads the project's `constitution.md` for architectural constraint checking.
 2. **Gap Normalization:** Parses the natural-language input and categorizes the discrepancies into five structured types. **Wiring and Navigation** covers missing routes, menu items, and sidebar links. **Contracts** covers API field mismatches, missing headers, and changed response shapes. **Acceptance Criteria** covers behavior differences from the original plan. **Test Coverage** flags new components without corresponding verification. **Logic/UX** covers missing error handling, toast notifications, and edge cases.
-3. **Constitution Compliance:** Cross-checks each proposed change against the project’s MUST-level architectural constraints. If a gap fix would violate a constitutional principle, it is flagged as CRITICAL before any edits are made.
+3. **Constitution Compliance:** Cross-checks each proposed change against the project's MUST-level architectural constraints. If a gap fix would violate a constitutional principle, it is flagged as CRITICAL before any edits are made.
 4. **Surgical Reconciliation:** Updates only the parts that actually drifted. In `spec.md`, it amends acceptance criteria and user scenarios. In `plan.md`, it updates routing, integration contracts, and testing strategy. In `tasks.md`, it appends remediation tasks with auto-incremented IDs (continuing from the highest existing `T###`) and exact file paths. Each modified file gets a revision note.
 5. **Sync Impact Report:** Outputs a structured summary of all changes and recommends the next Spec-Kit command to run (e.g., `/speckit.implement` to execute the new tasks).
 
-**A key design constraint:** if a Wiring or Navigation gap is detected, the extension automatically requires an integration test task. This prevents the most common class of drift (a feature that exists but is unreachable) from being “fixed” without verification.
+**A key design constraint:** if a Wiring or Navigation gap is detected, the extension automatically requires an integration test task. This prevents the most common class of drift (a feature that exists but is unreachable) from being "fixed" without verification.
 
 The scope can be narrowed with modifiers (`--spec-only`, `--plan-only`, `--tasks-only`) when only specific artifacts need updating.
 
 ### 3.2 The Outer Loop: Archive
 
-The [Archive extension](https://github.com/stn1slv/spec-kit-archive) is a **post-merge consolidation tool**. Once a feature branch is merged, the extension takes the finalized specification and merges its content into the project’s canonical memory:
+The [Archive extension](https://github.com/stn1slv/spec-kit-archive) is a **post-merge consolidation tool**. Once a feature branch is merged, the extension takes the finalized specification and merges its content into the project's canonical memory:
 
 ```
 /speckit.archive.run specs/006-invoice-settings
@@ -80,15 +80,15 @@ The [Archive extension](https://github.com/stn1slv/spec-kit-archive) is a **post
 
 The command executes a seven-step workflow:
 
-1. **Setup and Validation:** Resolves the feature directory and the project’s memory directory (`.specify/memory/`). If this is the first archival and the memory directory does not exist, bootstraps it from templates or creates it from the feature's content.
-2. **Feature Analysis:** Extracts everything of lasting value: user stories, functional requirements (detecting the project’s ID convention, whether it is FR-XXX, REQ-XXX, or unnumbered), entities, dependencies, architecture changes, known issues from research notes, and task completion counts.
+1. **Setup and Validation:** Resolves the feature directory and the project's memory directory (`.specify/memory/`). If this is the first archival and the memory directory does not exist, bootstraps it from templates or creates it from the feature's content.
+2. **Feature Analysis:** Extracts everything of lasting value: user stories, functional requirements (detecting the project's ID convention, whether it is FR-XXX, REQ-XXX, or unnumbered), entities, dependencies, architecture changes, known issues from research notes, and task completion counts.
 3. **Conflict Detection:** Systematically checks for issues before merging. **Constitution Compliance** flags any feature content that conflicts with architectural MUST principles. **Requirement ID Collisions** are detected when a feature ID already exists in the main spec. **Entity Redefinitions** highlight differences when an entity is modified, not just added. **Dependency Conflicts** note version mismatches with existing dependencies.
 4. **Clarification:** If conflicts require human judgment, asks targeted questions (maximum five) with structured options. Constitution conflicts are always escalated.
 5. **Archival Merge:** Applies edits to the canonical project memory. In `.specify/memory/spec.md`, it merges requirements with continued ID numbering, adds user stories, and updates entities. In `.specify/memory/plan.md`, it adds new dependencies, modules, configuration, and routing, and removes implemented items from "Future Work." In `.specify/memory/changelog.md`, it appends a structured entry with branch name, summary, new components, and task completion ratio. In the **agent knowledge file** (GEMINI.md / CLAUDE.md / AGENTS.md), it updates active technologies, project structure, recent changes, and merges known issues from research notes.
 6. **Traceability:** Every merged element is tagged with `[Source: specs/006-invoice-settings]`, creating an audit trail from any requirement in the project memory back to the feature that introduced it.
 7. **Archival Report:** Outputs a structured summary of all changes, bootstrapped files, constitution compliance status, conflicts resolved, and recommended follow-up actions.
 
-The feature folders are not deleted. They remain as read-only historical “deltas” of work done, while `.specify/memory/` becomes the living, module-level specification. Instead of a growing collection of disconnected feature folders, the project builds a unified memory that serves as the source of truth for onboarding developers and providing context to AI agents.
+The feature folders are not deleted. They remain as read-only historical "deltas" of work done, while `.specify/memory/` becomes the living, module-level specification. Instead of a growing collection of disconnected feature folders, the project builds a unified memory that serves as the source of truth for onboarding developers and providing context to AI agents.
 
 ### 4. Prompt-as-Code: An Architectural Note
 
@@ -97,7 +97,7 @@ One detail worth highlighting: neither extension contains any traditional source
 * A **YAML manifest** (`extension.yml`) that declares the extension ID, version, Spec-Kit version dependency, required scripts, and the command it provides.
 * A **Markdown command file** (`commands/reconcile.md` or `commands/archive.md`) that defines the agent's role, step-by-step workflow, validation rules, output format, and done criteria.
 
-This is **“prompt-as-code”**: version-controlled, reviewable, diffable, and testable, but executed by an LLM rather than a traditional runtime. The approach fits naturally into the Spec-Kit extension architecture, where every command is essentially a structured prompt that the AI agent follows within the project’s context.
+This is **"prompt-as-code"**: version-controlled, reviewable, diffable, and testable, but executed by an LLM rather than a traditional runtime. The approach fits naturally into the Spec-Kit extension architecture, where every command is essentially a structured prompt that the AI agent follows within the project's context.
 
 The Spec-Kit ecosystem hosts a [growing catalog of community extensions](https://github.com/github/spec-kit/blob/main/README.md#-community-extensions), all following this pattern. The prompt-as-code model makes it easier to contribute (no build toolchain, no language dependency) while keeping the discipline of a versioned, schema-validated plugin system.
 
@@ -105,7 +105,7 @@ The Spec-Kit ecosystem hosts a [growing catalog of community extensions](https:/
 
 As we offload more code generation to AI, the quality of the context we provide becomes our most important output. LLMs and agents are only as good as the specifications they read. If we let our specs drift, our AI tools will hallucinate corrections for problems that do not exist, or miss problems that do. The specification is no longer just a planning artifact. In a spec-driven workflow, it is a **runtime dependency**.
 
-Building feedback loops that continuously reconcile code with documentation is not just good engineering practice. It is the infrastructure required for reliable, autonomous AI agents. The Double-Loop Parity pattern addresses this by ensuring that the specification stays truthful at every stage: during active development (Reconcile) and after features are consolidated into the project’s memory (Archive).
+Building feedback loops that continuously reconcile code with documentation is not just good engineering practice. It is the infrastructure required for reliable, autonomous AI agents. The Double-Loop Parity pattern addresses this by ensuring that the specification stays truthful at every stage: during active development (Reconcile) and after features are consolidated into the project's memory (Archive).
 
 ### Conclusion
 
@@ -114,12 +114,12 @@ Both extensions were included in the [Spec-Kit v0.3.1 release](https://github.co
 If you are exploring Spec-Driven Development, Doc-as-Code, or trying to make your AI agents more reliable, you can install either extension directly:
 
 ```
-# Install Reconcile (Inner Loop)  
-specify extension add reconcile \  
-  --from https://github.com/stn1slv/spec-kit-reconcile/archive/refs/tags/v1.0.0.zip  
-  
-# Install Archive (Outer Loop)  
-specify extension add archive \  
+# Install Reconcile (Inner Loop)
+specify extension add reconcile \
+  --from https://github.com/stn1slv/spec-kit-reconcile/archive/refs/tags/v1.0.0.zip
+
+# Install Archive (Outer Loop)
+specify extension add archive \
   --from https://github.com/stn1slv/spec-kit-archive/archive/refs/tags/v1.0.0.zip
 ```
 

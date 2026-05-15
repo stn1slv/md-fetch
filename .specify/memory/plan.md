@@ -1,7 +1,7 @@
 # mdfetch — Main Implementation Plan
 
-**Last Updated**: 2026-05-14
-**Sources**: [specs/001-mdfetch-medium-extractor/plan.md], [specs/002-devto-provider/plan.md]
+**Last Updated**: 2026-05-15
+**Sources**: [specs/001-mdfetch-medium-extractor/plan.md], [specs/002-devto-provider/plan.md], [specs/003-medium-freedium-fallback/plan.md], [specs/004-remove-backoff/plan.md]
 
 ---
 
@@ -41,6 +41,7 @@ BaseExtractor (ABC)               — src/mdfetch/base.py
 ├── _no_retry_status_codes: frozenset[int] = frozenset()  — codes that skip retry; overridden by providers
 ├── fetch_html(url, *, retries, retry_delay, _no_retry_codes=None) → str
 │                                 — streaming HTTP, 30s timeout, 10 MB cap;
+│                                   fixed delay of retry_delay seconds between attempts (not exponential);
 │                                   codes in _no_retry_codes (or class attribute) raise immediately
 ├── clean_html(soup) → Tag        — abstract: platform-specific HTML isolation
 ├── convert_to_markdown(tag) → str— abstract: platform-specific Markdown conversion
@@ -139,7 +140,7 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 
 ## Testing Strategy
 
-**Unit tests** (65 tests, offline):
+**Unit tests** (63 tests, offline):
 - Router: domain routing, subdomain suffix matching, duplicate registration, invalid URLs, unsupported platforms
 - MediumExtractor: clean_html, convert_to_markdown, empty content, non-article pages, _parse_freedium (heading remap, missing main-content), fallback on 403/429 (URL construction, exc.url contract, no-sleep on 429), no-fallback on 200, UnsupportedContentTypeError.url on Freedium path [003-medium-freedium-fallback]
 - DevToExtractor: clean_html (title/cover/heading/image preservation, iframe/ltag embed→link, anchor stripping, non-article error), convert_to_markdown (headings/code/lists/images, no raw HTML, empty content error) [002-devto-provider]
@@ -150,7 +151,7 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 - Parametrized over 3 real stn1slv.medium.com articles (including a known paywalled URL that exercises the Freedium fallback when medium.com returns 403) [003-medium-freedium-fallback]
 - Parametrized over 3 real dev.to/stn1slv articles [002-devto-provider]
 - Snapshot-based containment check: `expected_body in extracted_result` — tests pass regardless of whether medium.com or Freedium served the content (heading normalisation ensures identical output)
-- 3 retries with 2-second delay on `FetchError` (covers transient 403s/timeouts)
+- 3 retries with 2-second **fixed** delay on `FetchError` (hardcoded; not env-var configurable) [004-remove-backoff]
 - Run with: `make integration` or `uv run pytest tests/integration/ --override-ini=addopts=`
 - Excluded from default `pytest` run via `addopts = "-m 'not integration'"` in pyproject.toml
 
@@ -189,6 +190,7 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 | Medium 403/429 fallback | Override `extract()` in `MediumExtractor`; `_no_retry_status_codes=frozenset({403,429})` on class | Immediate fallback with no medium.com retries; `BaseExtractor` extended with `_no_retry_codes` param for thread safety | [003-medium-freedium-fallback]
 | Freedium HTML parsing | Dedicated `_parse_freedium()` method; `div.main-content`; h4→h3 remap | Freedium HTML is structurally incompatible with `clean_html()` (no `<article>`); heading remap ensures snapshot tests pass for both paths | [003-medium-freedium-fallback]
 | Freedium exc.url contract | `inner_exc.url = url` unconditionally; error message is source-agnostic ("Fallback page…") | Preserves transparent-fallback contract (FR-028); `exc.url` is the authoritative field; message content is internal | [003-medium-freedium-fallback]
+| Retry strategy | Fixed delay (`retry_delay` seconds per attempt, unchanged between attempts) | Exponential backoff removed (PR #8); Freedium fallback absorbs 403/429 at a higher level making exponential growth unnecessary; integration tests use hardcoded defaults (`retries=3, retry_delay=2.0`) with no env-var override | [004-remove-backoff]
 
 ---
 
@@ -202,4 +204,4 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 
 ---
 
-*Last Updated: 2026-05-15 | Sources appended: [specs/003-medium-freedium-fallback/plan.md]*
+*Last Updated: 2026-05-15 | Sources appended: [specs/004-remove-backoff/plan.md]*

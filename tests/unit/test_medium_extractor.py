@@ -144,6 +144,35 @@ class TestConvertToMarkdown:
         with pytest.raises(EmptyContentError):
             extractor.convert_to_markdown(cleaned)
 
+    def test_normalizes_smart_quotes_to_ascii(self, extractor: MediumExtractor) -> None:
+        """Direct-Medium (typographic quotes) and Freedium (ASCII) must agree."""
+        html = "<article><p>He said “hello” to GitHub’s repo.</p></article>"
+        soup = BeautifulSoup(html, "lxml")
+        cleaned = extractor.clean_html(soup)
+        md = extractor.convert_to_markdown(cleaned)
+        assert "’" not in md and "“" not in md and "”" not in md
+        assert "GitHub's" in md
+        assert '"hello"' in md
+
+    def test_rewrites_br_inside_code_block_to_newline(self, extractor: MediumExtractor) -> None:
+        """<br> inside <pre>/<code> must yield a plain '\\n', not a trailing-two-space
+        hard break (Freedium produces plain newlines, so the two paths must agree)."""
+        html = "<article><pre><code>line one<br>line two</code></pre></article>"
+        soup = BeautifulSoup(html, "lxml")
+        cleaned = extractor.clean_html(soup)
+        md = extractor.convert_to_markdown(cleaned)
+        assert "line one\nline two" in md
+        assert "line one  \n" not in md
+
+    def test_preserves_prose_br_hard_break(self, extractor: MediumExtractor) -> None:
+        """<br> outside code blocks must NOT be rewritten — preserves the spec-meaningful
+        hard-break syntax that markdownify emits as trailing two spaces + newline."""
+        html = "<article><p>line one<br>line two</p></article>"
+        soup = BeautifulSoup(html, "lxml")
+        cleaned = extractor.clean_html(soup)
+        md = extractor.convert_to_markdown(cleaned)
+        assert "line one  \nline two" in md
+
 
 _FREEDIUM_ARTICLE_HTML = """
 <html><body>

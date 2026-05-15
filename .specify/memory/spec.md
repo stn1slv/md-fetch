@@ -1,7 +1,7 @@
 # mdfetch — Main Specification
 
-**Last Updated**: 2026-05-14
-**Sources**: [specs/001-mdfetch-medium-extractor/spec.md], [specs/002-devto-provider/spec.md]
+**Last Updated**: 2026-05-15
+**Sources**: [specs/001-mdfetch-medium-extractor/spec.md], [specs/002-devto-provider/spec.md], [specs/003-medium-freedium-fallback/spec.md], [specs/004-remove-backoff/spec.md]
 
 ---
 
@@ -105,6 +105,18 @@ A developer calls the library's extract function for a publicly accessible Mediu
 
 ---
 
+### US-010 — Predictable Fixed-Delay Retry Behaviour (P1)
+[Source: specs/004-remove-backoff]
+
+A developer calling `extract()` encounters a transient network error. The library retries using a simple, predictable fixed delay — exactly `retry_delay` seconds between every attempt — rather than an exponentially growing delay. The retry timing is constant and easy to reason about regardless of which attempt number is being made.
+
+**Acceptance Scenarios**:
+1. Given `fetch_html` is called with `retries=3` and `retry_delay=2.0`, when the first two attempts raise a transient error, then the library sleeps exactly `2.0` seconds before each retry (not `2.0` then `4.0`).
+2. Given `fetch_html` is called with `retries=1`, when the attempt fails, then no sleep occurs and the exception is raised immediately.
+3. Given a status code in `_no_retry_status_codes`, when that error is raised, then no sleep or retry occurs.
+
+---
+
 ### US-006 — Integration Tests Pass Against Real dev.to Article URLs (P3)
 [Source: specs/002-devto-provider]
 
@@ -135,6 +147,7 @@ A developer runs the integration test suite and all dev.to integration tests pas
 ### Network
 - **FR-006**: The library MUST raise a descriptive error when a network request fails (connection error, timeout, non-2xx HTTP status).
 - **FR-014**: HTTP requests MUST use a standard browser-like User-Agent string so that web servers return readable HTML. The User-Agent MUST NOT identify the library by name or version. The library does not check or respect `robots.txt` in v1.
+- **FR-029**: The `fetch_html` method MUST use a fixed delay of exactly `retry_delay` seconds between retry attempts — no exponential multiplication. The retry delay is constant and does not grow with each attempt number. [Source: specs/004-remove-backoff]
 
 ### Packaging & Testing
 - **FR-009**: The library MUST be packaged and distributed via PyPI using modern Python packaging best practices, enabling installation through the standard package manager without additional steps.
@@ -238,7 +251,7 @@ caller provides URL string
 - **Network timeouts**: Covered by `FetchError` (30-second fixed timeout).
 - **Oversized responses**: Responses exceeding 10 MB are rejected with `FetchError` to prevent OOM.
 - **Profile/tag pages**: When a `medium.com` URL points to a non-article page, `UnsupportedContentTypeError` is raised (distinct from `UnsupportedPlatformError`).
-- **HTTP 403 / transient failures**: Integration tests use a 3-retry helper with 2-second delay to handle transient rate limits.
+- **HTTP 403 / transient failures**: Integration tests use 3 retries with a 2-second fixed delay (hardcoded; not env-var configurable) to handle transient rate limits. [Source: specs/004-remove-backoff]
 - **dev.to profile pages**: When a `dev.to` URL points to an author profile (no `div#article-body`), `UnsupportedContentTypeError` is raised.
 - **dev.to tag listing pages**: When a `dev.to` URL points to a tag page (e.g., `dev.to/t/kafka`), `UnsupportedContentTypeError` is raised.
 - **dev.to liquid-tag embeds**: Embedded third-party widgets (GitHub Gists, CodePen, YouTube) serialised as `<div class="ltag__*" data-url="...">` are replaced with plain Markdown links; they are never silently dropped.
@@ -273,6 +286,9 @@ caller provides URL string
 - The library supports Python 3.12 and later.
 - The library operates on publicly accessible HTML; it does not execute JavaScript or render dynamic content.
 - Network timeouts use a fixed default of 30 seconds (not user-configurable in v1).
+- **SC-018**: `make test` passes with zero failures (all unit tests green) when run without any `MDFETCH_*` environment variables. [Source: specs/004-remove-backoff]
+- **SC-019**: `make integration` passes with zero failures when run without any `MDFETCH_RETRIES` or `MDFETCH_RETRY_DELAY` environment variables — integration tests use hardcoded defaults (3 retries, 2.0 s delay). [Source: specs/004-remove-backoff]
+- **SC-020**: No reference to `MDFETCH_RETRIES`, `MDFETCH_RETRY_DELAY`, or `_MAX_RETRY_DELAY` appears in `src/`, `tests/`, or `.github/` (specification and documentation files excluded). [Source: specs/004-remove-backoff]
 - **SC-013**: Articles that previously failed with a 403 paywall error are successfully extracted in at least 90% of cases where the Freedium mirror has the content available. [Source: specs/003-medium-freedium-fallback]
 - **SC-014**: Articles that previously failed with a 429 rate-limit error are successfully extracted via fallback without requiring the caller to retry. [Source: specs/003-medium-freedium-fallback]
 - **SC-015**: Zero changes are required in existing caller code to benefit from the Freedium fallback — existing integrations continue to work as-is. [Source: specs/003-medium-freedium-fallback]
@@ -281,4 +297,4 @@ caller provides URL string
 
 ---
 
-*Last Updated: 2026-05-15 | Sources appended: [specs/003-medium-freedium-fallback/spec.md]*
+*Last Updated: 2026-05-15 | Sources appended: [specs/004-remove-backoff/spec.md]*
