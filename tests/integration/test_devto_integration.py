@@ -36,7 +36,7 @@ def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
     requiring an exact match, making tests resilient to minor structural changes.
     """
     expected = (SNAPSHOTS_DIR / snapshot).read_text(encoding="utf-8")
-    result = extract(url, retries=5, retry_delay=2.0)
+    result = extract(url, retries=3, retry_delay=2.0)
     assert expected in result, (
         f"Extracted content for {snapshot!r} does not contain the stored snapshot body.\n"
         f"To regenerate the snapshot, run:\n"
