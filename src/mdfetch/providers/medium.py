@@ -9,7 +9,12 @@ from bs4.element import Tag
 from markdownify import markdownify
 
 from mdfetch.base import BaseExtractor
-from mdfetch.exceptions import EmptyContentError, UnsupportedContentTypeError
+from mdfetch.exceptions import (
+    EmptyContentError,
+    HTTPStatusError,
+    MdfetchError,
+    UnsupportedContentTypeError,
+)
 from mdfetch.router import register
 
 
@@ -18,6 +23,8 @@ class MediumExtractor(BaseExtractor):
     """Extracts article content from medium.com and its subdomains."""
 
     DOMAINS: frozenset[str] = frozenset({"medium.com"})
+    _FREEDIUM_BASE = "https://freedium-mirror.cfd/"
+    _no_retry_status_codes: frozenset[int] = frozenset({403, 429})
 
     def clean_html(self, soup: BeautifulSoup) -> Tag:
         """Isolate the article body and strip all non-content elements."""
@@ -65,3 +72,29 @@ class MediumExtractor(BaseExtractor):
             )
 
         return md
+
+    def _parse_freedium(self, soup: BeautifulSoup) -> str:
+        """Parse Freedium mirror HTML, which uses div.main-content instead of <article>."""
+        content = soup.find("div", class_="main-content")
+        if not isinstance(content, Tag):
+            raise UnsupportedContentTypeError(
+                "Freedium page missing main-content element",
+            )
+        return self.convert_to_markdown(content)
+
+    def extract(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
+        """Extract article, falling back to Freedium mirror on HTTP 403 or 429."""
+        try:
+            return super().extract(url, retries=retries, retry_delay=retry_delay)
+        except HTTPStatusError as exc:
+            if exc.status_code not in self._no_retry_status_codes:
+                raise
+        freedium_url = f"{self._FREEDIUM_BASE}{url}"
+        html = self.fetch_html(freedium_url, retries=retries, retry_delay=retry_delay)
+        soup = BeautifulSoup(html, "lxml")
+        try:
+            return self._parse_freedium(soup)
+        except MdfetchError as inner_exc:
+            if inner_exc.url is None:
+                inner_exc.url = url
+            raise

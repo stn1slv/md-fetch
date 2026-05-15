@@ -19,6 +19,7 @@ class BaseExtractor(ABC):
     """Contract all platform-specific extractors must fulfil."""
 
     DOMAINS: frozenset[str] = frozenset()
+    _no_retry_status_codes: frozenset[int] = frozenset()
 
     # FR-014: use a browser-like UA (no mdfetch-specific branding) so servers serve readable HTML
     _USER_AGENT = (
@@ -39,6 +40,11 @@ class BaseExtractor(ABC):
             try:
                 return self._do_fetch(url)
             except FetchError as exc:
+                if (
+                    isinstance(exc, HTTPStatusError)
+                    and exc.status_code in self._no_retry_status_codes
+                ):
+                    raise
                 last_exc = exc
                 if attempt < retries - 1:
                     time.sleep(min(_MAX_RETRY_DELAY, retry_delay * (2**attempt)))

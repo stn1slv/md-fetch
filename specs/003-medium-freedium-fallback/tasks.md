@@ -25,8 +25,8 @@ No new setup required — all project infrastructure exists. Proceeding directly
 
 **⚠️ CRITICAL**: Both US1 and US2 implementation tasks depend on T001.
 
-- [ ] T001 Add `_no_retry_status_codes: frozenset[int] = frozenset()` class attribute to `BaseExtractor` and insert early-exit guard `if isinstance(exc, HTTPStatusError) and exc.status_code in self._no_retry_status_codes: raise` in the `fetch_html()` retry loop in `src/mdfetch/base.py`
-- [ ] T002 [P] Add unit tests in `tests/unit/test_fetch_errors.py` verifying that status codes in `_no_retry_status_codes` are raised immediately without sleep/retry (use `MediumExtractor` with a subclass that sets the attribute, mock `httpx.Client`) and that codes NOT in the set still trigger the existing backoff
+- [x] T001 Add `_no_retry_status_codes: frozenset[int] = frozenset()` class attribute to `BaseExtractor` and insert early-exit guard `if isinstance(exc, HTTPStatusError) and exc.status_code in self._no_retry_status_codes: raise` in the `fetch_html()` retry loop in `src/mdfetch/base.py`
+- [x] T002 [P] Add unit tests in `tests/unit/test_fetch_errors.py` verifying that status codes in `_no_retry_status_codes` are raised immediately without sleep/retry (use `MediumExtractor` with a subclass that sets the attribute, mock `httpx.Client`) and that codes NOT in the set still trigger the existing backoff
 
 **Checkpoint**: `BaseExtractor` extended — user story implementation can now begin
 
@@ -38,9 +38,9 @@ No new setup required — all project infrastructure exists. Proceeding directly
 
 **Independent Test**: Call `extract()` with a mock that returns 403 on the first request and valid HTML on the second. Verify Markdown is returned and the second call used the Freedium URL.
 
-- [ ] T003 [P] [US1] Add unit tests for `_parse_freedium()` in `tests/unit/test_medium_extractor.py`: (a) valid Freedium HTML with `<div class="main-content">` containing `<h4>` and `<p>` — assert non-empty Markdown with `####` headings; (b) Freedium HTML missing `main-content` div — assert `UnsupportedContentTypeError` is raised; (c) mock full `extract()` flow with httpx returning 403 on medium.com and valid Freedium HTML on second call — assert Markdown returned and Freedium URL (`https://freedium-mirror.cfd/https://medium.com/...`) was fetched; (d) mock 403 on medium.com AND error on Freedium — assert exception raised with `exc.url` equal to original medium URL
-- [ ] T004 [P] [US1] Add `@pytest.mark.integration` test in `tests/integration/test_medium_integration.py` for a known paywalled Medium URL (e.g. `https://stn1slv.medium.com/from-drift-to-parity-building-a-feedback-loop-for-spec-driven-development-b3bd3d9c0021`); assert `extract()` returns a string containing at least one expected keyword from the article title (e.g. `"Parity"` or `"Spec-Driven"`)
-- [ ] T005 [US1] Implement fallback in `src/mdfetch/providers/medium.py`: (1) add imports for `HTTPStatusError` and `UnsupportedContentTypeError`; (2) add `_FREEDIUM_BASE = "https://freedium-mirror.cfd/"` and `_no_retry_status_codes: frozenset[int] = frozenset({403, 429})` class attributes; (3) add `_parse_freedium(self, soup: BeautifulSoup) -> str` — find `soup.find("div", class_="main-content")`, raise `UnsupportedContentTypeError` if missing, call `self.convert_to_markdown(content)`; (4) override `extract()` to catch `HTTPStatusError` for status codes in `_no_retry_status_codes`, construct `freedium_url`, fetch HTML, call `self._parse_freedium(soup)`, set `exc.url = url` on any `MdfetchError` (depends on T001)
+- [x] T003 [P] [US1] Add unit tests for `_parse_freedium()` in `tests/unit/test_medium_extractor.py`: (a) valid Freedium HTML with `<div class="main-content">` containing `<h4>` and `<p>` — assert non-empty Markdown with `####` headings; (b) Freedium HTML missing `main-content` div — assert `UnsupportedContentTypeError` is raised; (c) mock full `extract()` flow with httpx returning 403 on medium.com and valid Freedium HTML on second call — assert Markdown returned and Freedium URL (`https://freedium-mirror.cfd/https://medium.com/...`) was fetched; (d) mock 403 on medium.com AND error on Freedium — assert exception raised with `exc.url` equal to original medium URL
+- [x] T004 [P] [US1] Add `@pytest.mark.integration` test in `tests/integration/test_medium_integration.py` for a known paywalled Medium URL (e.g. `https://stn1slv.medium.com/from-drift-to-parity-building-a-feedback-loop-for-spec-driven-development-b3bd3d9c0021`); assert `extract()` returns a string containing at least one expected keyword from the article title (e.g. `"Parity"` or `"Spec-Driven"`)
+- [x] T005 [US1] Implement fallback in `src/mdfetch/providers/medium.py`: (1) add imports for `HTTPStatusError` and `UnsupportedContentTypeError`; (2) add `_FREEDIUM_BASE = "https://freedium-mirror.cfd/"` and `_no_retry_status_codes: frozenset[int] = frozenset({403, 429})` class attributes; (3) add `_parse_freedium(self, soup: BeautifulSoup) -> str` — find `soup.find("div", class_="main-content")`, raise `UnsupportedContentTypeError` if missing, call `self.convert_to_markdown(content)`; (4) override `extract()` to catch `HTTPStatusError` for status codes in `_no_retry_status_codes`, construct `freedium_url`, fetch HTML, call `self._parse_freedium(soup)`, set `exc.url = url` on any `MdfetchError` (depends on T001)
 
 **Checkpoint**: US1 fully functional — 403 on medium.com transparently resolved via Freedium
 
@@ -52,7 +52,7 @@ No new setup required — all project infrastructure exists. Proceeding directly
 
 **Independent Test**: Mock `httpx.Client` to return 429 on the medium.com call, valid HTML on the Freedium call. Verify no `time.sleep` is called before the Freedium request.
 
-- [ ] T006 [P] [US2] Add unit tests in `tests/unit/test_medium_extractor.py` for 429 fallback: mock `httpx.Client` to return 429 on the medium.com request; verify `time.sleep` is NOT called before the Freedium request (use `patch("mdfetch.base.time.sleep")`), and valid Markdown is returned from the Freedium path (depends on T005)
+- [x] T006 [P] [US2] Add unit tests in `tests/unit/test_medium_extractor.py` for 429 fallback: mock `httpx.Client` to return 429 on the medium.com request; verify `time.sleep` is NOT called before the Freedium request (use `patch("mdfetch.base.time.sleep")`), and valid Markdown is returned from the Freedium path (depends on T005)
 
 **Checkpoint**: US2 fully functional — 429 handled identically to 403 with no medium.com retries
 
@@ -64,7 +64,7 @@ No new setup required — all project infrastructure exists. Proceeding directly
 
 **Independent Test**: Mock `httpx.Client` to return 200 with valid HTML. Assert `extract()` returns Markdown and no second HTTP request is made.
 
-- [ ] T007 [P] [US3] Add unit test in `tests/unit/test_medium_extractor.py` verifying that `httpx.Client.stream` is called exactly once (only the medium.com request) when the primary fetch succeeds with HTTP 200 (depends on T005)
+- [x] T007 [P] [US3] Add unit test in `tests/unit/test_medium_extractor.py` verifying that `httpx.Client.stream` is called exactly once (only the medium.com request) when the primary fetch succeeds with HTTP 200 (depends on T005)
 
 **Checkpoint**: All three user stories independently verified
 
@@ -72,8 +72,8 @@ No new setup required — all project infrastructure exists. Proceeding directly
 
 ## Phase 6: Polish & Cross-Cutting Concerns
 
-- [ ] T008 [P] Run `uv run ruff check src/ tests/` and `uv run mypy src/` and fix any lint or type errors introduced by T001 and T005
-- [ ] T009 Run `make test` (full unit suite) and confirm all tests pass including T002, T003, T006, T007
+- [x] T008 [P] Run `uv run ruff check src/ tests/` and `uv run mypy src/` and fix any lint or type errors introduced by T001 and T005
+- [x] T009 Run `make test` (full unit suite) and confirm all tests pass including T002, T003, T006, T007
 
 ---
 

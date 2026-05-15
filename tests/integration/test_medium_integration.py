@@ -10,6 +10,13 @@ from mdfetch import extract
 
 SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
 
+MEDIUM_PAYWALLED_TEST_CASES = [
+    (
+        "https://stn1slv.medium.com/from-drift-to-parity-building-a-feedback-loop-for-spec-driven-development-b3bd3d9c0021",
+        "Parity",
+    ),
+]
+
 MEDIUM_TEST_CASES = [
     (
         "https://stn1slv.medium.com/from-drift-to-parity-building-a-feedback-loop-for-spec-driven-development-b3bd3d9c0021",
@@ -24,6 +31,23 @@ MEDIUM_TEST_CASES = [
         "integration-digest-december-2025.md",
     ),
 ]
+
+
+@pytest.mark.integration
+@pytest.mark.parametrize("url,keyword", MEDIUM_PAYWALLED_TEST_CASES)
+def test_freedium_fallback_returns_content(
+    url: str, keyword: str, http_retries: int, http_retry_delay: float
+) -> None:
+    """Assert paywalled articles are accessible via Freedium fallback.
+
+    If medium.com returns 403 the extractor falls back to freedium-mirror.cfd.
+    We assert the result is non-empty and contains a known keyword from the title.
+    """
+    result = extract(url, retries=http_retries, retry_delay=http_retry_delay)
+    assert result, "Freedium fallback returned empty content"
+    assert keyword in result, (
+        f"Expected keyword {keyword!r} not found in Freedium fallback output for {url}"
+    )
 
 
 @pytest.mark.integration
