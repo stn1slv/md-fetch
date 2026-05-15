@@ -17,7 +17,7 @@
 
 **Purpose**: Establish green baseline before making any changes
 
-- [ ] T001 Verify baseline by running `make test` — confirm 65 unit tests pass before changes
+- [X] T001 Verify baseline by running `make test` — confirm 65 unit tests pass before changes
 
 ---
 
@@ -37,10 +37,10 @@
 
 ### Implementation for User Story 1
 
-- [ ] T002 [US1] Remove `_MAX_RETRY_DELAY = 60.0` constant and change `time.sleep(min(_MAX_RETRY_DELAY, retry_delay * (2**attempt)))` to `time.sleep(retry_delay)` in `src/mdfetch/base.py`
-- [ ] T003 [US1] Update `fetch_html` docstring in `src/mdfetch/base.py` to say "fixed delay of *retry_delay* seconds" (remove mention of exponential schedule and `min(60, …)` formula)
-- [ ] T004 [P] [US1] Update `extract()` docstring in `src/mdfetch/__init__.py` — replace "exponential backoff starting at *retry_delay* seconds" with "fixed delay of *retry_delay* seconds between attempts"
-- [ ] T005 [P] [US1] Delete `test_exponential_backoff_sleep_sequence` and `test_exponential_backoff_capped_at_max_delay` test methods from `tests/unit/test_fetch_errors.py`
+- [X] T002 [US1] Remove `_MAX_RETRY_DELAY = 60.0` constant and change `time.sleep(min(_MAX_RETRY_DELAY, retry_delay * (2**attempt)))` to `time.sleep(retry_delay)` in `src/mdfetch/base.py`
+- [X] T003 [US1] Update `fetch_html` docstring in `src/mdfetch/base.py` to say "fixed delay of *retry_delay* seconds" (remove mention of exponential schedule and `min(60, …)` formula)
+- [X] T004 [P] [US1] Update `extract()` docstring in `src/mdfetch/__init__.py` — replace "exponential backoff starting at *retry_delay* seconds" with "fixed delay of *retry_delay* seconds between attempts"
+- [X] T005 [P] [US1] Delete `test_exponential_backoff_sleep_sequence` and `test_exponential_backoff_capped_at_max_delay` test methods from `tests/unit/test_fetch_errors.py`
 
 **Checkpoint**: Run `make test` — all remaining unit tests pass; no reference to exponential backoff remains in `src/`.
 
@@ -54,10 +54,10 @@
 
 ### Implementation for User Story 2
 
-- [ ] T006 [P] [US2] Remove `http_retries` and `http_retry_delay` fixture parameters from the test function signature and inline `retries=3, retry_delay=2.0` in the `extract()` call in `tests/integration/test_medium_integration.py`; remove the env-var docstring line from the test docstring
-- [ ] T007 [P] [US2] Same changes as T006 in `tests/integration/test_devto_integration.py`
-- [ ] T008 [US2] Delete `tests/integration/conftest.py` (file is empty after T006 + T007 remove all fixture consumers; no other test files reference these fixtures)
-- [ ] T009 [US2] Remove the `MDFETCH_RETRIES: "6"` and `MDFETCH_RETRY_DELAY: "2.0"` lines from the `env:` block of the `Run integration tests` step in `.github/workflows/integration.yml`
+- [X] T006 [P] [US2] Remove `http_retries` and `http_retry_delay` fixture parameters from the test function signature and inline `retries=3, retry_delay=2.0` in the `extract()` call in `tests/integration/test_medium_integration.py`; remove the env-var docstring line from the test docstring
+- [X] T007 [P] [US2] Same changes as T006 in `tests/integration/test_devto_integration.py`
+- [X] T008 [US2] Delete `tests/integration/conftest.py` (file is empty after T006 + T007 remove all fixture consumers; no other test files reference these fixtures)
+- [X] T009 [US2] Remove the `MDFETCH_RETRIES: "6"` and `MDFETCH_RETRY_DELAY: "2.0"` lines from the `env:` block of the `Run integration tests` step in `.github/workflows/integration.yml`
 
 **Checkpoint**: Run `make integration` — all 6 tests pass; no `MDFETCH_*` variables appear anywhere in the codebase.
 
@@ -67,10 +67,10 @@
 
 **Purpose**: Final validation — confirm all quality gates pass together
 
-- [ ] T010 Run `make test` to confirm all unit tests pass (expected: 63 tests — 65 minus the 2 deleted backoff tests)
-- [ ] T011 Run `uv run mypy src/` to confirm zero type errors after docstring and code changes
-- [ ] T012 Run `make lint` to confirm ruff check passes with no violations
-- [ ] T013 Verify no remaining references to `_MAX_RETRY_DELAY`, `MDFETCH_RETRIES`, or `MDFETCH_RETRY_DELAY` anywhere in the codebase by running `grep -r "MAX_RETRY_DELAY\|MDFETCH_RETRIES\|MDFETCH_RETRY_DELAY" src/ tests/ .github/`
+- [X] T010 Run `make test` to confirm all unit tests pass (expected: 63 tests — 65 minus the 2 deleted backoff tests)
+- [X] T011 Run `uv run mypy src/` to confirm zero type errors after docstring and code changes
+- [X] T012 Run `make lint` to confirm ruff check passes with no violations
+- [X] T013 Verify no remaining references to `_MAX_RETRY_DELAY`, `MDFETCH_RETRIES`, or `MDFETCH_RETRY_DELAY` anywhere in the codebase by running `grep -r "MAX_RETRY_DELAY\|MDFETCH_RETRIES\|MDFETCH_RETRY_DELAY" src/ tests/ .github/`
 - [ ] T014 Run `make integration` without any `MDFETCH_*` env vars set and confirm all 6 integration tests pass (verifies SC-002)
 
 ---
