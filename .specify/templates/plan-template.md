@@ -13,32 +13,31 @@
 ## Technical Context
 
 <!--
-  ACTION REQUIRED: Replace the content in this section with the technical details
-  for the project. The structure here is presented in advisory capacity to guide
-  the iteration process.
+  The values below reflect mdfetch's established stack.
+  Override only if this feature deviates from the norm.
 -->
 
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
+**Language/Version**: Python 3.12+ (matches CI matrix: 3.12–3.14)
 
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
+**Primary Dependencies**: `httpx` (HTTP fetch), `BeautifulSoup` / `lxml` (HTML parsing), `markdownify` (Markdown conversion), `pytest` (testing)
 
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
+**Storage**: N/A — stateless extraction library
 
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
+**Testing**: `pytest` via `uv run pytest` — unit tests (no network) + integration tests (`-m integration`, real URLs + snapshots)
 
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
+**Target Platform**: PyPI library (cross-platform)
 
-**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
+**Project Type**: Library
 
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
+**Performance Goals**: Inherits base class 30-second fetch timeout; no additional targets unless spec overrides
 
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+**Constraints**: [e.g., "One new provider file; no changes to shared infrastructure" or NEEDS CLARIFICATION]
 
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Scale/Scope**: Single-article extraction per call
 
 ## Constitution Check
 
-*GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
+*GATE: Must pass before implementation. Re-check after design phase.*
 
 - [ ] Validates Provider Pattern Architecture (No code duplication, adheres to Open/Closed Principle)
 - [ ] Confirms Technology Stack (`httpx`, `BeautifulSoup`, `Markdownify`, `pytest`)
@@ -60,58 +59,70 @@ specs/[###-feature]/
 └── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
-### Source Code (repository root)
+### Source Code
 <!--
-  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
-  for this feature. Delete unused options and expand the chosen structure with
-  real paths (e.g., apps/admin, packages/something). The delivered plan must
-  not include Option labels.
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete file
+  list for this feature. The layout always follows the established provider pattern.
 -->
 
 ```text
-# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
-src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+src/mdfetch/providers/
+└── [platform].py          # NEW: [Platform]Extractor
 
-tests/
-├── contract/
-├── integration/
-└── unit/
+tests/unit/
+└── test_[platform]_extractor.py   # NEW: unit tests (no network)
 
-# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure: feature modules, UI flows, platform tests]
+tests/integration/
+├── snapshots/
+│   └── [platform]-[article-slug].md  # NEW: snapshot(s)
+└── test_[platform]_integration.py    # NEW: integration tests (real URLs)
 ```
 
-**Structure Decision**: [Document the selected structure and reference the real
-directories captured above]
+**Non-runtime changes** (if any): [e.g., "README.md (supported platforms table), tests/unit/test_router.py (unsupported-domain fixture update)"]
+
+## Extraction Algorithm
+
+<!--
+  ACTION REQUIRED: Replace the pseudocode below with the actual extraction
+  pipeline for this platform, derived from research.md analysis.
+-->
+
+```
+extract(url):
+  html ← fetch_html(url)                   # base class; retries on all transient errors
+  soup ← BeautifulSoup(html, "lxml")
+  body_tag ← clean_html(soup)              # → article body with chrome stripped
+  return convert_to_markdown(body_tag)
+
+clean_html(soup):
+  1. Find [article body container]          → raise UnsupportedContentTypeError if absent
+  2. Strip [non-content elements]
+  3. Convert [embedded content] → anchor links
+  4. Find [title element]                   → prepend to body
+  5. Find [subtitle element] (optional)     → prepend after title
+  6. Return body tag
+
+convert_to_markdown(tag):
+  md ← markdownify(str(tag), heading_style="ATX", code_language="", strip=["script","style"])
+  md ← strip leading/trailing whitespace
+  md ← collapse 3+ blank lines → single blank line
+  if md empty → raise EmptyContentError
+  return md
+```
+
+## Error Mapping
+
+| Condition | Exception |
+|-----------|-----------|
+| Article body container not found | `UnsupportedContentTypeError` |
+| Body found but no extractable text | `EmptyContentError` |
+| HTTP error (any non-2xx after retries) | `HTTPStatusError` |
+| Network / timeout failure | `FetchError` |
 
 ## Complexity Tracking
 
 > **Fill ONLY if Constitution Check has violations that must be justified**
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+|-----------|------------|--------------------------------------|
+| [e.g., modifies base class] | [current need] | [why provider-only approach insufficient] |

@@ -21,6 +21,7 @@
 -->
 
 ## [Category 1]
+<!-- Example categories: Provider Compliance, Extraction Quality, Test Coverage, Constitution Gate -->
 
 - [ ] CHK001 First checklist item with clear action
 - [ ] CHK002 Second checklist item
