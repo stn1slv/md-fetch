@@ -43,7 +43,7 @@ class BaseExtractor(ABC):
         attempt *n* is ``min(60, retry_delay * 2 ** n)`` seconds.  Status codes listed
         in :attr:`_no_retry_status_codes` are raised immediately without any retry or
         sleep.  Pass ``_no_retry_codes`` to override the class-level set for this call
-        only (used internally to disable the override on Freedium fetches).
+        only (used internally for per-call overrides).
         """
         no_retry = self._no_retry_status_codes if _no_retry_codes is None else _no_retry_codes
         last_exc: FetchError | None = None

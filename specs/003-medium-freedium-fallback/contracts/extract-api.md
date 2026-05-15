@@ -29,7 +29,7 @@ MdfetchError
 ├── UnsupportedContentTypeError
 ├── EmptyContentError
 └── FetchError
-    └── HTTPStatusError  (status_code: int, url: str)
+    └── HTTPStatusError  (status_code: int, url: str | None)
 ```
 
 ## Guarantees introduced by this feature
@@ -37,4 +37,5 @@ MdfetchError
 - When fallback is invoked, `exc.url` on any raised exception contains the **original Medium URL**, not the Freedium mirror URL.
 - No new exception types are introduced.
 - No new parameters are added to `extract()`.
-- The Freedium mirror URL is never exposed in return values, exception messages visible to callers, or the `exc.url` field.
+- The Freedium mirror URL is never exposed in return values or the `exc.url` field.
+- `exc.url` is the authoritative public URL field and is always set to the original Medium URL when fallback fails. `exc.message` is an internal implementation detail and may contain transport-level information (e.g. the URL that was actually fetched); callers MUST NOT rely on its contents.
