@@ -51,5 +51,5 @@ uv run mypy src/  # type check
 ```
 
 <!-- SPECKIT START -->
-**Recent changes**: `003-medium-freedium-fallback` — Transparent Freedium mirror fallback for Medium 403/429 responses; `_no_retry_status_codes` hook on `BaseExtractor`; `_parse_freedium()` with h4→h3 heading remap on `MediumExtractor`
+**Active plan**: `specs/004-remove-backoff/plan.md` — Remove exponential backoff and env-var retry config; restore fixed-delay retries; delete `MDFETCH_RETRIES`/`MDFETCH_RETRY_DELAY` env vars from CI and integration test fixtures
 <!-- SPECKIT END -->

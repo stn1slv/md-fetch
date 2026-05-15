@@ -28,20 +28,15 @@ MEDIUM_TEST_CASES = [
 
 @pytest.mark.integration
 @pytest.mark.parametrize("url,snapshot", MEDIUM_TEST_CASES)
-def test_extract_contains_snapshot(
-    url: str, snapshot: str, http_retries: int, http_retry_delay: float
-) -> None:
+def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
     """Assert the extracted Markdown contains all content stored in the snapshot.
 
     Snapshots are subsets of the full extraction output. The containment check
     ``expected in result`` verifies the snapshot content is present without
     requiring an exact match, making tests resilient to minor structural changes.
-
-    Retry count and delay are controlled via MDFETCH_RETRIES and MDFETCH_RETRY_DELAY
-    environment variables (defaults: 3 total attempts, 2.0 s base delay, exponential backoff).
     """
     expected = (SNAPSHOTS_DIR / snapshot).read_text(encoding="utf-8")
-    result = extract(url, retries=http_retries, retry_delay=http_retry_delay)
+    result = extract(url, retries=3, retry_delay=2.0)
     assert expected in result, (
         f"Extracted content for {snapshot!r} does not contain the stored snapshot body.\n"
         f"To regenerate the snapshot, run:\n"

@@ -30,9 +30,6 @@ jobs:
 
       - name: Run integration tests
         id: integration
-        env:
-          MDFETCH_RETRIES: "6"
-          MDFETCH_RETRY_DELAY: "2.0"
         run: make integration
 
       - name: Create issue on failure

@@ -92,32 +92,10 @@ class TestFetchErrors:
             with pytest.raises(FetchError, match="exceeded"):
                 extractor.fetch_html("https://medium.com/article", retries=1)
 
-    def test_exponential_backoff_sleep_sequence(self, extractor: MediumExtractor) -> None:
-        mock = _make_stream_mock(status_code=503, is_success=False)
-        with patch("httpx.Client", return_value=mock):
-            with patch("mdfetch.base.time.sleep") as mock_sleep:
-                with pytest.raises(HTTPStatusError):
-                    extractor.fetch_html("https://medium.com/article", retries=4, retry_delay=1.0)
-
-        # 4 attempts → 3 inter-attempt sleeps: 1.0 * 2^0, 2^1, 2^2
-        assert mock_sleep.call_args_list == [call(1.0), call(2.0), call(4.0)]
-
-    def test_exponential_backoff_capped_at_max_delay(self, extractor: MediumExtractor) -> None:
-        mock = _make_stream_mock(status_code=503, is_success=False)
-        with patch("httpx.Client", return_value=mock):
-            with patch("mdfetch.base.time.sleep") as mock_sleep:
-                with pytest.raises(HTTPStatusError):
-                    # 7 attempts, retry_delay=2.0: uncapped sequence would be
-                    # 2, 4, 8, 16, 32, 64 — last value must be clamped to 60
-                    extractor.fetch_html("https://medium.com/article", retries=7, retry_delay=2.0)
-
-        delays = [c.args[0] for c in mock_sleep.call_args_list]
-        assert delays == [2.0, 4.0, 8.0, 16.0, 32.0, 60.0]
-
     def test_no_retry_status_codes_raises_immediately_without_sleep(
         self, extractor: MediumExtractor
     ) -> None:
-        """Status codes in _no_retry_status_codes must raise immediately, no backoff sleep."""
+        """Status codes in _no_retry_status_codes must raise immediately, no retry sleep."""
         mock = _make_stream_mock(status_code=403, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
@@ -142,7 +120,7 @@ class TestFetchErrors:
     def test_status_code_not_in_no_retry_set_still_retries(
         self, extractor: MediumExtractor
     ) -> None:
-        """Status codes NOT in _no_retry_status_codes (e.g. 503) must still trigger backoff."""
+        """Status codes NOT in _no_retry_status_codes must still trigger retry with fixed delay."""
         mock = _make_stream_mock(status_code=503, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
@@ -150,3 +128,4 @@ class TestFetchErrors:
                     extractor.fetch_html("https://medium.com/article", retries=3, retry_delay=1.0)
 
         assert mock_sleep.call_count == 2  # 3 attempts → 2 sleeps
+        assert mock_sleep.call_args_list == [call(1.0), call(1.0)]  # fixed delay, not exponential
