@@ -13,11 +13,12 @@ src/mdfetch/
 └── providers/
     ├── __init__.py
     ├── medium.py     # MediumExtractor (medium.com + *.medium.com)
-    └── devto.py      # DevToExtractor (dev.to)
+    ├── devto.py      # DevToExtractor (dev.to)
+    └── substack.py   # SubstackExtractor (substack.com + *.substack.com)
 
 tests/
 ├── unit/             # pytest unit tests (no network)
-└── integration/      # real network tests (Medium + dev.to URLs + snapshots)
+└── integration/      # real network tests (Medium + dev.to + Substack URLs + snapshots)
 
 .github/workflows/
 ├── ci.yml            # lint + unit tests on push/PR (Python 3.12–3.14)
@@ -51,7 +52,10 @@ uv run mypy src/  # type check
 ```
 
 <!-- SPECKIT START -->
-## Recent Changes
+## Known Issues & Gotchas
 
-- **004-remove-backoff**: Removed exponential backoff from `fetch_html`; restored fixed-delay retries (`retry_delay` seconds per attempt, constant between attempts). Deleted `MDFETCH_RETRIES`/`MDFETCH_RETRY_DELAY` env-var support from CI and integration fixtures; hardcoded `retries=3, retry_delay=2.0` in all integration tests. Deleted `tests/integration/conftest.py`.
+### ⚠️ test_router.py "unsupported domain" fixture must be updated per new provider
+**Issue:** When a new provider registers a domain (e.g., `dev.to`, then `substack.com`), the existing `test_raises_for_unsupported_domain` and `test_unsupported_error_includes_domain` tests in `tests/unit/test_router.py` use that domain as their "unsupported" example and start routing successfully instead of raising `UnsupportedPlatformError`.
+**Root Cause:** The domain used in the router tests was `substack.com` after the dev.to feature; adding SubstackExtractor made it valid too.
+**Prevention Rule:** When adding a new provider, update the unsupported-domain fixture in `test_router.py` to use a domain not registered by any provider (currently `wordpress.com`).
 <!-- SPECKIT END -->

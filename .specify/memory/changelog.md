@@ -2,6 +2,32 @@
 
 ---
 
+### mdfetch — Substack Provider — 2026-05-15
+
+**Branch**: `005-substack-provider`
+**Spec**: specs/005-substack-provider
+
+**What was added**:
+- `SubstackExtractor` provider for `substack.com` and all `*.substack.com` subdomain articles, auto-discovered via `@register` decorator
+- Article body isolation from `div.body.markup`; title prepended from `h1.post-title` in `div.post-header` (unconditional — structurally outside body); optional subtitle from `h3.subtitle` prepended after title
+- `div.subscription-widget-wrap` stripped (inline subscribe CTAs and paywall terminal widget — achieves silent free-preview truncation for paywalled posts without error or marker)
+- `<iframe>` and unknown `div[data-component-name]` embed containers converted to plain anchor links (consistent with dev.to embed handling)
+- HTTP 429 retried via base-class fixed-delay retry (no `_no_retry_status_codes` override — no Freedium-style mirror for Substack)
+- `UnsupportedContentTypeError` raised when `div.body.markup` is absent; `EmptyContentError` raised when body yields no extractable text
+- 18 unit tests in `tests/unit/test_substack_extractor.py`; 3 integration tests in `tests/integration/test_substack_integration.py` with 2 snapshot golden files
+- `test_router.py` unsupported-domain fixture updated from `substack.com` to `wordpress.com`
+
+**New Components**:
+- `src/mdfetch/providers/substack.py` — SubstackExtractor
+- `tests/unit/test_substack_extractor.py` — 18 unit tests
+- `tests/integration/test_substack_integration.py` — 3 integration tests
+- `tests/integration/snapshots/substack-kafka-topic-types.md`
+- `tests/integration/snapshots/substack-api-trends-2025.md`
+
+**Tasks Completed**: 21/21
+
+---
+
 ### mdfetch — Remove Exponential Backoff — 2026-05-15
 
 **Branch**: `004-remove-backoff`

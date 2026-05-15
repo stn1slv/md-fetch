@@ -1,13 +1,13 @@
 # mdfetch — Main Specification
 
 **Last Updated**: 2026-05-15
-**Sources**: [specs/001-mdfetch-medium-extractor/spec.md], [specs/002-devto-provider/spec.md], [specs/003-medium-freedium-fallback/spec.md], [specs/004-remove-backoff/spec.md]
+**Sources**: [specs/001-mdfetch-medium-extractor/spec.md], [specs/002-devto-provider/spec.md], [specs/003-medium-freedium-fallback/spec.md], [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md]
 
 ---
 
 ## Overview
 
-`mdfetch` is a Python library that extracts article content from web platforms and returns it as clean, well-structured Markdown. The library enforces a provider pattern — an abstract base defines the extraction contract, and each supported platform is implemented as a separate, independent provider. Supported platforms: `medium.com` (and subdomains), `dev.to`.
+`mdfetch` is a Python library that extracts article content from web platforms and returns it as clean, well-structured Markdown. The library enforces a provider pattern — an abstract base defines the extraction contract, and each supported platform is implemented as a separate, independent provider. Supported platforms: `medium.com` (and subdomains), `dev.to`, `substack.com` (and `*.substack.com` subdomains).
 
 ---
 
@@ -117,6 +117,40 @@ A developer calling `extract()` encounters a transient network error. The librar
 
 ---
 
+### US-011 — Extract a Free Substack Article to Markdown (P1)
+[Source: specs/005-substack-provider]
+
+A developer calls `extract()` with a free public `*.substack.com/p/...` URL. The function fetches the article and returns its content as clean Markdown — with no subscription banners, navigation menus, author bios, share buttons, or page chrome.
+
+**Acceptance Scenarios**:
+1. Given a valid URL pointing to a free public Substack post, when `extract()` is called, then it returns a non-empty Markdown string containing the article title as a top-level heading followed by the body content.
+2. Given a Substack post with multiple headings, paragraphs, lists, and inline links, when `extract()` is called, then the returned Markdown preserves all headings, paragraphs, lists, and hyperlinks while stripping subscription CTAs and navigation elements.
+3. Given a Substack post containing images, when `extract()` is called, then images appear in the output as Markdown image syntax (`![alt](url)`).
+
+---
+
+### US-012 — Handle a Paywalled Substack Post Gracefully (P2)
+[Source: specs/005-substack-provider]
+
+A developer calls `extract()` with a URL for a subscriber-only Substack post. The function returns the visible free-preview content as Markdown without raising an error.
+
+**Acceptance Scenarios**:
+1. Given a Substack post that is subscriber-only, when `extract()` is called, then it returns the freely available preview section as Markdown without raising an exception.
+2. Given a paywalled post whose free preview contains at least one paragraph, when `extract()` is called, then the output does not contain the paywall call-to-action text (e.g., "Subscribe to read the full post").
+
+---
+
+### US-013 — Reject Non-Article Substack Pages (P3)
+[Source: specs/005-substack-provider]
+
+A developer accidentally passes a Substack URL that does not point to an article (e.g., a publication homepage). The function raises a typed exception rather than returning empty or garbage Markdown.
+
+**Acceptance Scenarios**:
+1. Given a Substack publication homepage URL, when `extract()` is called, then `UnsupportedContentTypeError` is raised.
+2. Given a Substack post whose extractable text is empty after stripping all chrome, when `extract()` is called, then `EmptyContentError` is raised.
+
+---
+
 ### US-006 — Integration Tests Pass Against Real dev.to Article URLs (P3)
 [Source: specs/002-devto-provider]
 
@@ -164,6 +198,19 @@ A developer runs the integration test suite and all dev.to integration tests pas
 - **FR-027**: The Freedium fallback MUST be unconditionally active for all Medium URL extractions — no caller configuration, opt-in flag, or extractor parameter is required or supported. [Source: specs/003-medium-freedium-fallback]
 - **FR-028**: The Freedium fallback MUST be fully transparent to the caller — no warning, signal, metadata, or result field shall indicate which source (medium.com or Freedium) provided the content. [Source: specs/003-medium-freedium-fallback]
 
+### Substack Platform
+- **FR-030**: The library MUST route all `substack.com` and `*.substack.com` URLs to the Substack provider using the existing domain-registration mechanism. [Source: specs/005-substack-provider]
+- **FR-031**: The library MUST extract the main article body from a Substack post page (`div.body.markup`) and return it as clean Markdown. [Source: specs/005-substack-provider]
+- **FR-032**: The library MUST strip all non-content elements from a Substack article page before conversion, including: navigation headers, subscription call-to-action blocks, paywall nag prompts, social share buttons, author bio sections, comment sections, and page footers. [Source: specs/005-substack-provider]
+- **FR-033**: The library MUST prepend the article title as a top-level Markdown heading (`# Title`) from `h1.post-title` in `div.post-header`. Because Substack's HTML structure always places the post title outside `div.body.markup`, unconditional prepend achieves exactly-once inclusion. [Source: specs/005-substack-provider]
+- **FR-034**: The library MUST preserve the article's structural content: headings (all levels), paragraphs, ordered and unordered lists, inline code, fenced code blocks, blockquotes, hyperlinks, images, and article subtitle (when present as `h3.subtitle` in the post header). [Source: specs/005-substack-provider]
+- **FR-035**: The library MUST raise `UnsupportedContentTypeError` when the fetched Substack page does not contain a recognisable article body element (`div.body.markup`). [Source: specs/005-substack-provider]
+- **FR-036**: The library MUST raise `EmptyContentError` when the Substack article body is present but yields no extractable text after stripping. [Source: specs/005-substack-provider]
+- **FR-037**: For paywalled Substack posts, the library MUST silently extract only the publicly visible free-preview section without raising an exception and without appending any truncation marker, provided the preview contains at least some text. [Source: specs/005-substack-provider]
+- **FR-038**: The library MUST collapse runs of three or more consecutive blank lines to a single blank line in the Substack output Markdown. [Source: specs/005-substack-provider]
+- **FR-039**: The library MUST NOT treat HTTP 429 responses from Substack as a non-retryable condition; 429 MUST be retried up to the configured retry count with the standard fixed delay. [Source: specs/005-substack-provider]
+- **FR-040**: The library MUST convert embedded third-party content in Substack posts (e.g., tweet embeds, YouTube video iframes, and similar rich-media widgets) to plain anchor links using the embed's source URL, matching the pattern used by the dev.to provider. [Source: specs/005-substack-provider]
+
 ### dev.to Platform
 - **FR-015**: The library MUST add `dev.to` to the provider router so that any URL with the `dev.to` domain is dispatched to the dev.to provider without any change to the caller's code. [Source: specs/002-devto-provider]
 - **FR-016**: The library MUST include a dev.to provider that fetches the article page, isolates the main article body from `<div id="article-body">`, removes all non-content elements (navigation, social reaction widgets, comments, author sidebar, tag links), and returns the body as Markdown. [Source: specs/002-devto-provider]
@@ -190,7 +237,26 @@ A developer runs the integration test suite and all dev.to integration tests pas
 |-----------|------|-------------|
 | `DOMAINS` | `frozenset[str]` | Domain suffixes this provider handles (e.g., `{"medium.com"}`, `{"dev.to"}`) |
 
-**Invariants**: Each domain suffix registered to exactly one provider. Stateless — every call is independent. Registered providers: `MediumExtractor` (medium.com), `DevToExtractor` (dev.to).
+**Invariants**: Each domain suffix registered to exactly one provider. Stateless — every call is independent. Registered providers: `MediumExtractor` (medium.com), `DevToExtractor` (dev.to), `SubstackExtractor` (substack.com and all `*.substack.com` subdomains).
+
+### Substack Post
+[Source: specs/005-substack-provider]
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `url` | `str` | A `*.substack.com/p/<slug>` URL (or equivalent custom-domain path) |
+| `title` | `str` | Article title from `h1.post-title` in `div.post-header` |
+| `subtitle` | `str \| None` | Optional subtitle/deck from `h3.subtitle` in `div.post-header` |
+| `body` | `Tag` | Prose content inside `div.body.markup` |
+
+**Validation**: Page must contain `div.body.markup`; absent → `UnsupportedContentTypeError`. Body must yield non-empty text after stripping → else `EmptyContentError`.
+
+### Free Preview
+[Source: specs/005-substack-provider]
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `content` | `str` | Portion of a paywalled post publicly readable without a subscription |
+
+**Boundary**: In the DOM, bounded by the last `div.subscription-widget-wrap` at the truncation point. Stripping that element silently achieves truncation.
 
 ### ExtractionResult (Output)
 | Attribute | Type | Description |
@@ -257,6 +323,11 @@ caller provides URL string
 - **dev.to liquid-tag embeds**: Embedded third-party widgets (GitHub Gists, CodePen, YouTube) serialised as `<div class="ltag__*" data-url="...">` are replaced with plain Markdown links; they are never silently dropped.
 - **dev.to cover image**: The cover image lives in `<header class="crayons-article__header">`, not in `div#article-body` — the provider explicitly extracts and prepends it.
 - **dev.to HTML structure changes**: If `div#article-body` is absent, `UnsupportedContentTypeError` is raised.
+- **Substack paywalled posts**: `div.body.markup` already contains only the free-preview content; stripping `div.subscription-widget-wrap` achieves silent truncation (no error, no marker). [Source: specs/005-substack-provider]
+- **Substack homepage URLs**: `div.body.markup` is absent → `UnsupportedContentTypeError` is raised immediately. [Source: specs/005-substack-provider]
+- **Substack rich embeds**: `<iframe>` elements and `div[data-component-name]` containers (excluding `SubscribeWidget` and `Image2ToDOM`) are converted to plain anchor links using the embed's source URL. [Source: specs/005-substack-provider]
+- **Substack HTTP 429**: Treated as a retryable transient error (no `_no_retry_status_codes` override) — contrasts with `MediumExtractor` which uses `frozenset({403, 429})` to trigger Freedium fallback. [Source: specs/005-substack-provider]
+- **Substack HTML structure changes**: If Substack redesigns and removes `div.body.markup`, the extractor will require an update.
 
 ---
 
@@ -274,6 +345,12 @@ caller provides URL string
 - **SC-010**: The returned Markdown for a dev.to article with headings, lists, and code blocks preserves all three structural element types in correct Markdown syntax. [Source: specs/002-devto-provider]
 - **SC-011**: 100% of integration tests pass against the three provided reference dev.to article URLs at the time of release. [Source: specs/002-devto-provider]
 - **SC-012**: The dev.to provider is delivered as exactly one new file; no existing source files are modified (except `test_router.py` for expected domain-example maintenance when the provider registers `dev.to`). [Source: specs/002-devto-provider]
+
+- **SC-021**: A free public Substack article returns Markdown that contains the full article title and body text with zero subscription prompt phrases (e.g., "Subscribe", "This post is for paid subscribers"). [Source: specs/005-substack-provider]
+- **SC-022**: A paywalled Substack post returns a non-empty Markdown string (the free preview) without raising an exception, provided the free preview contains at least one paragraph. [Source: specs/005-substack-provider]
+- **SC-023**: A Substack homepage URL raises `UnsupportedContentTypeError` within the normal fetch timeout. [Source: specs/005-substack-provider]
+- **SC-024**: The extracted Markdown for any Substack article contains no consecutive blank-line runs of three or more lines. [Source: specs/005-substack-provider]
+- **SC-025**: The Substack provider is exercised by at least one integration test using a real network request, matching the pattern established by existing providers. [Source: specs/005-substack-provider]
 
 ---
 
@@ -297,4 +374,4 @@ caller provides URL string
 
 ---
 
-*Last Updated: 2026-05-15 | Sources appended: [specs/004-remove-backoff/spec.md]*
+*Last Updated: 2026-05-15 | Sources appended: [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md]*

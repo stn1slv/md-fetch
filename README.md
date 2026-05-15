@@ -16,6 +16,7 @@ from mdfetch import extract
 # Works with any supported platform — just pass the URL
 markdown = extract("https://medium.com/some-publication/article-slug-abc123")
 markdown = extract("https://dev.to/username/article-slug")
+markdown = extract("https://example.substack.com/p/article-slug")
 print(markdown)
 ```
 
@@ -56,6 +57,7 @@ except EmptyContentError as e:
 |----------|---------|
 | Medium   | `medium.com`, `*.medium.com` |
 | dev.to   | `dev.to` |
+| Substack | `substack.com`, `*.substack.com` |
 
 ## Development
 
