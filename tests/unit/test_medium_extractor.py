@@ -229,15 +229,19 @@ class TestFreediumFallback:
 
     def test_both_fail_raises_with_original_url(self, extractor: MediumExtractor) -> None:
         original_url = "https://medium.com/some/article"
+        freedium_url = f"https://freedium-mirror.cfd/{original_url}"
         router = _do_fetch_router({
             "medium.com": HTTPStatusError("HTTP 403", status_code=403, url=original_url),
-            "freedium-mirror.cfd": HTTPStatusError("HTTP 503", status_code=503, url=None),
+            "freedium-mirror.cfd": HTTPStatusError(
+                f"HTTP 503 fetching {freedium_url}", status_code=503, url=freedium_url
+            ),
         })
         with patch.object(extractor, "_do_fetch", side_effect=router):
             with pytest.raises(HTTPStatusError) as exc_info:
                 extractor.extract(original_url, retries=1)
 
         assert exc_info.value.url == original_url
+        assert "freedium" not in exc_info.value.message
 
     def test_non_fallback_status_propagates_without_freedium(
         self, extractor: MediumExtractor

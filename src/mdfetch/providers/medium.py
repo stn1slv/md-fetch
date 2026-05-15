@@ -95,11 +95,13 @@ class MediumExtractor(BaseExtractor):
             if exc.status_code not in self._no_retry_status_codes:
                 raise
         freedium_url = f"{self._FREEDIUM_BASE}{url}"
-        html = self.fetch_html(freedium_url, retries=retries, retry_delay=retry_delay)
-        soup = BeautifulSoup(html, "lxml")
         try:
+            html = self.fetch_html(freedium_url, retries=retries, retry_delay=retry_delay)
+            soup = BeautifulSoup(html, "lxml")
             return self._parse_freedium(soup)
         except MdfetchError as inner_exc:
-            if inner_exc.url is None:
-                inner_exc.url = url
+            inner_exc.url = url
+            if freedium_url in inner_exc.message:
+                inner_exc.message = inner_exc.message.replace(freedium_url, url)
+                inner_exc.args = (inner_exc.message,)
             raise
