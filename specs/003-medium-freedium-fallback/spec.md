@@ -90,7 +90,7 @@ A developer calls the library's extract function for a publicly accessible Mediu
 ## Assumptions
 
 - The Freedium mirror constructs its article URLs by prepending its base URL to the original Medium URL (e.g., `https://freedium-mirror.cfd/https://medium.com/...`).
-- The Freedium mirror's HTML structure differs from medium.com: content is in `<div class="main-content">` (no `<article>` element) and section headings use `<h4>` instead of `<h2>`/`<h3>`. A dedicated Freedium parser is required. Verified by live inspection.
+- The Freedium mirror's HTML structure differs from medium.com: content is in `<div class="main-content">` (no `<article>` element) and section headings use `<h4>` instead of `<h2>`/`<h3>`. A dedicated Freedium parser is required. The parser remaps `<h4>`→`<h3>`, `<h5>`→`<h4>`, `<h6>`→`<h5>` before Markdown conversion so both paths produce structurally identical output (`###` headings). Verified by live inspection.
 - The fallback is unconditionally active for all Medium URLs — no opt-in or configuration knob exists. This was an explicit design decision.
 - Fallback applies only to 403 and 429 HTTP status codes; other error codes (e.g., 404, 500) are handled by the existing error logic without triggering a fallback.
 - Custom domains hosted on Medium (e.g., `*.medium.com` subdomains) are already covered by the existing Medium provider routing and will also benefit from the fallback.
@@ -103,3 +103,6 @@ A developer calls the library's extract function for a publicly accessible Mediu
 - Q: Should the Freedium fallback be always active for all callers, or configurable (opt-in via parameter or extractor config)? → A: Always active — fallback happens automatically with no caller configuration required (Option A).
 - Q: Should the Freedium fallback trigger immediately on first 403/429, or only after existing retry/backoff logic is exhausted? → A: Immediate — on first 403 or 429, skip retries against medium.com and fall back to Freedium directly (Option A).
 - Q: Should the caller receive any signal (warning, metadata, result field) indicating that the Freedium fallback was used? → A: Silent — fallback is a fully internal implementation detail; no signal is exposed to the caller (Option A).
+
+### Revision: Implementation Sync 2026-05-15
+- Assumption updated: h4 heading remap to h3 confirmed as shipped behavior in `_parse_freedium()`, producing identical Markdown structure from both medium.com and Freedium paths.

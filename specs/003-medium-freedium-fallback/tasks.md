@@ -38,8 +38,8 @@ No new setup required — all project infrastructure exists. Proceeding directly
 
 **Independent Test**: Call `extract()` with a mock that returns 403 on the first request and valid HTML on the second. Verify Markdown is returned and the second call used the Freedium URL.
 
-- [x] T003 [P] [US1] Add unit tests for `_parse_freedium()` in `tests/unit/test_medium_extractor.py`: (a) valid Freedium HTML with `<div class="main-content">` containing `<h4>` and `<p>` — assert non-empty Markdown with `###` headings (h4 remapped to h3) and no `####`; (b) Freedium HTML missing `main-content` div — assert `UnsupportedContentTypeError` is raised; (c) mock full `extract()` flow with httpx returning 403 on medium.com and valid Freedium HTML on second call — assert Markdown returned and Freedium URL (`https://freedium-mirror.cfd/https://medium.com/...`) was fetched; (d) mock 403 on medium.com AND error on Freedium — assert exception raised with `exc.url` equal to original medium URL and Freedium URL absent from message
-- [x] T004 [P] [US1] Add `@pytest.mark.integration` test in `tests/integration/test_medium_integration.py` for a known paywalled Medium URL (e.g. `https://stn1slv.medium.com/from-drift-to-parity-building-a-feedback-loop-for-spec-driven-development-b3bd3d9c0021`); assert `extract()` returns a string containing at least one expected keyword from the article title (e.g. `"Parity"` or `"Spec-Driven"`)
+- [x] T003 [P] [US1] Add unit tests for `_parse_freedium()` in `tests/unit/test_medium_extractor.py`: (a) valid Freedium HTML with `<div class="main-content">` containing `<h4>` and `<p>` — assert non-empty Markdown with `###` headings (h4 remapped to h3) and no `####`; (b) Freedium HTML missing `main-content` div — assert `UnsupportedContentTypeError` is raised; (c) mock full `extract()` flow with httpx returning 403 on medium.com and valid Freedium HTML on second call — assert Markdown returned and Freedium URL (`https://freedium-mirror.cfd/https://medium.com/...`) was fetched; (d) mock 403 on medium.com AND error on Freedium — assert exception raised with `exc.url` equal to original medium URL (`exc.url` is the authoritative field; message content is not asserted)
+- [x] T004 [P] [US1] Add `@pytest.mark.integration` coverage for paywalled Medium URL in `tests/integration/test_medium_integration.py`; the URL `https://stn1slv.medium.com/from-drift-to-parity-building-a-feedback-loop-for-spec-driven-development-b3bd3d9c0021` is included in `MEDIUM_TEST_CASES` and covered by `test_extract_contains_snapshot` (snapshot containment is a strictly stronger assertion than keyword presence)
 - [x] T005 [US1] Implement fallback in `src/mdfetch/providers/medium.py`: (1) add imports for `HTTPStatusError` and `UnsupportedContentTypeError`; (2) add `_FREEDIUM_BASE = "https://freedium-mirror.cfd/"` and `_no_retry_status_codes: frozenset[int] = frozenset({403, 429})` class attributes; (3) add `_parse_freedium(self, soup: BeautifulSoup) -> str` — find `soup.find("div", class_="main-content")`, raise `UnsupportedContentTypeError` if missing, call `self.convert_to_markdown(content)`; (4) override `extract()` to catch `HTTPStatusError` for status codes in `_no_retry_status_codes`, construct `freedium_url`, fetch HTML, call `self._parse_freedium(soup)`, set `exc.url = url` on any `MdfetchError` (depends on T001)
 
 **Checkpoint**: US1 fully functional — 403 on medium.com transparently resolved via Freedium
@@ -150,7 +150,25 @@ Task T007: "Unit test for no-fallback on 200 in tests/unit/test_medium_extractor
 - T005 implements both US1 (403) and US2 (429) — they share the same `extract()` override
 - US3 requires no implementation — only a verification test (T007)
 - Integration test T004 requires network access: run with `make integration` not `make test`
-- `exc.url` on fallback failures must be the original Medium URL (never the Freedium URL) — see contracts/extract-api.md
+- `exc.url` on fallback failures must be the original Medium URL (never the Freedium URL) — `exc.url` is set unconditionally (not guarded by `is None`); see contracts/extract-api.md
 - Freedium HTML uses `<div class="main-content">` (no `<article>`); `_parse_freedium()` handles this — do NOT reuse `clean_html()` on Freedium HTML
 - Freedium uses `<h4>` headings; `_parse_freedium()` remaps h4→h3 so output matches medium.com's `###` — both paths produce the same snapshot-compatible Markdown
 - T003 now subsumes the FR-005 (both sources fail) test case from analyze report finding C1
+- Exception message is NOT asserted to be free of "freedium" text — `exc.url` is the sole public contract; message content is internal
+
+---
+
+## Phase 7: Post-Delivery Refinements (Sync: Implementation Drift)
+
+These tasks document work performed after the initial delivery in response to code review findings. All tasks are complete.
+
+- [x] T010 [P] Eliminate thread-unsafe instance mutation in `src/mdfetch/base.py` and `src/mdfetch/providers/medium.py`: add `_no_retry_codes: frozenset[int] | None = None` keyword-only parameter to `fetch_html()`; pass `_no_retry_codes=frozenset()` from `MediumExtractor.extract()` for the Freedium fetch instead of saving/restoring `self._no_retry_status_codes` [Sync: Gap Report]
+- [x] T011 [P] Replace source-specific error message in `src/mdfetch/providers/medium.py`: change `UnsupportedContentTypeError("Freedium page missing main-content element")` to `UnsupportedContentTypeError("Fallback page missing main-content element")` to preserve transparent-fallback contract (FR-009) [Sync: Gap Report]
+- [x] T012 [P] Remove redundant paywalled integration test from `tests/integration/test_medium_integration.py`: delete `MEDIUM_PAYWALLED_TEST_CASES` list and `test_freedium_fallback_returns_content` — the same URL is already covered by `test_extract_contains_snapshot` with a strictly stronger assertion; add `test_parse_freedium_unsupported_content_sets_original_url` unit test in `tests/unit/test_medium_extractor.py` to verify `UnsupportedContentTypeError.url == original_url` on the Freedium path [Sync: Gap Report]
+
+---
+
+### Revision: Implementation Sync 2026-05-15
+- T003(d) updated: message content assertion removed; `exc.url` is the authoritative contract field.
+- T004 updated: keyword-only test consolidated into snapshot containment test.
+- T010–T012 added to document post-delivery refinements (thread safety, error message, test deduplication).
