@@ -72,6 +72,39 @@ A developer passing a dev.to URL that points to a profile page, a tag listing, o
 
 ---
 
+### US-007 — Transparent Fallback on Blocked Medium Article (P1)
+[Source: specs/003-medium-freedium-fallback]
+
+A developer calls the library's extract function with a Medium URL. The article is behind a paywall or the user is geo-blocked, causing Medium to return a 403 error. Without any code changes, the library automatically retrieves the same article via the Freedium mirror and returns clean Markdown content.
+
+**Acceptance Scenarios**:
+1. Given a valid Medium article URL that returns 403 from medium.com, when `extract()` is called, then the library returns clean Markdown content retrieved via the Freedium mirror.
+2. Given a valid Medium article URL that returns 403 from medium.com, when the Freedium mirror also fails, then the library raises an appropriate extraction error with `exc.url` set to the original Medium URL.
+3. Given a valid Medium article URL that returns 403 from medium.com, when the library falls back to Freedium, then the caller receives the result without any knowledge of which source was used.
+
+---
+
+### US-008 — Automatic Fallback on Rate Limiting (P2)
+[Source: specs/003-medium-freedium-fallback]
+
+A developer calls the library's extract function for a Medium URL. Medium responds with 429 Too Many Requests. The library automatically uses the Freedium mirror as a fallback and returns clean Markdown without requiring the caller to retry.
+
+**Acceptance Scenarios**:
+1. Given a valid Medium article URL that returns 429 from medium.com, when `extract()` is called, then the library returns clean Markdown content retrieved via the Freedium mirror.
+2. Given a valid Medium article URL that returns 429 from medium.com, when the Freedium mirror also fails, then the library raises an appropriate extraction error.
+
+---
+
+### US-009 — No Fallback When Primary Succeeds (P3)
+[Source: specs/003-medium-freedium-fallback]
+
+A developer calls the library's extract function for a publicly accessible Medium article. Medium responds successfully. The library returns the content directly without involving the Freedium mirror, preserving the existing happy-path behavior.
+
+**Acceptance Scenarios**:
+1. Given a valid Medium article URL that returns a successful response, when `extract()` is called, then the library returns clean Markdown content without making any request to the Freedium mirror.
+
+---
+
 ### US-006 — Integration Tests Pass Against Real dev.to Article URLs (P3)
 [Source: specs/002-devto-provider]
 
@@ -106,6 +139,17 @@ A developer runs the integration test suite and all dev.to integration tests pas
 ### Packaging & Testing
 - **FR-009**: The library MUST be packaged and distributed via PyPI using modern Python packaging best practices, enabling installation through the standard package manager without additional steps.
 - **FR-010**: The test suite MUST include integration tests that supply real article URLs (Medium and dev.to) to the extraction function and assert that the output matches expected Markdown structure and content.
+
+### Freedium Fallback (Medium)
+- **FR-020**: When a Medium article extraction results in HTTP 403, the system MUST immediately attempt extraction via the Freedium mirror (`https://freedium-mirror.cfd/{url}`) — no retries against medium.com are made first. [Source: specs/003-medium-freedium-fallback]
+- **FR-021**: When a Medium article extraction results in HTTP 429, the system MUST immediately attempt extraction via the Freedium mirror — no retries against medium.com are made first. [Source: specs/003-medium-freedium-fallback]
+- **FR-022**: When the Freedium mirror is used as a fallback, the system MUST return content in the same clean Markdown format as direct extraction; Freedium's `<h4>` headings are remapped to `<h3>` so both paths produce identical heading-level output. [Source: specs/003-medium-freedium-fallback]
+- **FR-023**: When the primary Medium request succeeds (HTTP 200), the system MUST NOT make any request to the Freedium mirror. [Source: specs/003-medium-freedium-fallback]
+- **FR-024**: When both the primary Medium request and the Freedium fallback fail, the system MUST raise an error consistent with the existing exception hierarchy; `exc.url` MUST be set to the original Medium URL (never the Freedium URL). [Source: specs/003-medium-freedium-fallback]
+- **FR-025**: The Freedium fallback mechanism MUST require no changes to the caller's code — the public `extract()` interface remains unchanged. [Source: specs/003-medium-freedium-fallback]
+- **FR-026**: The Freedium fallback MUST only apply to Medium provider URLs; other providers are unaffected. [Source: specs/003-medium-freedium-fallback]
+- **FR-027**: The Freedium fallback MUST be unconditionally active for all Medium URL extractions — no caller configuration, opt-in flag, or extractor parameter is required or supported. [Source: specs/003-medium-freedium-fallback]
+- **FR-028**: The Freedium fallback MUST be fully transparent to the caller — no warning, signal, metadata, or result field shall indicate which source (medium.com or Freedium) provided the content. [Source: specs/003-medium-freedium-fallback]
 
 ### dev.to Platform
 - **FR-015**: The library MUST add `dev.to` to the provider router so that any URL with the `dev.to` domain is dispatched to the dev.to provider without any change to the caller's code. [Source: specs/002-devto-provider]
@@ -185,7 +229,10 @@ caller provides URL string
 
 ## Edge Cases and Error Handling
 
-- **Paywalled content**: If Medium gates content behind a paywall and the body is not in the public HTML, the library may return an `EmptyContentError` or a reduced extraction. Full paywall bypass is out of scope for v1.
+- **Paywalled content (HTTP 403)**: When Medium returns HTTP 403 (paywall or geo-block), the library automatically retries via the Freedium mirror (`https://freedium-mirror.cfd/`). If Freedium also fails, the error raised carries `exc.url` set to the original Medium URL. [Source: specs/003-medium-freedium-fallback]
+- **Freedium mirror unreachable**: If the Freedium mirror returns a network error, timeout, or non-2xx status, the fallback fails and the exception is propagated with `exc.url` set to the original Medium URL — Freedium's URL never appears in `exc.url`.
+- **Freedium HTML structure**: Freedium uses `<div class="main-content">` (no `<article>`); if this element is absent, `UnsupportedContentTypeError` is raised with a source-agnostic message ("Fallback page missing main-content element").
+- **Freedium heading levels**: Freedium renders section headings as `<h4>` vs. medium.com's `<h2>`/`<h3>`; `_parse_freedium()` remaps h4→h3, h5→h4, h6→h5 before conversion so snapshot tests pass regardless of which source served the content.
 - **HTML structure changes**: If Medium changes its HTML structure and `<article>` is absent, `UnsupportedContentTypeError` is raised.
 - **Empty article body**: If `<article>` is found but contains no extractable text, `EmptyContentError` is raised.
 - **Network timeouts**: Covered by `FetchError` (30-second fixed timeout).
@@ -226,3 +273,12 @@ caller provides URL string
 - The library supports Python 3.12 and later.
 - The library operates on publicly accessible HTML; it does not execute JavaScript or render dynamic content.
 - Network timeouts use a fixed default of 30 seconds (not user-configurable in v1).
+- **SC-013**: Articles that previously failed with a 403 paywall error are successfully extracted in at least 90% of cases where the Freedium mirror has the content available. [Source: specs/003-medium-freedium-fallback]
+- **SC-014**: Articles that previously failed with a 429 rate-limit error are successfully extracted via fallback without requiring the caller to retry. [Source: specs/003-medium-freedium-fallback]
+- **SC-015**: Zero changes are required in existing caller code to benefit from the Freedium fallback — existing integrations continue to work as-is. [Source: specs/003-medium-freedium-fallback]
+- **SC-016**: When the primary Medium request succeeds, there is no additional latency attributable to the fallback mechanism. [Source: specs/003-medium-freedium-fallback]
+- **SC-017**: All existing unit and integration tests for the Medium extractor continue to pass without modification after the fallback is introduced. [Source: specs/003-medium-freedium-fallback]
+
+---
+
+*Last Updated: 2026-05-15 | Sources appended: [specs/003-medium-freedium-fallback/spec.md]*

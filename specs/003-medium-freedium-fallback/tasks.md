@@ -1,0 +1,174 @@
+# Tasks: Medium Freedium Fallback
+
+**Input**: Design documents from `specs/003-medium-freedium-fallback/`
+
+**Prerequisites**: plan.md ✅ | spec.md ✅ | research.md ✅ | contracts/extract-api.md ✅
+
+**Organization**: Tasks grouped by user story — each story is independently testable.
+
+## Format: `[ID] [P?] [Story] Description`
+
+- **[P]**: Can run in parallel (different files, no dependencies)
+- **[Story]**: US1 = 403 Fallback, US2 = 429 Fallback, US3 = No Fallback on Success
+
+---
+
+## Phase 1: Setup
+
+No new setup required — all project infrastructure exists. Proceeding directly to foundational changes.
+
+---
+
+## Phase 2: Foundational (Blocking Prerequisites)
+
+**Purpose**: Extend `BaseExtractor` with the `_no_retry_status_codes` hook that both US1 and US2 depend on. No user story work can begin until this phase is complete.
+
+**⚠️ CRITICAL**: Both US1 and US2 implementation tasks depend on T001.
+
+- [x] T001 Add `_no_retry_status_codes: frozenset[int] = frozenset()` class attribute to `BaseExtractor` and insert early-exit guard `if isinstance(exc, HTTPStatusError) and exc.status_code in self._no_retry_status_codes: raise` in the `fetch_html()` retry loop in `src/mdfetch/base.py`
+- [x] T002 [P] Add unit tests in `tests/unit/test_fetch_errors.py` verifying that status codes in `_no_retry_status_codes` are raised immediately without sleep/retry (use `MediumExtractor` with a subclass that sets the attribute, mock `httpx.Client`) and that codes NOT in the set still trigger the existing backoff
+
+**Checkpoint**: `BaseExtractor` extended — user story implementation can now begin
+
+---
+
+## Phase 3: User Story 1 — Transparent Fallback on Blocked Article (Priority: P1) 🎯 MVP
+
+**Goal**: When `medium.com` returns HTTP 403, the library automatically retries via `https://freedium-mirror.cfd/{url}` and returns clean Markdown. Caller sees no difference.
+
+**Independent Test**: Call `extract()` with a mock that returns 403 on the first request and valid HTML on the second. Verify Markdown is returned and the second call used the Freedium URL.
+
+- [x] T003 [P] [US1] Add unit tests for `_parse_freedium()` in `tests/unit/test_medium_extractor.py`: (a) valid Freedium HTML with `<div class="main-content">` containing `<h4>` and `<p>` — assert non-empty Markdown with `###` headings (h4 remapped to h3) and no `####`; (b) Freedium HTML missing `main-content` div — assert `UnsupportedContentTypeError` is raised; (c) mock full `extract()` flow with httpx returning 403 on medium.com and valid Freedium HTML on second call — assert Markdown returned and Freedium URL (`https://freedium-mirror.cfd/https://medium.com/...`) was fetched; (d) mock 403 on medium.com AND error on Freedium — assert exception raised with `exc.url` equal to original medium URL (`exc.url` is the authoritative field; message content is not asserted)
+- [x] T004 [P] [US1] Add `@pytest.mark.integration` coverage for paywalled Medium URL in `tests/integration/test_medium_integration.py`; the URL `https://stn1slv.medium.com/from-drift-to-parity-building-a-feedback-loop-for-spec-driven-development-b3bd3d9c0021` is included in `MEDIUM_TEST_CASES` and covered by `test_extract_contains_snapshot` (snapshot containment is a strictly stronger assertion than keyword presence)
+- [x] T005 [US1] Implement fallback in `src/mdfetch/providers/medium.py`: (1) add imports for `HTTPStatusError` and `UnsupportedContentTypeError`; (2) add `_FREEDIUM_BASE = "https://freedium-mirror.cfd/"` and `_no_retry_status_codes: frozenset[int] = frozenset({403, 429})` class attributes; (3) add `_parse_freedium(self, soup: BeautifulSoup) -> str` — find `soup.find("div", class_="main-content")`, raise `UnsupportedContentTypeError` if missing, call `self.convert_to_markdown(content)`; (4) override `extract()` to catch `HTTPStatusError` for status codes in `_no_retry_status_codes`, construct `freedium_url`, fetch HTML, call `self._parse_freedium(soup)`, set `exc.url = url` on any `MdfetchError` (depends on T001)
+
+**Checkpoint**: US1 fully functional — 403 on medium.com transparently resolved via Freedium
+
+---
+
+## Phase 4: User Story 2 — Automatic Retry on Rate Limiting (Priority: P2)
+
+**Goal**: When `medium.com` returns HTTP 429, the same fallback mechanism activates immediately. No retries against `medium.com` are attempted first.
+
+**Independent Test**: Mock `httpx.Client` to return 429 on the medium.com call, valid HTML on the Freedium call. Verify no `time.sleep` is called before the Freedium request.
+
+- [x] T006 [P] [US2] Add unit tests in `tests/unit/test_medium_extractor.py` for 429 fallback: mock `httpx.Client` to return 429 on the medium.com request; verify `time.sleep` is NOT called before the Freedium request (use `patch("mdfetch.base.time.sleep")`), and valid Markdown is returned from the Freedium path (depends on T005)
+
+**Checkpoint**: US2 fully functional — 429 handled identically to 403 with no medium.com retries
+
+---
+
+## Phase 5: User Story 3 — No Fallback When Primary Succeeds (Priority: P3)
+
+**Goal**: When `medium.com` returns HTTP 200, no request is made to the Freedium mirror. Existing behaviour is fully preserved.
+
+**Independent Test**: Mock `httpx.Client` to return 200 with valid HTML. Assert `extract()` returns Markdown and no second HTTP request is made.
+
+- [x] T007 [P] [US3] Add unit test in `tests/unit/test_medium_extractor.py` verifying that `httpx.Client.stream` is called exactly once (only the medium.com request) when the primary fetch succeeds with HTTP 200 (depends on T005)
+
+**Checkpoint**: All three user stories independently verified
+
+---
+
+## Phase 6: Polish & Cross-Cutting Concerns
+
+- [x] T008 [P] Run `uv run ruff check src/ tests/` and `uv run mypy src/` and fix any lint or type errors introduced by T001 and T005
+- [x] T009 Run `make test` (full unit suite) and confirm all tests pass including T002, T003, T006, T007
+
+---
+
+## Dependencies & Execution Order
+
+### Phase Dependencies
+
+- **Foundational (Phase 2)**: No dependencies — start immediately
+- **US1 (Phase 3)**: T003 and T004 can start immediately (tests only); T005 depends on T001
+- **US2 (Phase 4)**: T006 depends on T005 (tests the implemented fallback)
+- **US3 (Phase 5)**: T007 depends on T005
+- **Polish (Phase 6)**: Depends on all phases complete
+
+### User Story Dependencies
+
+- **US1 (P1)**: Depends on T001 (foundational) — no other story dependency
+- **US2 (P2)**: Depends on T005 (US1 implementation — shared `extract()` override covers both)
+- **US3 (P3)**: Depends on T005 (verifies the override preserves happy-path behaviour)
+
+### Within Each Story
+
+- Test tasks [P] can begin writing before implementation (T003, T004 before T005)
+- T005 is the only implementation task — it covers US1 and US2 simultaneously
+- All test tasks for a story can be written in parallel
+
+### Parallel Opportunities
+
+- T002 and T003/T004 can run in parallel (different files, no shared dependencies)
+- T006 and T007 can run in parallel after T005 completes (different assertions)
+- T008 and T009 can run in parallel (different tools)
+
+---
+
+## Parallel Example: Foundational + US1 Test Writing
+
+```bash
+# Can run in parallel immediately:
+Task T001: "Extend BaseExtractor with _no_retry_status_codes in src/mdfetch/base.py"
+Task T002: "Unit tests for _no_retry_status_codes in tests/unit/test_fetch_errors.py"
+Task T003: "Unit tests for _parse_freedium() + 403 fallback in tests/unit/test_medium_extractor.py"
+Task T004: "Integration test for paywalled URL (keyword assertion) in tests/integration/test_medium_integration.py"
+
+# After T001 completes:
+Task T005: "Implement MediumExtractor.extract() fallback in src/mdfetch/providers/medium.py"
+
+# After T005 completes, in parallel:
+Task T006: "Unit tests for 429 no-retry in tests/unit/test_medium_extractor.py"
+Task T007: "Unit test for no-fallback on 200 in tests/unit/test_medium_extractor.py"
+```
+
+---
+
+## Implementation Strategy
+
+### MVP (User Story 1 Only)
+
+1. Complete T001 (base class extension)
+2. Complete T005 (MediumExtractor override — covers US1 and US2 simultaneously)
+3. Run T003 unit tests to verify 403 fallback
+4. **STOP and VALIDATE**: `make test` passes; integration test T004 passes
+5. US1 and US2 are both delivered at this point
+
+### Full Delivery
+
+1. T001 → T005 → run all test tasks → T008 → T009
+2. Total: 9 tasks across 6 phases
+3. Estimated changed files: 3 source files (`base.py`, `medium.py`) + 2–3 test files
+
+---
+
+## Notes
+
+- [P] tasks = different files, no shared dependencies — safe to parallelize
+- T005 implements both US1 (403) and US2 (429) — they share the same `extract()` override
+- US3 requires no implementation — only a verification test (T007)
+- Integration test T004 requires network access: run with `make integration` not `make test`
+- `exc.url` on fallback failures must be the original Medium URL (never the Freedium URL) — `exc.url` is set unconditionally (not guarded by `is None`); see contracts/extract-api.md
+- Freedium HTML uses `<div class="main-content">` (no `<article>`); `_parse_freedium()` handles this — do NOT reuse `clean_html()` on Freedium HTML
+- Freedium uses `<h4>` headings; `_parse_freedium()` remaps h4→h3 so output matches medium.com's `###` — both paths produce the same snapshot-compatible Markdown
+- T003 now subsumes the FR-005 (both sources fail) test case from analyze report finding C1
+- Exception message is NOT asserted to be free of "freedium" text — `exc.url` is the sole public contract; message content is internal
+
+---
+
+## Phase 7: Post-Delivery Refinements (Sync: Implementation Drift)
+
+These tasks document work performed after the initial delivery in response to code review findings. All tasks are complete.
+
+- [x] T010 [P] Eliminate thread-unsafe instance mutation in `src/mdfetch/base.py` and `src/mdfetch/providers/medium.py`: add `_no_retry_codes: frozenset[int] | None = None` keyword-only parameter to `fetch_html()`; pass `_no_retry_codes=frozenset()` from `MediumExtractor.extract()` for the Freedium fetch instead of saving/restoring `self._no_retry_status_codes` [Sync: Gap Report]
+- [x] T011 [P] Replace source-specific error message in `src/mdfetch/providers/medium.py`: change `UnsupportedContentTypeError("Freedium page missing main-content element")` to `UnsupportedContentTypeError("Fallback page missing main-content element")` to preserve transparent-fallback contract (FR-009) [Sync: Gap Report]
+- [x] T012 [P] Remove redundant paywalled integration test from `tests/integration/test_medium_integration.py`: delete `MEDIUM_PAYWALLED_TEST_CASES` list and `test_freedium_fallback_returns_content` — the same URL is already covered by `test_extract_contains_snapshot` with a strictly stronger assertion; add `test_parse_freedium_unsupported_content_sets_original_url` unit test in `tests/unit/test_medium_extractor.py` to verify `UnsupportedContentTypeError.url == original_url` on the Freedium path [Sync: Gap Report]
+
+---
+
+### Revision: Implementation Sync 2026-05-15
+- T003(d) updated: message content assertion removed; `exc.url` is the authoritative contract field.
+- T004 updated: keyword-only test consolidated into snapshot containment test.
+- T010–T012 added to document post-delivery refinements (thread safety, error message, test deduplication).
