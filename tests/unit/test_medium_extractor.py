@@ -200,10 +200,12 @@ def _do_fetch_router(url_map: dict[str, str | Exception]) -> object:
 class TestFreediumFallback:
     def test_403_triggers_freedium_fallback(self, extractor: MediumExtractor) -> None:
         original_url = "https://medium.com/some/article"
-        router = _do_fetch_router({
-            "freedium-mirror.cfd": _FREEDIUM_ARTICLE_HTML,
-            "medium.com": HTTPStatusError("HTTP 403", status_code=403, url=original_url),
-        })
+        router = _do_fetch_router(
+            {
+                "freedium-mirror.cfd": _FREEDIUM_ARTICLE_HTML,
+                "medium.com": HTTPStatusError("HTTP 403", status_code=403, url=original_url),
+            }
+        )
         with patch.object(extractor, "_do_fetch", side_effect=router):
             result = extractor.extract(original_url, retries=1)
 
@@ -230,12 +232,14 @@ class TestFreediumFallback:
     def test_both_fail_raises_with_original_url(self, extractor: MediumExtractor) -> None:
         original_url = "https://medium.com/some/article"
         freedium_url = f"https://freedium-mirror.cfd/{original_url}"
-        router = _do_fetch_router({
-            "medium.com": HTTPStatusError("HTTP 403", status_code=403, url=original_url),
-            "freedium-mirror.cfd": HTTPStatusError(
-                f"HTTP 503 fetching {freedium_url}", status_code=503, url=freedium_url
-            ),
-        })
+        router = _do_fetch_router(
+            {
+                "medium.com": HTTPStatusError("HTTP 403", status_code=403, url=original_url),
+                "freedium-mirror.cfd": HTTPStatusError(
+                    f"HTTP 503 fetching {freedium_url}", status_code=503, url=freedium_url
+                ),
+            }
+        )
         with patch.object(extractor, "_do_fetch", side_effect=router):
             with pytest.raises(HTTPStatusError) as exc_info:
                 extractor.extract(original_url, retries=1)
@@ -263,20 +267,24 @@ class TestFreediumFallback:
 
 class TestRateLimitFallback:
     def test_429_triggers_freedium_fallback(self, extractor: MediumExtractor) -> None:
-        router = _do_fetch_router({
-            "freedium-mirror.cfd": _FREEDIUM_ARTICLE_HTML,
-            "medium.com": HTTPStatusError("HTTP 429", status_code=429, url=None),
-        })
+        router = _do_fetch_router(
+            {
+                "freedium-mirror.cfd": _FREEDIUM_ARTICLE_HTML,
+                "medium.com": HTTPStatusError("HTTP 429", status_code=429, url=None),
+            }
+        )
         with patch.object(extractor, "_do_fetch", side_effect=router):
             result = extractor.extract("https://medium.com/article", retries=1)
 
         assert "Section One" in result
 
     def test_429_no_sleep_before_freedium(self, extractor: MediumExtractor) -> None:
-        router = _do_fetch_router({
-            "freedium-mirror.cfd": _FREEDIUM_ARTICLE_HTML,
-            "medium.com": HTTPStatusError("HTTP 429", status_code=429, url=None),
-        })
+        router = _do_fetch_router(
+            {
+                "freedium-mirror.cfd": _FREEDIUM_ARTICLE_HTML,
+                "medium.com": HTTPStatusError("HTTP 429", status_code=429, url=None),
+            }
+        )
         with patch.object(extractor, "_do_fetch", side_effect=router):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
                 extractor.extract("https://medium.com/article", retries=3)
@@ -285,9 +293,7 @@ class TestRateLimitFallback:
 
 
 class TestNoFallbackOnSuccess:
-    def test_successful_primary_fetch_makes_one_request(
-        self, extractor: MediumExtractor
-    ) -> None:
+    def test_successful_primary_fetch_makes_one_request(self, extractor: MediumExtractor) -> None:
         article_html = """
         <html><body><article>
             <h1>Test</h1><p>Content here.</p>
