@@ -78,7 +78,7 @@ A developer runs `make integration` locally or in CI without setting any `MDFETC
 - **SC-001**: `make test` passes with zero failures after the changes (all unit tests green).
 - **SC-002**: `make integration` passes with zero failures when run without any `MDFETCH_*` environment variables.
 - **SC-003**: The two exponential-backoff unit tests no longer exist in the test suite.
-- **SC-004**: No reference to `MDFETCH_RETRIES`, `MDFETCH_RETRY_DELAY`, or `_MAX_RETRY_DELAY` remains anywhere in the codebase.
+- **SC-004**: No reference to `MDFETCH_RETRIES`, `MDFETCH_RETRY_DELAY`, or `_MAX_RETRY_DELAY` remains in `src/`, `tests/`, or `.github/` (spec and documentation files are excluded).
 - **SC-005**: The CI `integration.yml` workflow no longer sets `MDFETCH_RETRIES` or `MDFETCH_RETRY_DELAY`.
 
 ## Assumptions

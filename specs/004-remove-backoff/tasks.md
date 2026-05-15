@@ -70,7 +70,7 @@
 - [X] T010 Run `make test` to confirm all unit tests pass (expected: 63 tests — 65 minus the 2 deleted backoff tests)
 - [X] T011 Run `uv run mypy src/` to confirm zero type errors after docstring and code changes
 - [X] T012 Run `make lint` to confirm ruff check passes with no violations
-- [X] T013 Verify no remaining references to `_MAX_RETRY_DELAY`, `MDFETCH_RETRIES`, or `MDFETCH_RETRY_DELAY` anywhere in the codebase by running `grep -r "MAX_RETRY_DELAY\|MDFETCH_RETRIES\|MDFETCH_RETRY_DELAY" src/ tests/ .github/`
+- [X] T013 Verify no remaining references to `_MAX_RETRY_DELAY`, `MDFETCH_RETRIES`, or `MDFETCH_RETRY_DELAY` in source, tests, and CI by running `grep -r "MAX_RETRY_DELAY\|MDFETCH_RETRIES\|MDFETCH_RETRY_DELAY" src/ tests/ .github/` (spec/doc files are intentionally excluded)
 - [X] T014 Run `make integration` without any `MDFETCH_*` env vars set and confirm all 6 integration tests pass (verifies SC-002)
 
 ---
