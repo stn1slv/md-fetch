@@ -61,14 +61,14 @@ No new files. Changes to existing files only:
 src/mdfetch/
 ├── base.py                    # Add _no_retry_status_codes + loop guard
 └── providers/
-    └── medium.py              # Override _no_retry_status_codes + extract()
+    └── medium.py              # Add _parse_freedium(); override _no_retry_status_codes + extract()
 
 tests/
 ├── unit/
 │   ├── test_fetch_errors.py   # Add tests: 403/429 not retried for MediumExtractor
-│   └── test_medium_extractor.py  # Add tests: fallback URL construction, fallback on 403/429
+│   └── test_medium_extractor.py  # Add tests: _parse_freedium(), fallback URL + 403/429 paths
 └── integration/
-    └── test_medium_integration.py  # Add test: paywalled URL succeeds via Freedium
+    └── test_medium_integration.py  # Add test: paywalled URL succeeds via Freedium (keyword assertion)
 ```
 
 **Structure Decision**: Single project layout unchanged; all changes are surgical modifications to existing files.
@@ -82,7 +82,7 @@ See [research.md](research.md) for full rationale. Key decisions:
 | Preventing retries on 403/429 | Add `_no_retry_status_codes: frozenset[int] = frozenset()` to `BaseExtractor`; override with `frozenset({403, 429})` in `MediumExtractor` |
 | Fallback implementation location | Override `extract()` in `MediumExtractor` |
 | Freedium URL construction | `f"https://freedium-mirror.cfd/{original_url}"` |
-| HTML parsing | Reuse existing `clean_html()` as-is; surface `UnsupportedContentTypeError` if Freedium HTML is incompatible |
+| HTML parsing | Freedium uses `<div class="main-content">` — **incompatible** with `clean_html()` which requires `<article>`; add dedicated `_parse_freedium(soup)` method to `MediumExtractor` |
 | Error when both fail | Raise `HTTPStatusError`/`FetchError` from Freedium attempt; set `exc.url` to original Medium URL |
 | Integration test | Non-empty Markdown assertion (not snapshot) for known paywalled URL |
 
@@ -109,11 +109,22 @@ This is the only change to `base.py`. The attribute is empty by default, so all 
 
 ### MediumExtractor changes (`src/mdfetch/providers/medium.py`)
 
-Add two class-level constants and override `extract()`:
+**Verified finding**: Freedium HTML uses `<div class="main-content">` as the content root — no `<article>` element exists. The existing `clean_html()` always raises `UnsupportedContentTypeError` on Freedium HTML. A dedicated parser method is required.
+
+Add two class-level constants, a new `_parse_freedium()` method, and override `extract()`:
 
 ```python
 _FREEDIUM_BASE = "https://freedium-mirror.cfd/"
 _no_retry_status_codes: frozenset[int] = frozenset({403, 429})
+
+def _parse_freedium(self, soup: BeautifulSoup) -> str:
+    """Parse Freedium mirror HTML, which uses div.main-content instead of <article>."""
+    content = soup.find("div", class_="main-content")
+    if not isinstance(content, Tag):
+        raise UnsupportedContentTypeError(
+            "Freedium page missing main-content element",
+        )
+    return self.convert_to_markdown(content)
 
 def extract(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
     try:
@@ -125,15 +136,17 @@ def extract(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> st
     html = self.fetch_html(freedium_url, retries=retries, retry_delay=retry_delay)
     soup = BeautifulSoup(html, "lxml")
     try:
-        cleaned = self.clean_html(soup)
-        return self.convert_to_markdown(cleaned)
+        return self._parse_freedium(soup)
     except MdfetchError as inner_exc:
         if inner_exc.url is None:
             inner_exc.url = url
         raise
 ```
 
-Note: `except HTTPStatusError` must be imported at the top of `medium.py`.
+Notes:
+- `HTTPStatusError` must be added to the imports in `medium.py`
+- `_parse_freedium()` skips all Medium-specific stripping (nav, clap buttons, `data-testid` elements) — Freedium's `main-content` div already contains only article body
+- Section headings will render as `####` Markdown (Freedium uses `<h4>`); this is an accepted structural difference vs `##`/`###` from direct Medium access
 
 ### Data Model
 

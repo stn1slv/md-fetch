@@ -90,7 +90,7 @@ A developer calls the library's extract function for a publicly accessible Mediu
 ## Assumptions
 
 - The Freedium mirror constructs its article URLs by prepending its base URL to the original Medium URL (e.g., `https://freedium-mirror.cfd/https://medium.com/...`).
-- The Freedium mirror's HTML structure is compatible with or closely mirrors the HTML structure that the existing Medium extractor already processes.
+- The Freedium mirror's HTML structure differs from medium.com: content is in `<div class="main-content">` (no `<article>` element) and section headings use `<h4>` instead of `<h2>`/`<h3>`. A dedicated Freedium parser is required. Verified by live inspection.
 - The fallback is unconditionally active for all Medium URLs — no opt-in or configuration knob exists. This was an explicit design decision.
 - Fallback applies only to 403 and 429 HTTP status codes; other error codes (e.g., 404, 500) are handled by the existing error logic without triggering a fallback.
 - Custom domains hosted on Medium (e.g., `*.medium.com` subdomains) are already covered by the existing Medium provider routing and will also benefit from the fallback.

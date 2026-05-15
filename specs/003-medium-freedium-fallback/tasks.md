@@ -38,9 +38,9 @@ No new setup required — all project infrastructure exists. Proceeding directly
 
 **Independent Test**: Call `extract()` with a mock that returns 403 on the first request and valid HTML on the second. Verify Markdown is returned and the second call used the Freedium URL.
 
-- [ ] T003 [P] [US1] Add unit tests in `tests/unit/test_medium_extractor.py` for 403 fallback: mock `httpx.Client` to return 403 on the medium.com request and valid article HTML on the Freedium request; verify returned Markdown is non-empty and the Freedium URL (`https://freedium-mirror.cfd/https://medium.com/...`) was fetched
-- [ ] T004 [P] [US1] Add `@pytest.mark.integration` test in `tests/integration/test_medium_integration.py` for a known paywalled Medium URL; assert `extract()` returns a non-empty string (no snapshot comparison — Freedium content may differ)
-- [ ] T005 [US1] Implement fallback in `src/mdfetch/providers/medium.py`: add `_FREEDIUM_BASE = "https://freedium-mirror.cfd/"` and `_no_retry_status_codes: frozenset[int] = frozenset({403, 429})` class attributes; override `extract()` to catch `HTTPStatusError` for status codes in `_no_retry_status_codes`, construct `freedium_url = f"{self._FREEDIUM_BASE}{url}"`, fetch and parse via existing `fetch_html()` + `clean_html()` + `convert_to_markdown()`; set `exc.url = url` (original URL) on any `MdfetchError` raised from the Freedium path (depends on T001)
+- [ ] T003 [P] [US1] Add unit tests for `_parse_freedium()` in `tests/unit/test_medium_extractor.py`: (a) valid Freedium HTML with `<div class="main-content">` containing `<h4>` and `<p>` — assert non-empty Markdown with `####` headings; (b) Freedium HTML missing `main-content` div — assert `UnsupportedContentTypeError` is raised; (c) mock full `extract()` flow with httpx returning 403 on medium.com and valid Freedium HTML on second call — assert Markdown returned and Freedium URL (`https://freedium-mirror.cfd/https://medium.com/...`) was fetched; (d) mock 403 on medium.com AND error on Freedium — assert exception raised with `exc.url` equal to original medium URL
+- [ ] T004 [P] [US1] Add `@pytest.mark.integration` test in `tests/integration/test_medium_integration.py` for a known paywalled Medium URL (e.g. `https://stn1slv.medium.com/from-drift-to-parity-building-a-feedback-loop-for-spec-driven-development-b3bd3d9c0021`); assert `extract()` returns a string containing at least one expected keyword from the article title (e.g. `"Parity"` or `"Spec-Driven"`)
+- [ ] T005 [US1] Implement fallback in `src/mdfetch/providers/medium.py`: (1) add imports for `HTTPStatusError` and `UnsupportedContentTypeError`; (2) add `_FREEDIUM_BASE = "https://freedium-mirror.cfd/"` and `_no_retry_status_codes: frozenset[int] = frozenset({403, 429})` class attributes; (3) add `_parse_freedium(self, soup: BeautifulSoup) -> str` — find `soup.find("div", class_="main-content")`, raise `UnsupportedContentTypeError` if missing, call `self.convert_to_markdown(content)`; (4) override `extract()` to catch `HTTPStatusError` for status codes in `_no_retry_status_codes`, construct `freedium_url`, fetch HTML, call `self._parse_freedium(soup)`, set `exc.url = url` on any `MdfetchError` (depends on T001)
 
 **Checkpoint**: US1 fully functional — 403 on medium.com transparently resolved via Freedium
 
@@ -113,8 +113,8 @@ No new setup required — all project infrastructure exists. Proceeding directly
 # Can run in parallel immediately:
 Task T001: "Extend BaseExtractor with _no_retry_status_codes in src/mdfetch/base.py"
 Task T002: "Unit tests for _no_retry_status_codes in tests/unit/test_fetch_errors.py"
-Task T003: "Unit tests for 403 fallback in tests/unit/test_medium_extractor.py"
-Task T004: "Integration test for paywalled URL in tests/integration/test_medium_integration.py"
+Task T003: "Unit tests for _parse_freedium() + 403 fallback in tests/unit/test_medium_extractor.py"
+Task T004: "Integration test for paywalled URL (keyword assertion) in tests/integration/test_medium_integration.py"
 
 # After T001 completes:
 Task T005: "Implement MediumExtractor.extract() fallback in src/mdfetch/providers/medium.py"
@@ -151,3 +151,6 @@ Task T007: "Unit test for no-fallback on 200 in tests/unit/test_medium_extractor
 - US3 requires no implementation — only a verification test (T007)
 - Integration test T004 requires network access: run with `make integration` not `make test`
 - `exc.url` on fallback failures must be the original Medium URL (never the Freedium URL) — see contracts/extract-api.md
+- Freedium HTML uses `<div class="main-content">` (no `<article>`); `_parse_freedium()` handles this — do NOT reuse `clean_html()` on Freedium HTML
+- Freedium headings render as `####` Markdown (`<h4>`) vs `##`/`###` from medium.com — accepted structural difference, not a bug
+- T003 now subsumes the FR-005 (both sources fail) test case from analyze report finding C1

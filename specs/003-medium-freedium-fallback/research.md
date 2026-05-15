@@ -31,28 +31,43 @@
 
 **Alternatives considered**: Stripping the scheme and prepending `https://` — rejected because the mirror expects the full original URL.
 
-## Decision 4: HTML Structure Compatibility
+## Decision 4: HTML Structure Compatibility *(updated after live verification)*
 
-**Decision**: Attempt to parse Freedium HTML with the existing `MediumExtractor.clean_html()` as-is. Document as a risk requiring integration test validation.
+**Decision**: Freedium HTML is **structurally incompatible** with `MediumExtractor.clean_html()`. A dedicated `_parse_freedium(soup)` method is required in `MediumExtractor`.
 
-**Rationale**: The spec assumption states Freedium's HTML is compatible with the existing Medium extractor. Freedium mirrors Medium's article HTML with minimal wrapping. If `clean_html()` raises `UnsupportedContentTypeError` (no `<article>` found), the error propagates to the caller with the original URL set — this is the correct fallback failure mode.
+**Finding** (verified by fetching `https://freedium-mirror.cfd/https://stn1slv.medium.com/...`):
 
-**Alternatives considered**: A separate `clean_html_freedium()` method — deferred; implement only if integration tests reveal structural incompatibility.
+| Aspect | medium.com | freedium-mirror.cfd |
+|---|---|---|
+| Content root | `<article>` | `<div class="main-content">` |
+| Section headings | `<h2>` / `<h3>` | `<h4>` |
+| Medium-specific attributes | `data-testid`, clap buttons, nav | **None** — content is already clean |
+| Stripping needed | Yes (nav, buttons, sidebar, footer) | No — `main-content` contains only article body |
+
+**Impact**: Calling `clean_html()` on Freedium HTML always raises `UnsupportedContentTypeError` because `soup.find("article")` returns `None`. The previous assumption that the HTML structure was compatible was **incorrect**.
+
+**Revised approach**: Add `_parse_freedium(soup: BeautifulSoup) -> str` to `MediumExtractor`:
+- Find `soup.find("div", class_="main-content")`
+- Raise `UnsupportedContentTypeError` if missing
+- Pass directly to `convert_to_markdown()` — no stripping needed
+- Note: headings will render as `####` (Freedium uses `<h4>`) rather than `##`/`###` (medium.com uses `<h2>`/`<h3>`). This is an accepted structural difference; content is fully preserved.
+
+**Alternatives considered**:
+- Reuse `clean_html()` with a fallback tag search — rejected because `clean_html()` strips elements by Medium-specific `data-testid` attributes that don't exist on Freedium; adding a fallback tag lookup conflates two distinct HTML schemas in one method.
+- A unified `clean_html()` that auto-detects the source — rejected because it couples Medium and Freedium parsing logic, making both harder to reason about and test.
 
 ## Decision 5: Error Surfaced When Both Sources Fail
 
-**Decision**: When Freedium also fails, raise the `HTTPStatusError` (or `FetchError`) from the Freedium attempt. The original URL is preserved in `exc.url`.
+**Decision**: When Freedium also fails, raise the exception from the Freedium attempt (`HTTPStatusError`, `FetchError`, or `UnsupportedContentTypeError`). Set `exc.url` to the original Medium URL (not the Freedium URL).
 
-**Rationale**: The Freedium error is the last known failure and most actionable for callers. Setting `exc.url` to the original Medium URL (not the Freedium URL) avoids leaking the fallback internals through the public exception, consistent with FR-009 (fully transparent fallback).
+**Rationale**: Setting `exc.url` to the original Medium URL avoids leaking the Freedium mirror as an internal implementation detail, consistent with FR-009 (fully transparent fallback). The exception type from the Freedium attempt is the most actionable signal for the caller.
 
-**Alternatives considered**: Re-raising the original `medium.com` error — rejected because it would misrepresent what was last attempted and obscure the Freedium failure mode for debugging.
-
-Wait — on reflection, the spec says FR-009 (fully transparent, no signal to caller). From the user's perspective they only know the original URL. Setting `exc.url` to the Freedium URL leaks an internal detail. The original Medium URL is the correct value for `exc.url`.
+**Alternatives considered**: Re-raising the original `medium.com` error — rejected because it misrepresents what was last attempted.
 
 ## Decision 6: Integration Test Strategy
 
-**Decision**: Add a new `@pytest.mark.integration` test in `test_medium_integration.py` using a known paywalled Medium URL. Verify that `extract()` returns non-empty Markdown (not an assertion against a snapshot, since Freedium content may differ slightly).
+**Decision**: Add a new `@pytest.mark.integration` test in `test_medium_integration.py` using a known paywalled Medium URL. Verify that `extract()` returns non-empty Markdown containing at least one expected keyword from the article title.
 
-**Rationale**: Snapshot-based tests are fragile for Freedium content due to possible structural differences. A presence/non-empty assertion is sufficient to validate SC-001.
+**Rationale**: Full snapshot comparison is inappropriate for Freedium content because heading levels differ from medium.com output (`####` vs `##`). A keyword-presence assertion is stricter than a non-empty check while remaining resilient to structural differences.
 
-**Alternatives considered**: Full snapshot comparison — deferred; add once HTML compatibility is confirmed stable.
+**Alternatives considered**: Full snapshot comparison — rejected because Freedium heading levels (`<h4>`) differ from Medium (`<h2>`/`<h3>`), making snapshots immediately stale.
