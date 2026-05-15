@@ -13,11 +13,12 @@ src/mdfetch/
 └── providers/
     ├── __init__.py
     ├── medium.py     # MediumExtractor (medium.com + *.medium.com)
-    └── devto.py      # DevToExtractor (dev.to)
+    ├── devto.py      # DevToExtractor (dev.to)
+    └── substack.py   # SubstackExtractor (substack.com + *.substack.com)
 
 tests/
 ├── unit/             # pytest unit tests (no network)
-└── integration/      # real network tests (Medium + dev.to URLs + snapshots)
+└── integration/      # real network tests (Medium + dev.to + Substack URLs + snapshots)
 
 .github/workflows/
 ├── ci.yml            # lint + unit tests on push/PR (Python 3.12–3.14)
@@ -51,17 +52,10 @@ uv run mypy src/  # type check
 ```
 
 <!-- SPECKIT START -->
-## Active Feature
+## Known Issues & Gotchas
 
-**005-substack-provider** — Add Substack platform extractor
-Plan: [specs/005-substack-provider/plan.md](specs/005-substack-provider/plan.md)
-
-Key implementation details:
-- New file: `src/mdfetch/providers/substack.py` — `SubstackExtractor(BaseExtractor)`, `DOMAINS = frozenset({"substack.com"})`
-- Extraction root: `div.body.markup` (inside `div.available-content`)
-- Title: prepend `h1.post-title` from `div.post-header`; subtitle: prepend `h3.subtitle` if present
-- Strip: `div.subscription-widget-wrap` (inline CTAs + paywall terminal widget)
-- Embeds: replace `iframe` and unknown `div[data-component-name]` with plain anchor links
-- HTTP 429: retried (no `_no_retry_status_codes` override)
-- Tests: `tests/unit/test_substack.py` + `tests/integration/test_substack_integration.py`
+### ⚠️ test_router.py "unsupported domain" fixture must be updated per new provider
+**Issue:** When a new provider registers a domain (e.g., `dev.to`, then `substack.com`), the existing `test_raises_for_unsupported_domain` and `test_unsupported_error_includes_domain` tests in `tests/unit/test_router.py` use that domain as their "unsupported" example and start routing successfully instead of raising `UnsupportedPlatformError`.
+**Root Cause:** The domain used in the router tests was `substack.com` after the dev.to feature; adding SubstackExtractor made it valid too.
+**Prevention Rule:** When adding a new provider, update the unsupported-domain fixture in `test_router.py` to use a domain not registered by any provider (currently `wordpress.com`).
 <!-- SPECKIT END -->
