@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mdfetch"
-version = "0.2.2"
+version = "0.3.0"
 description = "Extract article content from web platforms and return it as clean Markdown."
 readme = "README.md"
 license = { text = "MIT" }
 authors = [{ name = "Stanislav Deviatov", email = "devyatov@gmail.com" }]
-keywords = ["markdown", "scraping", "medium", "dev.to", "article", "extraction"]
+keywords = ["markdown", "scraping", "medium", "dev.to", "substack", "article", "extraction"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
