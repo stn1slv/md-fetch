@@ -50,7 +50,7 @@
 - Find `soup.find("div", class_="main-content")`
 - Raise `UnsupportedContentTypeError` if missing
 - Pass directly to `convert_to_markdown()` — no stripping needed
-- Note: headings will render as `####` (Freedium uses `<h4>`) rather than `##`/`###` (medium.com uses `<h2>`/`<h3>`). This is an accepted structural difference; content is fully preserved.
+- Note: Freedium uses `<h4>` for section headings while medium.com uses `<h2>`/`<h3>`. `_parse_freedium()` remaps h4→h3, h5→h4, h6→h5 before conversion so the Markdown output is structurally identical to the direct path (`###` headings).
 
 **Alternatives considered**:
 - Reuse `clean_html()` with a fallback tag search — rejected because `clean_html()` strips elements by Medium-specific `data-testid` attributes that don't exist on Freedium; adding a fallback tag lookup conflates two distinct HTML schemas in one method.
@@ -68,6 +68,6 @@
 
 **Decision**: Add a new `@pytest.mark.integration` test in `test_medium_integration.py` using a known paywalled Medium URL. Verify that `extract()` returns non-empty Markdown containing at least one expected keyword from the article title.
 
-**Rationale**: Full snapshot comparison is inappropriate for Freedium content because heading levels differ from medium.com output (`####` vs `##`). A keyword-presence assertion is stricter than a non-empty check while remaining resilient to structural differences.
+**Rationale**: The integration test uses a keyword-presence assertion (`expected in result`) against committed snapshots of article body text. Because `_parse_freedium()` remaps heading levels to match the direct-path output, the same snapshots work regardless of whether medium.com returned 200 or 403/429.
 
-**Alternatives considered**: Full snapshot comparison — rejected because Freedium heading levels (`<h4>`) differ from Medium (`<h2>`/`<h3>`), making snapshots immediately stale.
+**Alternatives considered**: Full snapshot comparison — viable now that heading levels are normalised; existing snapshot files serve this purpose.

@@ -95,6 +95,11 @@ class MediumExtractor(BaseExtractor):
             if exc.status_code not in self._no_retry_status_codes:
                 raise
         freedium_url = f"{self._FREEDIUM_BASE}{url}"
+        # The class-level _no_retry_status_codes must not apply to the Freedium
+        # request — a 429 from the mirror should be retried with backoff, not
+        # raised immediately.  Shadow it with an empty set for this fetch only.
+        _saved_no_retry = self._no_retry_status_codes
+        self._no_retry_status_codes = frozenset()
         try:
             html = self.fetch_html(freedium_url, retries=retries, retry_delay=retry_delay)
             soup = BeautifulSoup(html, "lxml")
@@ -105,3 +110,5 @@ class MediumExtractor(BaseExtractor):
                 inner_exc.message = inner_exc.message.replace(freedium_url, url)
                 inner_exc.args = (inner_exc.message,)
             raise
+        finally:
+            self._no_retry_status_codes = _saved_no_retry

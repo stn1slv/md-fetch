@@ -33,7 +33,9 @@ class BaseExtractor(ABC):
 
         Makes up to *retries* total attempts on transient :class:`FetchError` (network
         errors, timeouts, non-2xx responses) using exponential backoff: the wait before
-        attempt *n* is ``min(60, retry_delay * 2 ** n)`` seconds.
+        attempt *n* is ``min(60, retry_delay * 2 ** n)`` seconds.  Status codes listed
+        in :attr:`_no_retry_status_codes` are raised immediately without any retry or
+        sleep.
         """
         last_exc: FetchError | None = None
         for attempt in range(max(1, retries)):

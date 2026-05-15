@@ -234,10 +234,12 @@ class TestFreediumFallback:
         freedium_url = f"https://freedium-mirror.cfd/{original_url}"
         router = _do_fetch_router(
             {
-                "medium.com": HTTPStatusError("HTTP 403", status_code=403, url=original_url),
+                # "freedium-mirror.cfd" must come first: the Freedium URL embeds the
+                # medium.com domain, so a later "medium.com" entry would match it too.
                 "freedium-mirror.cfd": HTTPStatusError(
                     f"HTTP 503 fetching {freedium_url}", status_code=503, url=freedium_url
                 ),
+                "medium.com": HTTPStatusError("HTTP 403", status_code=403, url=original_url),
             }
         )
         with patch.object(extractor, "_do_fetch", side_effect=router):

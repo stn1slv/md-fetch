@@ -146,7 +146,7 @@ def extract(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> st
 Notes:
 - `HTTPStatusError` must be added to the imports in `medium.py`
 - `_parse_freedium()` skips all Medium-specific stripping (nav, clap buttons, `data-testid` elements) — Freedium's `main-content` div already contains only article body
-- Section headings will render as `####` Markdown (Freedium uses `<h4>`); this is an accepted structural difference vs `##`/`###` from direct Medium access
+- Freedium uses `<h4>` for section headings; `_parse_freedium()` remaps h4→h3, h5→h4, h6→h5 before conversion so heading levels match the direct Medium path (`###`)
 
 ### Data Model
 
