@@ -40,5 +40,5 @@ Substack follows the same pattern as all providers:
 2. Define `class SubstackExtractor(BaseExtractor)` decorated with `@register`
 3. Set `DOMAINS: frozenset[str] = frozenset({"substack.com"})`
 4. Implement `clean_html(soup)` and `convert_to_markdown(tag)`
-5. Add unit tests in `tests/unit/test_substack.py`
+5. Add unit tests in `tests/unit/test_substack_extractor.py`
 6. Add integration tests in `tests/integration/test_substack_integration.py`

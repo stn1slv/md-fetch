@@ -67,7 +67,7 @@ tests/
     └── test_substack_integration.py  # NEW: real-network integration tests
 ```
 
-No other files are modified.
+No shared runtime infrastructure is modified. The following non-runtime files are also updated: `README.md` (supported platforms table), `tests/unit/test_router.py` (unsupported-domain fixture updated from `substack.com` to `wordpress.com`), and `.specify/` memory/config files.
 
 ## Phase 1: Design & Contracts
 

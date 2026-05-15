@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import re
 
 from bs4 import BeautifulSoup
@@ -59,7 +60,7 @@ class SubstackExtractor(BaseExtractor):
         if isinstance(header, Tag):
             subtitle_el = header.find("h3", class_=re.compile(r"subtitle"))
             if isinstance(subtitle_el, Tag):
-                body.insert(0, subtitle_el.__copy__())
+                body.insert(0, copy.copy(subtitle_el))
 
         # Prepend article title as top-level heading (FR-004)
         # h1.post-title is structurally outside div.body.markup; unconditional prepend
@@ -67,7 +68,7 @@ class SubstackExtractor(BaseExtractor):
         if isinstance(header, Tag):
             title_el = header.find("h1", class_="post-title")
             if isinstance(title_el, Tag):
-                body.insert(0, title_el.__copy__())
+                body.insert(0, copy.copy(title_el))
 
         return body
 
