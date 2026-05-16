@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-16
 
-**Status**: Draft
+**Status**: Completed
 
 **Input**: User description: "Let's add support of thenewstack.io articles"
 
