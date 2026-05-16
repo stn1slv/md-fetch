@@ -64,7 +64,7 @@ A new user reading the project README discovers that Homebrew is the recommended
 - What if the Homebrew tap repository is temporarily unavailable when the pipeline tries to push the formula update?
 - What if the `TAP_GITHUB_TOKEN` has expired or been revoked at the time of a release?
 - What if a PyPI release is subsequently yanked — should the formula be rolled back or left at the yanked version?
-- What if two releases are published in rapid succession — will the second pipeline run update the formula correctly even if the first is still running?
+- What if two releases are published in rapid succession — will the second pipeline run update the formula correctly even if the first is still running? *(Addressed: `concurrency: group=homebrew-tap-update, cancel-in-progress=false` serializes runs so the second waits for the first to complete.)*
 - What if the `brew test` verification step fails after installation (e.g., a missing transitive dependency not declared in the formula)?
 
 ## Requirements *(mandatory)*
@@ -105,6 +105,10 @@ A new user reading the project README discovers that Homebrew is the recommended
 - Q: Should the tap-update job retry if PyPI does not immediately serve the new release's sdist checksum? → A: Retry up to 3 times with 30-second intervals before failing.
 - Q: What is the measurable time bound for SC-003 (formula update after PyPI publish)? → A: Within 10 minutes of PyPI publish confirmation.
 - Q: Where should the brew install option appear in the README relative to pip? → A: Pip remains first (universal); brew added as a secondary option below.
+
+### Revision: Implementation Sync 2026-05-16
+- **Edge Case #4**: Resolved by `concurrency: group=homebrew-tap-update` in the CI job — concurrent release runs are serialized rather than racing.
+- **FR-006**: Scoping clarified in implementation — `TAP_GITHUB_TOKEN` must be a fine-grained PAT (`Contents: read+write` on `stn1slv/homebrew-tap` only).
 
 ## Assumptions
 

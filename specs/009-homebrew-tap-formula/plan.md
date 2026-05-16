@@ -99,6 +99,12 @@ virtualenv_install_with_resources:
 md-fetch binary available on PATH
 ```
 
+**System library dependencies** (`lxml` requires libxml2/libxslt from macOS):
+```ruby
+uses_from_macos "libxml2"
+uses_from_macos "libxslt"
+```
+
 **Resources declared** (alphabetical, as required by Homebrew style):
 anyio, beautifulsoup4, certifi, click, h11, httpcore, httpx, idna, lxml, markdownify, six, soupsieve, typing-extensions
 
@@ -112,6 +118,7 @@ GitHub Release published (tag vX.Y.Z on main)
 build job (existing) → publish job (existing)
   ↓
 update-homebrew-tap job (NEW, needs: publish)
+  [concurrency: group=homebrew-tap-update, cancel-in-progress=false]
   1. Strip 'v' prefix from GITHUB_REF_NAME → VERSION
   2. Poll https://pypi.org/pypi/mdfetch/{VERSION}/json
      - Retry up to 3× with 30s sleep on failure/empty
@@ -122,7 +129,7 @@ update-homebrew-tap job (NEW, needs: publish)
      - Replace url line (package)
      - Replace first sha256 line (package only, not resource blocks)
   5. git commit "chore: bump md-fetch to v{VERSION}"
-  6. git pull --rebase (concurrent release safety)
+  6. git pull --rebase
   7. git push
 ```
 
@@ -135,5 +142,11 @@ Full YAML skeleton: [`contracts/tap-update-job.md`](contracts/tap-update-job.md)
 | PyPI doesn't return new version after 3×30s | Job exits 1 → CI failure (SC-004) |
 | `TAP_GITHUB_TOKEN` missing or revoked | `git clone` fails → CI failure (SC-004) |
 | Formula file structure changed (sed no-op) | `git commit` finds nothing staged → exits 1 → CI failure |
-| Push conflict (concurrent release) | `git pull --rebase` succeeds for sequential; true concurrent fails loudly |
+| Concurrent release overlap | `concurrency: group=homebrew-tap-update` serializes runs; second run queues and proceeds after first completes |
 | `brew test` fails after install | `brew test md-fetch` exits non-zero → installation validation fails |
+
+### Revision: Implementation Sync 2026-05-16
+- **Formula**: Added `uses_from_macos "libxml2"` and `uses_from_macos "libxslt"` (discovered by `brew audit --strict --new`; required by `lxml`)
+- **CI Job**: Added `concurrency: { group: homebrew-tap-update, cancel-in-progress: false }` to serialize overlapping release runs (resolves Edge Case #4 from spec.md)
+- **CI Job Design flow**: Annotated concurrency guard; removed "concurrent release safety" note from `git pull --rebase` step (now secondary protection only)
+- **Failure Modes**: Updated concurrent-release row to reflect concurrency guard as primary mechanism

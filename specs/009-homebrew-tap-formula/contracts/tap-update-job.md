@@ -14,6 +14,9 @@ update-homebrew-tap:
   name: Update Homebrew tap
   runs-on: ubuntu-latest
   needs: publish
+  concurrency:
+    group: homebrew-tap-update
+    cancel-in-progress: false
   permissions:
     contents: read
 
@@ -74,10 +77,10 @@ update-homebrew-tap:
 | PyPI returns 404 for new version after 3×30s retries | Step exits non-zero → job fails → workflow shows red |
 | `TAP_GITHUB_TOKEN` absent or invalid | `git clone` or `git push` exits non-zero → job fails |
 | `sed` finds no matching line (formula structure changed) | `git diff --quiet` would show no changes; `git commit` would fail — job exits non-zero |
-| Push conflict (concurrent release) | `git pull --rebase` resolves sequential conflicts; true concurrent failure exits non-zero |
+| Concurrent release overlap | `concurrency: group=homebrew-tap-update` serializes runs; second run queues and proceeds after first completes (`cancel-in-progress: false`) |
 
 ## Prerequisites
 
 - `TAP_GITHUB_TOKEN` secret must be set in `stn1slv/md-fetch` repository settings.
-- Token requires: `contents:write` scope on `stn1slv/homebrew-tap`.
+- Token must be a **fine-grained PAT** with `Contents: read+write` on `stn1slv/homebrew-tap` only. Do not use a classic `repo`-scoped PAT.
 - `jq` is **not** required — Python 3 (always available on `ubuntu-latest`) is used for JSON parsing.
