@@ -55,7 +55,7 @@ uv run mypy src/  # type check
 <!-- SPECKIT START -->
 ## Active Feature Plan
 
-No active feature. Last completed: `006-thenewstack-provider` (archived 2026-05-16).
+Active feature: `007-dzone-provider`. Implementation plan: [`specs/007-dzone-provider/plan.md`](specs/007-dzone-provider/plan.md).
 
 ## Known Issues & Gotchas
 

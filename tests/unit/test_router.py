@@ -74,3 +74,9 @@ class TestUrlValidation:
 
         provider = route("https://thenewstack.io/some-article/")
         assert isinstance(provider, TheNewStackExtractor)
+
+    def test_routes_dzone_com(self) -> None:
+        from mdfetch.providers.dzone import DZoneExtractor
+
+        provider = route("https://dzone.com/articles/some-article")
+        assert isinstance(provider, DZoneExtractor)
