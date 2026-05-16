@@ -9,7 +9,8 @@ import sys
 import click
 
 from mdfetch import extract
-from mdfetch.exceptions import MdfetchError
+from mdfetch.exceptions import MdfetchError, UnsupportedPlatformError
+from mdfetch.router import supported_domains
 
 
 @click.command(name="mdfetch")
@@ -45,6 +46,17 @@ def main(url: str, output: str | None, retries: int, retry_delay: float) -> None
                 f.write(content)
         else:
             click.echo(content)
+    except UnsupportedPlatformError as e:
+        from urllib.parse import urlparse
+
+        domain = urlparse(e.url).hostname if e.url else str(e)
+        domains = ", ".join(sorted(supported_domains()))
+        click.secho(
+            f"Error: '{domain}' is not a supported platform.\nSupported domains: {domains}",
+            err=True,
+            fg="red",
+        )
+        sys.exit(1)
     except MdfetchError as e:
         click.secho(str(e), err=True, fg="red")
         sys.exit(1)
