@@ -1,3 +1,23 @@
+### mdfetch — Homebrew Tap Formula — 2026-05-16
+
+**Branch**: `009-homebrew-tap-formula`
+**Spec**: specs/009-homebrew-tap-formula
+
+**What was added**:
+- `Formula/md-fetch.rb` in `stn1slv/homebrew-tap` using `Language::Python::Virtualenv` pattern with 13 resource blocks; `depends_on "python@3.12"`; `uses_from_macos "libxml2"` and `uses_from_macos "libxslt"` (required by lxml); test block verifying `md-fetch --version`
+- `update-homebrew-tap` job in `.github/workflows/publish.yml`: polls PyPI JSON API (3×30s retry), patches formula url+sha256 via sed, commits and pushes to tap; `concurrency: group=homebrew-tap-update, cancel-in-progress: false` serializes concurrent release runs
+- `README.md` updated with `brew install stn1slv/tap/md-fetch` as secondary install option beneath `pip install mdfetch`
+- `homebrew-tap/README.md` updated with md-fetch row in Available Formulas table
+- TAP_GITHUB_TOKEN documented as required fine-grained PAT (`Contents: read+write` on `stn1slv/homebrew-tap` only)
+
+**New Components**:
+- `Formula/md-fetch.rb` (in `stn1slv/homebrew-tap`) — Homebrew formula
+- `update-homebrew-tap` CI job (in `.github/workflows/publish.yml`)
+
+**Tasks Completed**: 13/15 (T002 manual PAT setup, T015 post-merge verification pending)
+
+---
+
 ### mdfetch — Architecture Refactoring & CLI Improvements — 2026-05-16
 
 **Branch**: `refactor/reduce-duplication-and-robustness`

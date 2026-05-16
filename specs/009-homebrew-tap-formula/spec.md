@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-16
 
-**Status**: Draft
+**Status**: Completed
 
 **Input**: User description: "Add a Homebrew formula to stn1slv/homebrew-tap so users can install the md-fetch CLI via `brew install stn1slv/tap/md-fetch`. Automate keeping the formula up to date by extending the existing publish pipeline."
 

@@ -107,6 +107,10 @@ jobs:
             Formula/md-fetch.rb
           sed -i "0,/  sha256 \"[a-f0-9]*\"/{s|  sha256 \"[a-f0-9]*\"|  sha256 \"${SHA256}\"|}" Formula/md-fetch.rb
 
+          if ! grep -qF "  url \"${SDIST_URL}\"" Formula/md-fetch.rb; then
+            echo "ERROR: URL substitution made no change — formula URL pattern may have drifted" >&2; exit 1
+          fi
+
           git add Formula/md-fetch.rb
           git commit -m "chore: bump md-fetch to v${VERSION}"
           git pull --rebase
