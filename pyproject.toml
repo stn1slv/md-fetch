@@ -27,11 +27,16 @@ dependencies = [
     "beautifulsoup4>=4.12",
     "lxml>=5.0",
     "markdownify>=0.13",
+    "click>=8.1",
 ]
+
+[project.scripts]
+md-fetch = "mdfetch.cli:main"
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
+    "pytest-mock>=3.14.0",
     "ruff>=0.4",
     "mypy>=1.9",
 ]

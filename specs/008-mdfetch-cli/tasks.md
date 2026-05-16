@@ -20,11 +20,11 @@ description: "Task list for mdfetch-cli implementation"
 
 **Purpose**: Verify baseline and create file stubs.
 
-- [ ] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
-- [ ] T002 Update `pyproject.toml` to add `click` (version >= 8.1) to dependencies and define `[project.scripts]` for `md-fetch = "mdfetch.cli:main"`
-- [ ] T003 Run `make setup` to sync new dependencies
-- [ ] T004 Create `src/mdfetch/cli.py` with module docstring, `from __future__ import annotations`, and required imports (`click`, `extract` from `mdfetch`, and `MdfetchError`)
-- [ ] T005 [P] Create `tests/integration/test_cli_integration.py` with module docstring and required imports (`subprocess`, `pytest`)
+- [x] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
+- [x] T002 Update `pyproject.toml` to add `click` (version >= 8.1) to dependencies and define `[project.scripts]` for `md-fetch = "mdfetch.cli:main"`
+- [x] T003 Run `make setup` to sync new dependencies
+- [x] T004 Create `src/mdfetch/cli.py` with module docstring, `from __future__ import annotations`, and required imports (`click`, `extract` from `mdfetch`, and `MdfetchError`)
+- [x] T005 [P] Create `tests/integration/test_cli_integration.py` with module docstring and required imports (`subprocess`, `pytest`)
 
 ---
 
@@ -34,7 +34,7 @@ description: "Task list for mdfetch-cli implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T006 Implement the basic `@click.command()` shell in `src/mdfetch/cli.py` named `main`, accepting a `url` argument.
+- [x] T006 Implement the basic `@click.command()` shell in `src/mdfetch/cli.py` named `main`, accepting a `url` argument.
 
 **Checkpoint**: `uv run md-fetch --help` executes without error and displays basic help text.
 
@@ -48,13 +48,13 @@ description: "Task list for mdfetch-cli implementation"
 
 ### Implementation for User Story 1
 
-- [ ] T007 [US1] Implement standard output fetching in `src/mdfetch/cli.py`:
+- [x] T007 [US1] Implement standard output fetching in `src/mdfetch/cli.py`:
   1. Call `extract(url)` inside the `main` function.
   2. Print the result using `click.echo()`.
 
 ### Tests for User Story 1
 
-- [ ] T008 [US1] Add integration test for stdout printing in `tests/integration/test_cli_integration.py` using `subprocess.run(["uv", "run", "md-fetch", "<URL>"])`.
+- [x] T008 [US1] Add integration test for stdout printing in `tests/integration/test_cli_integration.py` using `subprocess.run(["uv", "run", "md-fetch", "<URL>"])`.
 
 **Checkpoint**: User Story 1 is independently functional. `uv run md-fetch <URL>` works.
 
@@ -68,12 +68,12 @@ description: "Task list for mdfetch-cli implementation"
 
 ### Implementation for User Story 2
 
-- [ ] T009 [US2] Update `main` in `src/mdfetch/cli.py` to accept an `-o` / `--output` option using `@click.option()`.
-- [ ] T010 [US2] Update `main` logic to write content to the specified file path if provided, rather than printing to stdout.
+- [x] T009 [US2] Update `main` in `src/mdfetch/cli.py` to accept an `-o` / `--output` option using `@click.option()`.
+- [x] T010 [US2] Update `main` logic to write content to the specified file path if provided, rather than printing to stdout.
 
 ### Tests for User Story 2
 
-- [ ] T011 [US2] Add integration test for file writing in `tests/integration/test_cli_integration.py` using a temporary directory fixture.
+- [x] T011 [US2] Add integration test for file writing in `tests/integration/test_cli_integration.py` using a temporary directory fixture.
 
 **Checkpoint**: User Stories 1 AND 2 both work independently.
 
@@ -87,13 +87,13 @@ description: "Task list for mdfetch-cli implementation"
 
 ### Implementation for User Story 3
 
-- [ ] T012 [US3] Update `main` in `src/mdfetch/cli.py` to wrap the `extract()` call in a `try...except MdfetchError` block.
-- [ ] T013 [US3] In the `except` block, print the error string to `stderr` in red using `click.secho()` and exit gracefully with `sys.exit(1)` or `raise click.Abort()`.
+- [x] T012 [US3] Update `main` in `src/mdfetch/cli.py` to wrap the `extract()` call in a `try...except MdfetchError` block.
+- [x] T013 [US3] In the `except` block, print the error string to `stderr` in red using `click.secho()` and exit gracefully with `sys.exit(1)` or `raise click.Abort()`.
 
 ### Tests for User Story 3
 
-- [ ] T014 [US3] Add integration test for unsupported URL in `tests/integration/test_cli_integration.py`, asserting stderr output and exit code 1.
-- [ ] T014b [US3] Add mock test for network timeout (`FetchError`) in `tests/integration/test_cli_integration.py`, asserting stderr output and exit code 1.
+- [x] T014 [US3] Add integration test for unsupported URL in `tests/integration/test_cli_integration.py`, asserting stderr output and exit code 1.
+- [x] T014b [US3] Add mock test for network timeout (`FetchError`) in `tests/integration/test_cli_integration.py`, asserting stderr output and exit code 1.
 
 **Checkpoint**: All user stories independently functional; graceful error handling verified.
 
@@ -103,12 +103,12 @@ description: "Task list for mdfetch-cli implementation"
 
 **Purpose**: Final quality gate across all new files.
 
-- [ ] T015 [P] Run `uv run mypy src/mdfetch/cli.py` and fix any type errors
-- [ ] T016 [P] Run `make lint` and fix any ruff violations in `src/mdfetch/cli.py` and `tests/integration/test_cli_integration.py`
-- [ ] T017 Run `make format` to ensure consistent code styling
-- [ ] T018 Run `make test` and confirm all existing unit tests still pass
-- [ ] T018b Run `make integration` and confirm the new CLI integration tests pass alongside the others
-- [ ] T019 Update `README.md` to document the new `md-fetch` CLI command usage (stdout and file output).
+- [x] T015 [P] Run `uv run mypy src/mdfetch/cli.py` and fix any type errors
+- [x] T016 [P] Run `make lint` and fix any ruff violations in `src/mdfetch/cli.py` and `tests/integration/test_cli_integration.py`
+- [x] T017 Run `make format` to ensure consistent code styling
+- [x] T018 Run `make test` and confirm all existing unit tests still pass
+- [x] T018b Run `make integration` and confirm the new CLI integration tests pass alongside the others
+- [x] T019 Update `README.md` to document the new `md-fetch` CLI command usage (stdout and file output).
 
 ---
 
