@@ -34,7 +34,7 @@ description: "Task list for Homebrew Tap Formula feature"
 **Purpose**: Confirm baseline and fulfil the one manual prerequisite.
 
 - [ ] T001 Run `make test` in `/Users/Stanislav_Deviatov/src/github/md-fetch` and confirm all existing unit tests pass (green baseline before any changes)
-- [ ] T002 Create a GitHub PAT with `contents:write` scope on `stn1slv/homebrew-tap`, then add it as secret `HOMEBREW_TAP_TOKEN` in `stn1slv/md-fetch` → Settings → Secrets and variables → Actions *(manual step — required before Phase 4 CI testing)*
+- [ ] T002 Create a GitHub PAT with `contents:write` scope on `stn1slv/homebrew-tap`, then add it as secret `TAP_GITHUB_TOKEN` in `stn1slv/md-fetch` → Settings → Secrets and variables → Actions *(manual step — required before Phase 4 CI testing)*
 
 ---
 

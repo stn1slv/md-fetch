@@ -62,7 +62,7 @@ A new user reading the project README discovers that Homebrew is the recommended
 ### Edge Cases
 
 - What if the Homebrew tap repository is temporarily unavailable when the pipeline tries to push the formula update?
-- What if the `HOMEBREW_TAP_TOKEN` has expired or been revoked at the time of a release?
+- What if the `TAP_GITHUB_TOKEN` has expired or been revoked at the time of a release?
 - What if a PyPI release is subsequently yanked — should the formula be rolled back or left at the yanked version?
 - What if two releases are published in rapid succession — will the second pipeline run update the formula correctly even if the first is still running?
 - What if the `brew test` verification step fails after installation (e.g., a missing transitive dependency not declared in the formula)?
@@ -79,14 +79,14 @@ A new user reading the project README discovers that Homebrew is the recommended
 - **FR-006**: The automated formula update MUST commit and push the change to `stn1slv/homebrew-tap` using a dedicated access token with write permissions scoped to that repository only.
 - **FR-007**: If the automated formula update step fails for any reason (network error, authentication failure, PyPI propagation timeout after 3 retries, push conflict), the failure MUST be surfaced as a failed CI job, preventing silent divergence between PyPI and Homebrew.
 - **FR-008**: The project README MUST include the `brew install stn1slv/tap/md-fetch` command in the installation section as a secondary option beneath the existing `pip install mdfetch` instruction, so that Homebrew users can discover it without searching elsewhere.
-- **FR-009**: The repository settings MUST document the required `HOMEBREW_TAP_TOKEN` secret (a personal access token with write access to `stn1slv/homebrew-tap`) so that the automation can be reproduced by any future maintainer.
+- **FR-009**: The repository settings MUST document the required `TAP_GITHUB_TOKEN` secret (a personal access token with write access to `stn1slv/homebrew-tap`) so that the automation can be reproduced by any future maintainer.
 
 ### Key Entities
 
 - **Homebrew Formula**: A declarative package definition in `stn1slv/homebrew-tap` describing how to install `md-fetch`, including its source URL, integrity checksum, dependencies, and test procedure.
 - **PyPI Source Archive (sdist)**: The `.tar.gz` source distribution published to PyPI for each release; the formula uses this archive as its source and verifies it against a SHA-256 checksum.
 - **Release Pipeline**: The existing GitHub Actions workflow that publishes `md-fetch` to PyPI; this feature extends it with a post-publish job to keep the Homebrew formula in sync.
-- **HOMEBREW_TAP_TOKEN**: A GitHub Personal Access Token with write access to the `stn1slv/homebrew-tap` repository, stored as a secret in the `md-fetch` repository and consumed exclusively by the tap-update job.
+- **TAP_GITHUB_TOKEN**: A GitHub Personal Access Token with write access to the `stn1slv/homebrew-tap` repository, stored as a secret in the `md-fetch` repository and consumed exclusively by the tap-update job.
 
 ## Success Criteria *(mandatory)*
 
@@ -111,7 +111,7 @@ A new user reading the project README discovers that Homebrew is the recommended
 - Homebrew is already installed on the user's machine; the feature does not cover installing Homebrew itself.
 - The formula targets the standard Homebrew installation on both macOS and Linux; Windows (WSL) is out of scope.
 - Only the source distribution (sdist) is used as the formula's source artifact; binary wheels are not referenced by the formula.
-- A `HOMEBREW_TAP_TOKEN` PAT will be created and added to the `md-fetch` repository secrets by the maintainer before the automation is first used; this is a one-time manual prerequisite outside the automated workflow.
+- A `TAP_GITHUB_TOKEN` PAT will be created and added to the `md-fetch` repository secrets by the maintainer before the automation is first used; this is a one-time manual prerequisite outside the automated workflow.
 - If a PyPI release is yanked after the formula has been updated, the formula is not automatically rolled back; the maintainer handles yanked-release scenarios manually.
 - The `stn1slv/homebrew-tap` repository already exists and accepts formula files under `Formula/`; no structural changes to the tap are needed.
 - The existing release pipeline publishes to PyPI first; the tap-update job runs after a confirmed successful publish and does not block the PyPI publish if it fails.

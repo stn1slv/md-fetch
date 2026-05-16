@@ -49,7 +49,7 @@ Inputs consumed by the `update-homebrew-tap` GitHub Actions job:
 | Variable | Source | Description |
 |----------|--------|-------------|
 | `GITHUB_REF_NAME` | GitHub Actions context | Release tag, e.g. `v0.5.0` |
-| `HOMEBREW_TAP_TOKEN` | Repository secret | PAT with `contents:write` on `stn1slv/homebrew-tap` |
+| `TAP_GITHUB_TOKEN` | Repository secret | PAT with `contents:write` on `stn1slv/homebrew-tap` |
 | `VERSION` | Derived (`${GITHUB_REF_NAME#v}`) | Version without `v` prefix, e.g. `0.5.0` |
 | `SDIST_URL` | PyPI JSON API | Full URL of the new sdist tarball |
 | `SHA256` | PyPI JSON API | SHA-256 of the new sdist tarball |

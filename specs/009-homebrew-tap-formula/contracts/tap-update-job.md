@@ -49,9 +49,9 @@ update-homebrew-tap:
 
     - name: Clone homebrew-tap and update formula
       env:
-        HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
       run: |
-        git clone "https://x-access-token:${HOMEBREW_TAP_TOKEN}@github.com/stn1slv/homebrew-tap.git"
+        git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/stn1slv/homebrew-tap.git"
         cd homebrew-tap
         git config user.name  "github-actions[bot]"
         git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -72,12 +72,12 @@ update-homebrew-tap:
 | Failure | Job Behaviour |
 |---------|--------------|
 | PyPI returns 404 for new version after 3×30s retries | Step exits non-zero → job fails → workflow shows red |
-| `HOMEBREW_TAP_TOKEN` absent or invalid | `git clone` or `git push` exits non-zero → job fails |
+| `TAP_GITHUB_TOKEN` absent or invalid | `git clone` or `git push` exits non-zero → job fails |
 | `sed` finds no matching line (formula structure changed) | `git diff --quiet` would show no changes; `git commit` would fail — job exits non-zero |
 | Push conflict (concurrent release) | `git pull --rebase` resolves sequential conflicts; true concurrent failure exits non-zero |
 
 ## Prerequisites
 
-- `HOMEBREW_TAP_TOKEN` secret must be set in `stn1slv/md-fetch` repository settings.
+- `TAP_GITHUB_TOKEN` secret must be set in `stn1slv/md-fetch` repository settings.
 - Token requires: `contents:write` scope on `stn1slv/homebrew-tap`.
 - `jq` is **not** required — Python 3 (always available on `ubuntu-latest`) is used for JSON parsing.

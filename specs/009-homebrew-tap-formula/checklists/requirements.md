@@ -33,4 +33,4 @@
 
 - All items pass. Spec is ready for `/speckit-plan`.
 - The formula's `Language::Python::Virtualenv` pattern and SHA256 mechanics are deliberately kept out of the spec (they are implementation decisions captured in the plan).
-- The `HOMEBREW_TAP_TOKEN` prerequisite is documented as an assumption since it requires a one-time manual step outside the automated workflow.
+- The `TAP_GITHUB_TOKEN` prerequisite is documented as an assumption since it requires a one-time manual step outside the automated workflow.

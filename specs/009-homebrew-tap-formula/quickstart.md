@@ -6,7 +6,7 @@
 
 - Homebrew installed (`/opt/homebrew/bin/brew` on Apple Silicon, `/usr/local/bin/brew` on Intel)
 - Access to `stn1slv/homebrew-tap` repository with write permissions
-- `HOMEBREW_TAP_TOKEN` PAT created with `contents:write` scope on `stn1slv/homebrew-tap`
+- `TAP_GITHUB_TOKEN` PAT created with `contents:write` scope on `stn1slv/homebrew-tap`
 
 ## Step 1: Get the mdfetch 0.5.0 sdist URL and SHA-256
 
@@ -51,7 +51,7 @@ Simulate the tap-update script with a specific version:
 
 ```bash
 export VERSION="0.5.0"
-export HOMEBREW_TAP_TOKEN="<your-pat>"
+export TAP_GITHUB_TOKEN="<your-pat>"
 
 # Fetch sdist info
 RESPONSE=$(curl -sf "https://pypi.org/pypi/mdfetch/${VERSION}/json")
@@ -62,12 +62,12 @@ echo "URL:    $SDIST_URL"
 echo "SHA256: $SHA256"
 ```
 
-## Step 5: Add the `HOMEBREW_TAP_TOKEN` secret
+## Step 5: Add the `TAP_GITHUB_TOKEN` secret
 
 1. Create a GitHub PAT at Settings → Developer settings → Personal access tokens
    - Scopes: `repo` (or fine-grained `contents:write` on `stn1slv/homebrew-tap`)
 2. Add to `stn1slv/md-fetch` → Settings → Secrets and variables → Actions
-   - Name: `HOMEBREW_TAP_TOKEN`
+   - Name: `TAP_GITHUB_TOKEN`
 
 ## Step 6: Trigger a test release
 

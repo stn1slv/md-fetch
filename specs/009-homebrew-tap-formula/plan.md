@@ -26,7 +26,7 @@ Add a Homebrew formula for the `md-fetch` CLI to `stn1slv/homebrew-tap` using th
 
 **Constraints**:
 - No changes to `src/mdfetch/` or `tests/` — this feature is purely packaging and CI
-- The `HOMEBREW_TAP_TOKEN` PAT must be created and stored as a repository secret by the maintainer before first use (one-time manual step)
+- The `TAP_GITHUB_TOKEN` PAT must be created and stored as a repository secret by the maintainer before first use (one-time manual step)
 - Formula resource blocks pin dependency versions to those in `uv.lock` at time of formula creation; dependency bumps are a separate manual operation
 
 **Scale/Scope**: Single formula file; single CI job addition; two README updates
@@ -117,7 +117,7 @@ update-homebrew-tap job (NEW, needs: publish)
      - Retry up to 3× with 30s sleep on failure/empty
      - Extract: SDIST_URL, SHA256
      - Exit 1 if not available after 3 retries
-  3. Clone stn1slv/homebrew-tap via HOMEBREW_TAP_TOKEN
+  3. Clone stn1slv/homebrew-tap via TAP_GITHUB_TOKEN
   4. sed patch Formula/md-fetch.rb:
      - Replace url line (package)
      - Replace first sha256 line (package only, not resource blocks)
@@ -133,7 +133,7 @@ Full YAML skeleton: [`contracts/tap-update-job.md`](contracts/tap-update-job.md)
 | Condition | Behaviour |
 |-----------|-----------|
 | PyPI doesn't return new version after 3×30s | Job exits 1 → CI failure (SC-004) |
-| `HOMEBREW_TAP_TOKEN` missing or revoked | `git clone` fails → CI failure (SC-004) |
+| `TAP_GITHUB_TOKEN` missing or revoked | `git clone` fails → CI failure (SC-004) |
 | Formula file structure changed (sed no-op) | `git commit` finds nothing staged → exits 1 → CI failure |
 | Push conflict (concurrent release) | `git pull --rebase` succeeds for sequential; true concurrent fails loudly |
 | `brew test` fails after install | `brew test md-fetch` exits non-zero → installation validation fails |
