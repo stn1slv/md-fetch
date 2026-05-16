@@ -81,12 +81,6 @@ class TestUrlValidation:
         provider = route("https://dzone.com/articles/some-article")
         assert isinstance(provider, DZoneExtractor)
 
-    def test_returns_cached_instance(self) -> None:
-        """Routing the same domain twice must return the same provider instance."""
-        a = route("https://dev.to/article1")
-        b = route("https://dev.to/article2")
-        assert a is b
-
 
 class TestSupportedDomains:
     def test_returns_frozenset(self) -> None:

@@ -97,11 +97,10 @@ DZoneExtractor(BaseExtractor) — src/mdfetch/providers/dzone.py
 ```
 router.py
 ├── _REGISTRY: dict[str, type[BaseExtractor]]
-├── _INSTANCES: dict[type[BaseExtractor], BaseExtractor]  — provider caching
 ├── @register decorator          — self-enrolls provider at class definition time
 ├── _autodiscover_providers()    — pkgutil.iter_modules scans mdfetch/providers/ at import
 ├── supported_domains() → frozenset[str] — returns all registered domain strings
-├── route(url) → BaseExtractor   — exact hostname match, then longest-suffix fallback; reuses _INSTANCES
+├── route(url) → BaseExtractor   — exact hostname match, then longest-suffix fallback
 └── Duplicate domain registration raises ValueError
 ```
 
