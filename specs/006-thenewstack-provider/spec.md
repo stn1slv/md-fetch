@@ -48,7 +48,7 @@ A developer passes a thenewstack.io URL that does not point to an article (e.g.,
 - What happens when the article body is present but contains no extractable text after stripping (e.g., media-only post)?
 - How does the system behave when the platform returns an HTTP error (404, 429, 503)?
 - What happens when the article contains embedded content (tweets, YouTube videos, iframes)?
-- What happens when VoxPop poll widgets are present mid-article — are they stripped without leaving gaps?
+- What happens if a future site redesign moves VoxPop polls inside the article body container? (Currently a non-issue: VoxPop is a page-level modal, confirmed outside `div#tns-post-body-content` across all reference articles.)
 
 ## Requirements *(mandatory)*
 
@@ -56,7 +56,7 @@ A developer passes a thenewstack.io URL that does not point to an article (e.g.,
 
 - **FR-001**: The system MUST route all `thenewstack.io` URLs to the new provider using the existing domain-registration mechanism (`@register` decorator + `DOMAINS` frozenset).
 - **FR-002**: The system MUST extract the main article body from a thenewstack.io page and return it as clean Markdown.
-- **FR-003**: The system MUST strip all non-content elements before Markdown conversion, including: site navigation headers, subscription CTAs and newsletter signup forms, VoxPop poll widgets, social share buttons, author bio sections, related articles sections, sidebar content, sponsored content banners, and page footers.
+- **FR-003**: The system MUST strip all non-content elements before Markdown conversion, including: site navigation headers, subscription CTAs and newsletter signup forms, social share buttons, author bio sections, related articles sections, sidebar content, sponsored content banners, and page footers. (Note: VoxPop poll widgets are rendered as page-level modals outside the article body container and require no explicit stripping.)
 - **FR-004**: The system MUST prepend the article title as a top-level Markdown heading (`# Title`), followed immediately by the article deck/subtitle as a plain paragraph when one is present on the page.
 - **FR-005**: The system MUST preserve the article's structural content: headings (all levels), paragraphs, ordered and unordered lists, inline code, fenced code blocks, blockquotes, hyperlinks, and images.
 - **FR-006**: The system MUST raise `UnsupportedContentTypeError` when the fetched page does not contain a recognisable article body element.
@@ -67,8 +67,8 @@ A developer passes a thenewstack.io URL that does not point to an article (e.g.,
 
 ### Key Entities
 
-- **thenewstack.io Article**: A single article page at a `thenewstack.io/<slug>/` URL. Key attributes: title, author, publication date, body content (always publicly accessible — no paywall).
-- **DOM Element Taxonomy**: Mapping of HTML elements to actions (keep, strip) for thenewstack.io's page structure. Article body resides in `<article>` or equivalent main content container; non-content elements include navigation, VoxPop polls, subscription forms, social buttons, related posts, and footer.
+- **thenewstack.io Article**: A single article page at a `thenewstack.io/<slug>/` URL. Key attributes: title, deck/subtitle (optional), author, publication date, body content (always publicly accessible — no paywall).
+- **DOM Element Taxonomy**: Mapping of HTML elements to actions (keep, strip) for thenewstack.io's page structure. Article body resides in `div#tns-post-body-content`; title and deck reside in `div#tns-post-headline`. Non-content elements inside the body include sponsored content disclosures (`div.sponsored-post-disclosure`, `div.tns-sponsored-post-disclosure`, `div.sponsor-disclosure`) and injected sponsor notes (`div.tns-sponsor-note`). Navigation, VoxPop polls, social buttons, related posts, sidebar, and footer are outside the body container and require no explicit stripping.
 
 ## Success Criteria *(mandatory)*
 
@@ -78,7 +78,7 @@ A developer passes a thenewstack.io URL that does not point to an article (e.g.,
 - **SC-002**: Extraction completes within the base class 30-second fetch timeout on stable internet.
 - **SC-003**: A thenewstack.io homepage URL raises `UnsupportedContentTypeError` within the normal fetch timeout.
 - **SC-004**: The extracted Markdown for any article contains no consecutive blank-line runs of three or more lines.
-- **SC-005**: The new provider is exercised by at least one integration test using a real network request against both reference article URLs, matching the pattern established by existing providers.
+- **SC-005**: The new provider is exercised by integration tests using real network requests against all five reference article URLs, matching the pattern established by existing providers.
 
 ## Clarifications
 
@@ -92,7 +92,7 @@ A developer passes a thenewstack.io URL that does not point to an article (e.g.,
 - thenewstack.io does not operate a paywall; all articles are publicly accessible without authentication. No paywall handling is required.
 - thenewstack.io does not use contributor subdomains (unlike Substack or Medium); only the primary `thenewstack.io` hostname needs to be registered.
 - The platform's public HTML page structure (article body container element) is stable enough for CSS-selector-based extraction; a major redesign would require an extractor update.
-- VoxPop poll widgets embedded mid-article are non-content and MUST be stripped entirely; their removal should not introduce extra blank lines beyond the collapsed-blank-line rule.
+- VoxPop poll widgets (`div.tns-voxpop-screen`) are rendered as page-level overlay modals outside `div#tns-post-body-content` — confirmed across all five reference articles. No explicit stripping is needed; they are naturally excluded by scoping extraction to the body container.
 - The implementation follows the existing provider pattern: one new file `src/mdfetch/providers/thenewstack.py`, no changes to shared infrastructure.
 - The base class retry/timeout behaviour (3 retries, 30-second timeout) is inherited without modification.
 - Integration tests use the five reference article URLs: `https://thenewstack.io/using-a-developer-portal-for-api-management/`, `https://thenewstack.io/api-management-for-asynchronous-apis/`, `https://thenewstack.io/json-schema-ai-reliability/`, `https://thenewstack.io/mcp-api-governance-readiness/`, and `https://thenewstack.io/api-mcp-agent-integration/`. All five were verified to share identical HTML structure.
