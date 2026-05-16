@@ -23,14 +23,14 @@ from mdfetch.exceptions import MdfetchError
 )
 @click.option(
     "--retries",
-    type=int,
+    type=click.IntRange(min=1),
     default=3,
     show_default=True,
     help="Total number of fetch attempts on transient errors",
 )
 @click.option(
     "--retry-delay",
-    type=float,
+    type=click.FloatRange(min=0),
     default=2.0,
     show_default=True,
     help="Seconds to wait between retry attempts",

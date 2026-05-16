@@ -81,7 +81,8 @@ class BaseExtractor(ABC):
                         status_code=response.status_code,
                         url=url,
                     )
-                content_type = (response.headers.get("content-type") or "").split(";")[0].strip()
+                raw_ct = response.headers.get("content-type") or ""
+                content_type = raw_ct.split(";")[0].strip().lower()
                 if content_type and content_type not in _ACCEPTED_CONTENT_TYPES:
                     raise UnsupportedContentTypeError(
                         f"Expected HTML but got {content_type!r} from {url}",

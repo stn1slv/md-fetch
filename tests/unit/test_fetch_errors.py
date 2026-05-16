@@ -127,3 +127,11 @@ class TestFetchErrors:
         with patch("httpx.Client", return_value=mock):
             result = extractor.fetch_html("https://medium.com/article", retries=1)
         assert "Test" in result
+
+    def test_accepts_mixed_case_content_type(self, extractor: MediumExtractor) -> None:
+        """HTTP media types are case-insensitive per RFC 7231."""
+        body = b"<html><body><article><p>Test</p></article></body></html>"
+        mock = make_stream_mock(body=body, content_type="Text/HTML; charset=utf-8")
+        with patch("httpx.Client", return_value=mock):
+            result = extractor.fetch_html("https://medium.com/article", retries=1)
+        assert "Test" in result
