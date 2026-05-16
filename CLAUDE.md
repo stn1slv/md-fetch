@@ -57,7 +57,7 @@ make typecheck    # type check
 <!-- SPECKIT START -->
 ## Active Feature Plan
 
-Active feature: `008-mdfetch-cli`. Implementation plan: [`specs/008-mdfetch-cli/plan.md`](specs/008-mdfetch-cli/plan.md).
+Active feature: `009-homebrew-tap-formula`. Implementation plan: [`specs/009-homebrew-tap-formula/plan.md`](specs/009-homebrew-tap-formula/plan.md).
 
 ## Known Issues & Gotchas
 
