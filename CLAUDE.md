@@ -7,6 +7,7 @@ Python library that extracts article content from web platforms and returns it a
 ```
 src/mdfetch/
 ├── __init__.py       # extract() public API + exception re-exports
+├── cli.py            # Command-line interface and argument parsing
 ├── exceptions.py     # MdfetchError hierarchy (7 exception classes)
 ├── base.py           # BaseExtractor ABC
 ├── router.py         # Domain-to-provider routing
@@ -15,7 +16,8 @@ src/mdfetch/
     ├── medium.py     # MediumExtractor (medium.com + *.medium.com)
     ├── devto.py      # DevToExtractor (dev.to)
     ├── substack.py   # SubstackExtractor (substack.com + *.substack.com)
-    └── thenewstack.py  # TheNewStackExtractor (thenewstack.io)
+    ├── thenewstack.py  # TheNewStackExtractor (thenewstack.io)
+    └── dzone.py      # DZoneExtractor (dzone.com)
 
 tests/
 ├── unit/             # pytest unit tests (no network)
@@ -34,7 +36,7 @@ Makefile              # setup / test / lint / format / build / upgrade-deps / cl
 ## Key conventions
 
 - **Package manager**: `uv` for all dev workflows — never use `pip`, `venv`, or `pip-tools` directly
-- **Provider pattern**: new platforms = one new file under `src/mdfetch/providers/`, no changes to shared code
+- **Provider pattern**: new platforms = one new file under `src/mdfetch/providers/` subclassing `BaseExtractor` and utilizing its shared conversion methods.
 - **No logging**: all failures communicated via typed exceptions only (FR-013)
 - **Type hints**: strict (`mypy src/` must pass with zero errors)
 - **Linter/formatter**: `ruff` (`make lint` / `make format`)
@@ -49,7 +51,7 @@ make format       # ruff format
 make build        # uv build (wheel + sdist)
 make upgrade-deps # uv sync --all-extras --upgrade
 make integration  # integration tests (network required)
-uv run mypy src/  # type check
+make typecheck    # type check
 ```
 
 <!-- SPECKIT START -->

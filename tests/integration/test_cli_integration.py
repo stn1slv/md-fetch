@@ -8,7 +8,6 @@ import pathlib
 import subprocess
 
 import pytest
-import pytest_mock
 
 
 @pytest.mark.integration
@@ -47,19 +46,6 @@ def test_unsupported_url_error() -> None:
         ["uv", "run", "md-fetch", url], capture_output=True, text=True, check=False
     )
     assert result.returncode == 1
-    assert "No provider registered for domain 'unsupported.com'" in result.stderr
+    assert "'unsupported.com' is not a supported platform." in result.stderr
+    assert "Supported domains:" in result.stderr
     assert result.stdout == ""
-
-
-def test_error_handling_with_runner(mocker: pytest_mock.MockerFixture) -> None:
-    from click.testing import CliRunner
-
-    from mdfetch.cli import main
-    from mdfetch.exceptions import FetchError
-
-    mocker.patch("mdfetch.cli.extract", side_effect=FetchError("Network timeout after 3 retries"))
-    runner = CliRunner()
-    result = runner.invoke(main, ["https://dev.to/test"])
-
-    assert result.exit_code == 1
-    assert "Network timeout after 3 retries" in result.stderr

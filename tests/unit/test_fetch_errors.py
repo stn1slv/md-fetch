@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import call, patch
 
 import httpx
 import pytest
 
-from mdfetch.exceptions import FetchError, HTTPStatusError
+from mdfetch.exceptions import FetchError, HTTPStatusError, UnsupportedContentTypeError
 from mdfetch.providers.medium import MediumExtractor
+from tests.conftest import make_stream_mock
 
 
 @pytest.fixture()
@@ -16,39 +17,9 @@ def extractor() -> MediumExtractor:
     return MediumExtractor()
 
 
-def _make_stream_mock(
-    *,
-    status_code: int = 200,
-    is_success: bool = True,
-    body: bytes = b"<html></html>",
-    stream_side_effect: Exception | None = None,
-) -> MagicMock:
-    """Build a mock httpx.Client whose .stream() behaves like a real streaming response."""
-    mock_response = MagicMock()
-    mock_response.is_success = is_success
-    mock_response.status_code = status_code
-    mock_response.encoding = "utf-8"
-    mock_response.iter_bytes.return_value = iter([body])
-
-    mock_stream_ctx = MagicMock()
-    mock_stream_ctx.__enter__ = MagicMock(return_value=mock_response)
-    mock_stream_ctx.__exit__ = MagicMock(return_value=False)
-
-    mock_client = MagicMock()
-    mock_client.__enter__ = MagicMock(return_value=mock_client)
-    mock_client.__exit__ = MagicMock(return_value=False)
-
-    if stream_side_effect is not None:
-        mock_client.stream.side_effect = stream_side_effect
-    else:
-        mock_client.stream.return_value = mock_stream_ctx
-
-    return mock_client
-
-
 class TestFetchErrors:
     def test_raises_http_status_error_on_404(self, extractor: MediumExtractor) -> None:
-        mock = _make_stream_mock(status_code=404, is_success=False)
+        mock = make_stream_mock(status_code=404, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with pytest.raises(HTTPStatusError) as exc_info:
                 extractor.fetch_html("https://medium.com/article", retries=1)
@@ -56,7 +27,7 @@ class TestFetchErrors:
         assert exc_info.value.status_code == 404
 
     def test_raises_http_status_error_on_503(self, extractor: MediumExtractor) -> None:
-        mock = _make_stream_mock(status_code=503, is_success=False)
+        mock = make_stream_mock(status_code=503, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with pytest.raises(HTTPStatusError) as exc_info:
                 extractor.fetch_html("https://medium.com/article", retries=1)
@@ -66,20 +37,20 @@ class TestFetchErrors:
     def test_raises_fetch_error_on_timeout(self, extractor: MediumExtractor) -> None:
         with patch(
             "httpx.Client",
-            return_value=_make_stream_mock(stream_side_effect=httpx.TimeoutException("timed out")),
+            return_value=make_stream_mock(stream_side_effect=httpx.TimeoutException("timed out")),
         ):
             with pytest.raises(FetchError):
                 extractor.fetch_html("https://medium.com/article", retries=1)
 
     def test_raises_fetch_error_on_connection_error(self, extractor: MediumExtractor) -> None:
-        mock = _make_stream_mock(stream_side_effect=httpx.ConnectError("connection refused"))
+        mock = make_stream_mock(stream_side_effect=httpx.ConnectError("connection refused"))
         with patch("httpx.Client", return_value=mock):
             with pytest.raises(FetchError):
                 extractor.fetch_html("https://medium.com/article", retries=1)
 
     def test_http_status_error_is_fetch_error(self, extractor: MediumExtractor) -> None:
         """HTTPStatusError must be a subclass of FetchError for callers catching FetchError."""
-        mock = _make_stream_mock(status_code=404, is_success=False)
+        mock = make_stream_mock(status_code=404, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with pytest.raises(FetchError):
                 extractor.fetch_html("https://medium.com/article", retries=1)
@@ -88,7 +59,7 @@ class TestFetchErrors:
         self, extractor: MediumExtractor
     ) -> None:
         oversized_body = b"x" * (11 * 1024 * 1024)  # 11 MB — over the 10 MB cap
-        with patch("httpx.Client", return_value=_make_stream_mock(body=oversized_body)):
+        with patch("httpx.Client", return_value=make_stream_mock(body=oversized_body)):
             with pytest.raises(FetchError, match="exceeded"):
                 extractor.fetch_html("https://medium.com/article", retries=1)
 
@@ -96,7 +67,7 @@ class TestFetchErrors:
         self, extractor: MediumExtractor
     ) -> None:
         """Status codes in _no_retry_status_codes must raise immediately, no retry sleep."""
-        mock = _make_stream_mock(status_code=403, is_success=False)
+        mock = make_stream_mock(status_code=403, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
                 with pytest.raises(HTTPStatusError) as exc_info:
@@ -108,7 +79,7 @@ class TestFetchErrors:
     def test_no_retry_status_codes_raises_immediately_for_429(
         self, extractor: MediumExtractor
     ) -> None:
-        mock = _make_stream_mock(status_code=429, is_success=False)
+        mock = make_stream_mock(status_code=429, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
                 with pytest.raises(HTTPStatusError) as exc_info:
@@ -121,7 +92,7 @@ class TestFetchErrors:
         self, extractor: MediumExtractor
     ) -> None:
         """Status codes NOT in _no_retry_status_codes must still trigger retry with fixed delay."""
-        mock = _make_stream_mock(status_code=503, is_success=False)
+        mock = make_stream_mock(status_code=503, is_success=False)
         with patch("httpx.Client", return_value=mock):
             with patch("mdfetch.base.time.sleep") as mock_sleep:
                 with pytest.raises(HTTPStatusError):
@@ -129,3 +100,56 @@ class TestFetchErrors:
 
         assert mock_sleep.call_count == 2  # 3 attempts → 2 sleeps
         assert mock_sleep.call_args_list == [call(1.0), call(1.0)]  # fixed delay, not exponential
+
+    def test_raises_unsupported_content_type_for_json(self, extractor: MediumExtractor) -> None:
+        mock = make_stream_mock(content_type="application/json")
+        with patch("httpx.Client", return_value=mock):
+            with pytest.raises(UnsupportedContentTypeError, match="application/json"):
+                extractor.fetch_html("https://medium.com/article", retries=1)
+
+    def test_raises_unsupported_content_type_for_pdf(self, extractor: MediumExtractor) -> None:
+        mock = make_stream_mock(content_type="application/pdf")
+        with patch("httpx.Client", return_value=mock):
+            with pytest.raises(UnsupportedContentTypeError, match="application/pdf"):
+                extractor.fetch_html("https://medium.com/article", retries=1)
+
+    def test_accepts_xhtml_content_type(self, extractor: MediumExtractor) -> None:
+        body = b"<html><body><article><p>Test</p></article></body></html>"
+        mock = make_stream_mock(body=body, content_type="application/xhtml+xml; charset=utf-8")
+        with patch("httpx.Client", return_value=mock):
+            result = extractor.fetch_html("https://medium.com/article", retries=1)
+        assert "Test" in result
+
+    def test_accepts_empty_content_type(self, extractor: MediumExtractor) -> None:
+        """Servers that omit Content-Type should not trigger the check."""
+        body = b"<html><body><article><p>Test</p></article></body></html>"
+        mock = make_stream_mock(body=body, content_type="")
+        with patch("httpx.Client", return_value=mock):
+            result = extractor.fetch_html("https://medium.com/article", retries=1)
+        assert "Test" in result
+
+    def test_accepts_mixed_case_content_type(self, extractor: MediumExtractor) -> None:
+        """HTTP media types are case-insensitive per RFC 7231."""
+        body = b"<html><body><article><p>Test</p></article></body></html>"
+        mock = make_stream_mock(body=body, content_type="Text/HTML; charset=utf-8")
+        with patch("httpx.Client", return_value=mock):
+            result = extractor.fetch_html("https://medium.com/article", retries=1)
+        assert "Test" in result
+
+    def test_unsupported_content_type_does_not_read_body(self, extractor: MediumExtractor) -> None:
+        """Body stream must not be consumed when content-type is rejected."""
+        mock = make_stream_mock(content_type="application/json")
+        with patch("httpx.Client", return_value=mock):
+            with pytest.raises(UnsupportedContentTypeError):
+                extractor.fetch_html("https://medium.com/article", retries=1)
+        mock.stream.return_value.__enter__.return_value.iter_bytes.assert_not_called()
+
+    def test_unsupported_content_type_is_not_retried(self, extractor: MediumExtractor) -> None:
+        """UnsupportedContentTypeError must propagate immediately with no retry attempts."""
+        mock = make_stream_mock(content_type="application/pdf")
+        with patch("httpx.Client", return_value=mock):
+            with patch("mdfetch.base.time.sleep") as mock_sleep:
+                with pytest.raises(UnsupportedContentTypeError):
+                    extractor.fetch_html("https://medium.com/article", retries=3)
+        mock_sleep.assert_not_called()
+        assert mock.stream.call_count == 1

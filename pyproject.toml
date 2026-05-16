@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "mdfetch"
-version = "0.4.0"
+version = "0.5.0"
 description = "Extract article content from web platforms and return it as clean Markdown."
 readme = "README.md"
 license = { text = "MIT" }

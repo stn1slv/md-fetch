@@ -7,10 +7,9 @@ import re
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from markdownify import markdownify
 
 from mdfetch.base import BaseExtractor
-from mdfetch.exceptions import EmptyContentError, UnsupportedContentTypeError
+from mdfetch.exceptions import UnsupportedContentTypeError
 from mdfetch.router import register
 
 
@@ -33,14 +32,7 @@ class SubstackExtractor(BaseExtractor):
             widget.decompose()
 
         # Convert iframes to plain anchor links (FR-011)
-        for iframe in body.find_all("iframe"):
-            src = str(iframe.get("src") or iframe.get("data-src") or "")
-            if src:
-                link = soup.new_tag("a", href=src)
-                link.string = src
-                iframe.replace_with(link)
-            else:
-                iframe.decompose()
+        self._replace_iframes_with_links(body, soup)
 
         # Convert other Substack embed containers to plain anchor links (FR-011)
         _safe_components = {"SubscribeWidget", "Image2ToDOM"}
@@ -71,16 +63,3 @@ class SubstackExtractor(BaseExtractor):
                 body.insert(0, copy.copy(title_el))
 
         return body
-
-    def convert_to_markdown(self, tag: Tag) -> str:
-        """Convert cleaned article Tag to Markdown."""
-        md = markdownify(str(tag), heading_style="ATX", code_language="", strip=["script", "style"])
-        md = md.strip()
-        md = re.sub(r"\n{3,}", "\n\n", md)
-
-        if not md:
-            raise EmptyContentError(
-                "Article body contained no extractable text content",
-            )
-
-        return md

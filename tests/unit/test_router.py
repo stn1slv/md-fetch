@@ -80,3 +80,34 @@ class TestUrlValidation:
 
         provider = route("https://dzone.com/articles/some-article")
         assert isinstance(provider, DZoneExtractor)
+
+
+class TestSupportedDomains:
+    def test_returns_frozenset(self) -> None:
+        from mdfetch.router import supported_domains
+
+        result = supported_domains()
+        assert isinstance(result, frozenset)
+
+    def test_contains_known_domains(self) -> None:
+        from mdfetch.router import supported_domains
+
+        result = supported_domains()
+        assert "medium.com" in result
+        assert "dev.to" in result
+        assert "substack.com" in result
+        assert "thenewstack.io" in result
+        assert "dzone.com" in result
+
+    def test_does_not_contain_unregistered_domain(self) -> None:
+        from mdfetch.router import supported_domains
+
+        result = supported_domains()
+        assert "wordpress.com" not in result
+
+    def test_public_api_import(self) -> None:
+        from mdfetch import supported_domains
+
+        result = supported_domains()
+        assert isinstance(result, frozenset)
+        assert "medium.com" in result

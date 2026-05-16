@@ -54,6 +54,11 @@ def route(url: str) -> BaseExtractor:
     return provider_cls()
 
 
+def supported_domains() -> frozenset[str]:
+    """Return the set of domains that have a registered provider."""
+    return frozenset(_REGISTRY)
+
+
 def _autodiscover_providers() -> None:
     """Import every module in mdfetch.providers; classes decorated with @register self-enrol."""
     import mdfetch.providers as _providers_pkg  # noqa: PLC0415

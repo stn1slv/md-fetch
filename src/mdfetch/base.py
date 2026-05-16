@@ -2,16 +2,26 @@
 
 from __future__ import annotations
 
+import re
 import time
 from abc import ABC, abstractmethod
+from typing import Any
 
 import httpx
 from bs4 import BeautifulSoup
 from bs4.element import Tag
+from markdownify import markdownify
 
-from mdfetch.exceptions import FetchError, HTTPStatusError, MdfetchError
+from mdfetch.exceptions import (
+    EmptyContentError,
+    FetchError,
+    HTTPStatusError,
+    MdfetchError,
+    UnsupportedContentTypeError,
+)
 
 _MAX_RESPONSE_BYTES = 10 * 1024 * 1024  # 10 MB — guard against runaway responses
+_ACCEPTED_CONTENT_TYPES = frozenset({"text/html", "application/xhtml+xml"})
 
 
 class BaseExtractor(ABC):
@@ -46,42 +56,50 @@ class BaseExtractor(ABC):
         """
         no_retry = self._no_retry_status_codes if _no_retry_codes is None else _no_retry_codes
         last_exc: FetchError | None = None
-        for attempt in range(max(1, retries)):
-            try:
-                return self._do_fetch(url)
-            except FetchError as exc:
-                if isinstance(exc, HTTPStatusError) and exc.status_code in no_retry:
-                    raise
-                last_exc = exc
-                if attempt < retries - 1:
-                    time.sleep(retry_delay)
-        assert last_exc is not None
+        with httpx.Client(timeout=30.0, follow_redirects=True) as client:
+            for attempt in range(max(1, retries)):
+                try:
+                    return self._do_fetch(url, client)
+                except FetchError as exc:
+                    if isinstance(exc, HTTPStatusError) and exc.status_code in no_retry:
+                        raise
+                    last_exc = exc
+                    if attempt < retries - 1:
+                        time.sleep(retry_delay)
+        if last_exc is None:
+            raise RuntimeError("unreachable: retry loop completed without exception")
         raise last_exc
 
-    def _do_fetch(self, url: str) -> str:
+    def _do_fetch(self, url: str, client: httpx.Client) -> str:
         """Single HTTP fetch attempt (no retry logic)."""
         headers = {"User-Agent": self._USER_AGENT}
         try:
-            with httpx.Client(timeout=30.0, follow_redirects=True) as client:
-                with client.stream("GET", url, headers=headers) as response:
-                    if not response.is_success:
-                        raise HTTPStatusError(
-                            f"HTTP {response.status_code} fetching {url}",
-                            status_code=response.status_code,
+            with client.stream("GET", url, headers=headers) as response:
+                if not response.is_success:
+                    raise HTTPStatusError(
+                        f"HTTP {response.status_code} fetching {url}",
+                        status_code=response.status_code,
+                        url=url,
+                    )
+                raw_ct = response.headers.get("content-type") or ""
+                content_type = raw_ct.split(";")[0].strip().lower()
+                if content_type and content_type not in _ACCEPTED_CONTENT_TYPES:
+                    raise UnsupportedContentTypeError(
+                        f"Expected HTML but got {content_type!r} from {url}",
+                        url=url,
+                    )
+                chunks: list[bytes] = []
+                total = 0
+                for chunk in response.iter_bytes():
+                    total += len(chunk)
+                    if total > _MAX_RESPONSE_BYTES:
+                        raise FetchError(
+                            f"Response from {url} exceeded "
+                            f"{_MAX_RESPONSE_BYTES // (1024 * 1024)} MB limit",
                             url=url,
                         )
-                    chunks: list[bytes] = []
-                    total = 0
-                    for chunk in response.iter_bytes():
-                        total += len(chunk)
-                        if total > _MAX_RESPONSE_BYTES:
-                            raise FetchError(
-                                f"Response from {url} exceeded "
-                                f"{_MAX_RESPONSE_BYTES // (1024 * 1024)} MB limit",
-                                url=url,
-                            )
-                        chunks.append(chunk)
-                    return b"".join(chunks).decode(response.encoding or "utf-8", errors="replace")
+                    chunks.append(chunk)
+                return b"".join(chunks).decode(response.encoding or "utf-8", errors="replace")
         except httpx.TimeoutException as exc:
             raise FetchError(f"Request timed out: {url}", url=url) from exc
         except httpx.RequestError as exc:
@@ -91,9 +109,47 @@ class BaseExtractor(ABC):
     def clean_html(self, soup: BeautifulSoup) -> Tag:
         """Isolate the article body, strip non-content elements, and return the root Tag."""
 
-    @abstractmethod
+    def _markdownify_kwargs(self) -> dict[str, Any]:
+        """Return markdownify keyword arguments for this provider.
+
+        The returned dict is merged with (and may override) the base defaults
+        ``heading_style="ATX"``, ``code_language=""``, ``strip=["script","style"]``.
+        Override in subclasses to customise or extend the conversion options.
+        """
+        return {}
+
     def convert_to_markdown(self, tag: Tag) -> str:
         """Convert the cleaned Tag to a Markdown string."""
+        md = markdownify(
+            str(tag),
+            **{
+                "heading_style": "ATX",
+                "code_language": "",
+                "strip": ["script", "style"],
+                **self._markdownify_kwargs(),
+            },
+        )
+        md = md.strip()
+        md = re.sub(r"\n{3,}", "\n\n", md)
+
+        if not md:
+            raise EmptyContentError(
+                "Article body contained no extractable text content",
+            )
+
+        return md
+
+    @staticmethod
+    def _replace_iframes_with_links(container: Tag, soup: BeautifulSoup) -> None:
+        """Replace ``<iframe>`` elements inside *container* with plain anchor links."""
+        for iframe in container.find_all("iframe"):
+            src = str(iframe.get("src") or iframe.get("data-src") or "")
+            if src:
+                link = soup.new_tag("a", href=src)
+                link.string = src
+                iframe.replace_with(link)
+            else:
+                iframe.decompose()
 
     def extract(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
         """Orchestrate fetch → clean → convert and return Markdown."""

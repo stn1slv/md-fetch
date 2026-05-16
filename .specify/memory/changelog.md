@@ -1,3 +1,26 @@
+### mdfetch — Architecture Refactoring & CLI Improvements — 2026-05-16
+
+**Branch**: `refactor/reduce-duplication-and-robustness`
+
+**What was added**:
+- Centralized duplicated markdown conversion and iframe stripping into `BaseExtractor`, utilizing a `_markdownify_kwargs()` hook.
+- Added strict `Content-Type` header validation in `_do_fetch` to eagerly reject non-HTML responses (e.g., `application/json`, `application/pdf`).
+- Implemented `httpx.Client` connection pooling across retry attempts.
+- Exported new public API `mdfetch.supported_domains()` which returns a `frozenset[str]` of all registered domains.
+- Expanded the CLI (`mdfetch.cli:main`) with configurable options: `--retries`, `--retry-delay` (with click `IntRange`/`FloatRange` validation), and `--version`.
+- Removed control-flow assertions in favor of explicit `RuntimeError` guards.
+- Consolidated test helpers (`make_stream_mock`) into `tests/conftest.py`.
+- Bumped package version to `0.5.0`.
+
+**New Components**:
+- Updates across `base.py`, `router.py`, `cli.py`, and `__init__.py`.
+- Refactored providers (`devto.py`, `substack.py`, `thenewstack.py`, `dzone.py`) to leverage `BaseExtractor` defaults.
+- Additional unit and integration test coverage for CLI flags and content types.
+
+**Tasks Completed**: Refactoring and PR Review updates
+
+---
+
 # Merged Features Log
 
 ---

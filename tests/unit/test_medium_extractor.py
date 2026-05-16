@@ -215,7 +215,7 @@ class TestParseFreedium:
 def _do_fetch_router(url_map: dict[str, str | Exception]) -> object:
     """Return a _do_fetch side_effect that routes by URL substring match."""
 
-    def _side_effect(url: str) -> str:
+    def _side_effect(url: str, _client: object = None) -> str:
         for pattern, response in url_map.items():
             if pattern in url:
                 if isinstance(response, Exception):
@@ -244,7 +244,7 @@ class TestFreediumFallback:
         original_url = "https://stn1slv.medium.com/some-article-abc123"
         captured_urls: list[str] = []
 
-        def capturing_router(url: str) -> str:
+        def capturing_router(url: str, _client: object = None) -> str:
             captured_urls.append(url)
             if "freedium" in url:
                 return _FREEDIUM_ARTICLE_HTML
@@ -298,7 +298,7 @@ class TestFreediumFallback:
     ) -> None:
         call_count = 0
 
-        def router(url: str) -> str:
+        def router(url: str, _client: object = None) -> str:
             nonlocal call_count
             call_count += 1
             raise HTTPStatusError("HTTP 404", status_code=404, url=url)
@@ -347,7 +347,7 @@ class TestNoFallbackOnSuccess:
         """
         call_count = 0
 
-        def router(url: str) -> str:
+        def router(url: str, _client: object = None) -> str:
             nonlocal call_count
             call_count += 1
             return article_html

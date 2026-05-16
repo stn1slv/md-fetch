@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import logging
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from mdfetch import extract
+from tests.conftest import make_stream_mock
 
 
 @pytest.fixture()
@@ -24,31 +25,11 @@ def mock_medium_response() -> str:
     """
 
 
-def _stream_client_mock(html: str) -> MagicMock:
-    """Return a mock httpx.Client whose .stream() yields the given HTML body."""
-    body = html.encode("utf-8")
-
-    mock_response = MagicMock()
-    mock_response.is_success = True
-    mock_response.status_code = 200
-    mock_response.encoding = "utf-8"
-    mock_response.iter_bytes.return_value = iter([body])
-
-    mock_stream_ctx = MagicMock()
-    mock_stream_ctx.__enter__ = MagicMock(return_value=mock_response)
-    mock_stream_ctx.__exit__ = MagicMock(return_value=False)
-
-    mock_client = MagicMock()
-    mock_client.__enter__ = MagicMock(return_value=mock_client)
-    mock_client.__exit__ = MagicMock(return_value=False)
-    mock_client.stream.return_value = mock_stream_ctx
-    return mock_client
-
-
 def test_no_stdout_during_successful_extraction(
     capsys: pytest.CaptureFixture[str], mock_medium_response: str
 ) -> None:
-    with patch("httpx.Client", return_value=_stream_client_mock(mock_medium_response)):
+    mock_client = make_stream_mock(body=mock_medium_response.encode("utf-8"))
+    with patch("httpx.Client", return_value=mock_client):
         extract("https://medium.com/article", retries=1)
 
     captured = capsys.readouterr()
@@ -70,7 +51,8 @@ def test_no_logging_during_extraction(mock_medium_response: str) -> None:
     root_logger.setLevel(logging.DEBUG)
 
     try:
-        with patch("httpx.Client", return_value=_stream_client_mock(mock_medium_response)):
+        mock_client = make_stream_mock(body=mock_medium_response.encode("utf-8"))
+        with patch("httpx.Client", return_value=mock_client):
             extract("https://medium.com/article", retries=1)
     finally:
         root_logger.removeHandler(handler)

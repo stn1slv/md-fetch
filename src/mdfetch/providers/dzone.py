@@ -3,15 +3,13 @@
 from __future__ import annotations
 
 import copy
-import re
 from typing import Any
 
 from bs4 import BeautifulSoup
 from bs4.element import AttributeValueList, Tag
-from markdownify import markdownify
 
 from mdfetch.base import BaseExtractor
-from mdfetch.exceptions import EmptyContentError, UnsupportedContentTypeError
+from mdfetch.exceptions import UnsupportedContentTypeError
 from mdfetch.router import register
 
 
@@ -68,21 +66,6 @@ class DZoneExtractor(BaseExtractor):
 
         return body
 
-    def convert_to_markdown(self, tag: Tag) -> str:
-        """Convert cleaned article Tag to Markdown."""
-        md = markdownify(
-            str(tag),
-            heading_style="ATX",
-            code_language="",
-            code_language_callback=_code_language_callback,
-            strip=["script", "style"],
-        )
-        md = md.strip()
-        md = re.sub(r"\n{3,}", "\n\n", md)
-
-        if not md:
-            raise EmptyContentError(
-                "Article body contained no extractable text content",
-            )
-
-        return md
+    def _markdownify_kwargs(self) -> dict[str, Any]:
+        """Inject DZone's code-language callback into markdownify options."""
+        return {"code_language_callback": _code_language_callback}

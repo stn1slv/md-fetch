@@ -7,11 +7,9 @@ import unicodedata
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from markdownify import markdownify
 
 from mdfetch.base import BaseExtractor
 from mdfetch.exceptions import (
-    EmptyContentError,
     HTTPStatusError,
     MdfetchError,
     UnsupportedContentTypeError,
@@ -78,18 +76,7 @@ class MediumExtractor(BaseExtractor):
         # leaving <br> in prose untouched (preserving its hard-break semantics).
         for br in tag.select("pre br, code br"):
             br.replace_with("\n")
-
-        md = markdownify(str(tag), heading_style="ATX", code_language="", strip=["script", "style"])
-        md = md.strip()
-        md = re.sub(r"\n{3,}", "\n\n", md)
-        md = self._normalize(md)
-
-        if not md:
-            raise EmptyContentError(
-                "Article body contained no extractable text content",
-            )
-
-        return md
+        return self._normalize(super().convert_to_markdown(tag))
 
     def _normalize(self, md: str) -> str:
         """Canonicalize text so direct-Medium and Freedium-fallback paths agree.
