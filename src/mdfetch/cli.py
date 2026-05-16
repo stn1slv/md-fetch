@@ -49,7 +49,7 @@ def main(url: str, output: str | None, retries: int, retry_delay: float) -> None
     except UnsupportedPlatformError as e:
         from urllib.parse import urlparse
 
-        domain = urlparse(e.url).hostname if e.url else str(e)
+        domain = (urlparse(e.url).hostname if e.url else None) or str(e)
         domains = ", ".join(sorted(supported_domains()))
         click.secho(
             f"Error: '{domain}' is not a supported platform.\nSupported domains: {domains}",
