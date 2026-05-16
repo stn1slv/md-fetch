@@ -2,6 +2,35 @@
 
 ---
 
+### mdfetch — The New Stack Provider — 2026-05-16
+
+**Branch**: `006-thenewstack-provider`
+**Spec**: specs/006-thenewstack-provider
+
+**What was added**:
+- `TheNewStackExtractor` provider for `thenewstack.io` articles, auto-discovered via `@register` decorator
+- Article body isolation from `div#tns-post-body-content`; title prepended from `h1.title` in `div#tns-post-headline`; optional deck/subtitle prepended as plain `<p>` tag from `div.post-excerpt`
+- 4 sponsored-content selectors decomposed from body: `div.sponsored-post-disclosure`, `div.tns-sponsored-post-disclosure`, `div.sponsor-disclosure`, `div.tns-sponsor-note`
+- iframes converted to plain anchor links (defensive; not observed in reference articles)
+- `UnsupportedContentTypeError` raised when `div#tns-post-body-content` is absent; `EmptyContentError` raised when body yields no extractable text
+- 14 unit tests in `tests/unit/test_thenewstack_extractor.py`; 6 integration tests (5 article snapshots + 1 homepage error) in `tests/integration/test_thenewstack_integration.py`
+- VoxPop polls (`div.tns-voxpop-screen`) confirmed as page-level modals outside body — no stripping needed
+- Snapshots use verbatim first-30-line prefix format (preserves blank lines for containment assertion)
+
+**New Components**:
+- `src/mdfetch/providers/thenewstack.py` — TheNewStackExtractor
+- `tests/unit/test_thenewstack_extractor.py` — 14 unit tests
+- `tests/integration/test_thenewstack_integration.py` — 6 integration tests
+- `tests/integration/snapshots/thenewstack-developer-portal-api.md`
+- `tests/integration/snapshots/thenewstack-async-apis.md`
+- `tests/integration/snapshots/thenewstack-json-schema-ai.md`
+- `tests/integration/snapshots/thenewstack-mcp-api-governance.md`
+- `tests/integration/snapshots/thenewstack-api-mcp-agent.md`
+
+**Tasks Completed**: 20/20
+
+---
+
 ### mdfetch — Substack Provider — 2026-05-15
 
 **Branch**: `005-substack-provider`

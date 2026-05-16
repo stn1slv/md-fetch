@@ -1,7 +1,7 @@
 # mdfetch — Main Implementation Plan
 
-**Last Updated**: 2026-05-15
-**Sources**: [specs/001-mdfetch-medium-extractor/plan.md], [specs/002-devto-provider/plan.md], [specs/003-medium-freedium-fallback/plan.md], [specs/004-remove-backoff/plan.md], [specs/005-substack-provider/plan.md]
+**Last Updated**: 2026-05-16
+**Sources**: [specs/001-mdfetch-medium-extractor/plan.md], [specs/002-devto-provider/plan.md], [specs/003-medium-freedium-fallback/plan.md], [specs/004-remove-backoff/plan.md], [specs/005-substack-provider/plan.md], [specs/006-thenewstack-provider/plan.md]
 
 ---
 
@@ -74,6 +74,18 @@ SubstackExtractor(BaseExtractor)  — src/mdfetch/providers/substack.py  [005-su
 │                  prepends h3.subtitle from div.post-header (if present);
 │                  prepends h1.post-title from div.post-header (unconditional — structurally outside body)
 └── convert_to_markdown() → markdownify with ATX headings; collapses 3+ newlines to 2; raises EmptyContentError if empty
+
+TheNewStackExtractor(BaseExtractor) — src/mdfetch/providers/thenewstack.py  [006-thenewstack-provider]
+├── DOMAINS = frozenset({"thenewstack.io"})  — no subdomain routing needed (single-site WordPress)
+├── _no_retry_status_codes = frozenset()  — inherits base class default (no overrides needed)
+├── clean_html() → locates div#tns-post-body-content; raises UnsupportedContentTypeError if absent;
+│                  decomposes 4 sponsored-content selectors: div.sponsored-post-disclosure,
+│                    div.tns-sponsored-post-disclosure, div.sponsor-disclosure, div.tns-sponsor-note;
+│                  replaces iframes with anchor links using src/data-src (defensive; not observed in reference articles);
+│                  prepends div.post-excerpt text as new <p> tag (deck) from div#tns-post-headline (if present);
+│                  prepends copy.copy(h1.title) from div#tns-post-headline (if present)
+│                  Note: VoxPop polls (div.tns-voxpop-screen) are page-level modals outside body — no stripping needed
+└── convert_to_markdown() → markdownify with ATX headings; collapses 3+ newlines to 2; raises EmptyContentError if empty
 ```
 
 ### Router / Auto-Discovery
@@ -111,7 +123,8 @@ src/
         ├── __init__.py      # Empty — auto-discovery handles registration
         ├── medium.py        # MediumExtractor
         ├── devto.py         # DevToExtractor [002-devto-provider]
-        └── substack.py      # SubstackExtractor [005-substack-provider]
+        ├── substack.py      # SubstackExtractor [005-substack-provider]
+        └── thenewstack.py   # TheNewStackExtractor [006-thenewstack-provider]
 
 tests/
 ├── unit/
@@ -120,20 +133,27 @@ tests/
 │   ├── test_fetch_errors.py
 │   ├── test_silent.py
 │   ├── test_devto_extractor.py      # [002-devto-provider]
-│   └── test_substack_extractor.py   # [005-substack-provider]
+│   ├── test_substack_extractor.py   # [005-substack-provider]
+│   └── test_thenewstack_extractor.py  # [006-thenewstack-provider]
 └── integration/
     ├── snapshots/           # Golden Markdown files (article body snapshots)
     │   ├── from-drift-to-parity.md
     │   ├── architecting-the-asynchronous-agent.md
     │   ├── integration-digest-december-2025.md
-    │   ├── devto-integration-digest-december-2025.md      # [002-devto-provider]
-    │   ├── devto-integration-digest-july-2025.md          # [002-devto-provider]
-    │   ├── devto-integration-digest-march-2026.md         # [002-devto-provider]
-    │   ├── substack-kafka-topic-types.md                  # [005-substack-provider]
-    │   └── substack-api-trends-2025.md                    # [005-substack-provider]
+    │   ├── devto-integration-digest-december-2025.md        # [002-devto-provider]
+    │   ├── devto-integration-digest-july-2025.md            # [002-devto-provider]
+    │   ├── devto-integration-digest-march-2026.md           # [002-devto-provider]
+    │   ├── substack-kafka-topic-types.md                    # [005-substack-provider]
+    │   ├── substack-api-trends-2025.md                      # [005-substack-provider]
+    │   ├── thenewstack-developer-portal-api.md              # [006-thenewstack-provider]
+    │   ├── thenewstack-async-apis.md                        # [006-thenewstack-provider]
+    │   ├── thenewstack-json-schema-ai.md                    # [006-thenewstack-provider]
+    │   ├── thenewstack-mcp-api-governance.md                # [006-thenewstack-provider]
+    │   └── thenewstack-api-mcp-agent.md                     # [006-thenewstack-provider]
     ├── test_medium_integration.py
-    ├── test_devto_integration.py        # [002-devto-provider]
-    └── test_substack_integration.py     # [005-substack-provider]
+    ├── test_devto_integration.py          # [002-devto-provider]
+    ├── test_substack_integration.py       # [005-substack-provider]
+    └── test_thenewstack_integration.py    # [006-thenewstack-provider]
 
 specs/                       # Speckit feature specifications
 pyproject.toml               # hatchling build backend, uv package manager
@@ -156,18 +176,20 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 
 ## Testing Strategy
 
-**Unit tests** (84 tests, offline):
+**Unit tests** (101 tests, offline):
 - Router: domain routing, subdomain suffix matching, duplicate registration, invalid URLs, unsupported platforms
 - MediumExtractor: clean_html, convert_to_markdown, empty content, non-article pages, _parse_freedium (heading remap, missing main-content), fallback on 403/429 (URL construction, exc.url contract, no-sleep on 429), no-fallback on 200, UnsupportedContentTypeError.url on Freedium path [003-medium-freedium-fallback]
 - DevToExtractor: clean_html (title/cover/heading/image preservation, iframe/ltag embed→link, anchor stripping, non-article error), convert_to_markdown (headings/code/lists/images, no raw HTML, empty content error) [002-devto-provider]
 - SubstackExtractor: routing (subdomain + root domain + _no_retry_status_codes assertion), clean_html (body.markup tag return, subscription-widget strip, title prepend, subtitle prepend, prose preservation, iframe→anchor), convert_to_markdown (title heading, no triple blank lines, image syntax, link preservation), paywalled post (non-empty, Subscribe text absent, free preview present), error cases (UnsupportedContentTypeError on no body, EmptyContentError on whitespace body) [005-substack-provider]
+- TheNewStackExtractor: routing (thenewstack.io domain), clean_html (body div return, title prepend, deck-as-paragraph prepend, sponsor note strip, all 3 disclosure variant strips, iframe→anchor, no deck when absent), convert_to_markdown (title heading, deck after title, no triple blank lines, image syntax, link preservation), error cases (UnsupportedContentTypeError on no body, EmptyContentError on whitespace body) [006-thenewstack-provider]
 - Fetch errors: HTTP 404, 503, timeout, connection error, size limit exceeded; `_no_retry_status_codes` immediate-raise + `_no_retry_codes` override [003-medium-freedium-fallback]
 - Silent: no stdout/stderr output, no logging during extraction
 
-**Integration tests** (9 tests, network required):
+**Integration tests** (15 tests, network required):
 - Parametrized over 3 real stn1slv.medium.com articles (including a known paywalled URL that exercises the Freedium fallback when medium.com returns 403) [003-medium-freedium-fallback]
 - Parametrized over 3 real dev.to/stn1slv articles [002-devto-provider]
 - Parametrized over 2 real Substack articles + 1 homepage error test (`UnsupportedContentTypeError`) [005-substack-provider]
+- Parametrized over 5 real thenewstack.io articles + 1 homepage error test (`UnsupportedContentTypeError`); snapshots are verbatim first-30-line prefixes of the full extraction output [006-thenewstack-provider]
 - Snapshot-based containment check: `expected_body in extracted_result` — tests pass regardless of which source served the content
 - 3 retries with 2-second **fixed** delay on `FetchError` (hardcoded; not env-var configurable) [004-remove-backoff]
 - Run with: `make integration` or `uv run pytest tests/integration/ --override-ini=addopts=`
@@ -210,6 +232,11 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 | Substack title prepend | Unconditional prepend of `h1.post-title` from `div.post-header` | Structurally guaranteed outside `div.body.markup`; section headings use distinct class `header-anchor-post` — no deduplication needed | [005-substack-provider]
 | Substack subtitle | Prepend `h3.subtitle` after title (inserted at index 0 first, then title at index 0 displaces it to index 1) | Author intent preserved; subtitle rendered as `###` heading | [005-substack-provider]
 | Substack HTTP 429 | No `_no_retry_status_codes` override — base class `frozenset()` applies | Unlike Medium, Substack has no Freedium-style mirror; retry is the correct fallback | [005-substack-provider]
+| thenewstack.io article body | `div#tns-post-body-content` | Innermost element containing only prose (29 direct `<p>` children in reference articles); parent chain includes several wrapper divs that add no content | [006-thenewstack-provider]
+| thenewstack.io deck element | Create new `<p>` tag with deck text rather than copying `div.post-excerpt` directly | `div.post-excerpt` is a `<div>`, not a semantic subtitle; wrapping text in `<p>` ensures proper paragraph rendering in Markdown | [006-thenewstack-provider]
+| thenewstack.io VoxPop polls | No explicit stripping required | `div.tns-voxpop-screen` confirmed absent from `div#tns-post-body-content` across all 5 reference articles — page-level overlay modal, not inline content | [006-thenewstack-provider]
+| thenewstack.io router test | No update to `test_router.py` unsupported-domain fixture | `wordpress.com` was already the fixture after the Substack provider; `thenewstack.io` registration requires no change | [006-thenewstack-provider]
+| thenewstack.io snapshot format | Verbatim first-30-line prefix (not stripped/compacted) | Blank lines must be preserved for `snapshot in result` containment assertion to pass | [006-thenewstack-provider]
 | Medium 403/429 fallback | Override `extract()` in `MediumExtractor`; `_no_retry_status_codes=frozenset({403,429})` on class | Immediate fallback with no medium.com retries; `BaseExtractor` extended with `_no_retry_codes` param for thread safety | [003-medium-freedium-fallback]
 | Freedium HTML parsing | Dedicated `_parse_freedium()` method; `div.main-content`; h4→h3 remap | Freedium HTML is structurally incompatible with `clean_html()` (no `<article>`); heading remap ensures snapshot tests pass for both paths | [003-medium-freedium-fallback]
 | Freedium exc.url contract | `inner_exc.url = url` unconditionally; error message is source-agnostic ("Fallback page…") | Preserves transparent-fallback contract (FR-028); `exc.url` is the authoritative field; message content is internal | [003-medium-freedium-fallback]
@@ -227,4 +254,4 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 
 ---
 
-*Last Updated: 2026-05-15 | Sources appended: [specs/004-remove-backoff/plan.md], [specs/005-substack-provider/plan.md]*
+*Last Updated: 2026-05-16 | Sources appended: [specs/004-remove-backoff/plan.md], [specs/005-substack-provider/plan.md], [specs/006-thenewstack-provider/plan.md]*

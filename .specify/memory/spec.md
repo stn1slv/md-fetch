@@ -1,13 +1,13 @@
 # mdfetch — Main Specification
 
-**Last Updated**: 2026-05-15
-**Sources**: [specs/001-mdfetch-medium-extractor/spec.md], [specs/002-devto-provider/spec.md], [specs/003-medium-freedium-fallback/spec.md], [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md]
+**Last Updated**: 2026-05-16
+**Sources**: [specs/001-mdfetch-medium-extractor/spec.md], [specs/002-devto-provider/spec.md], [specs/003-medium-freedium-fallback/spec.md], [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md], [specs/006-thenewstack-provider/spec.md]
 
 ---
 
 ## Overview
 
-`mdfetch` is a Python library that extracts article content from web platforms and returns it as clean, well-structured Markdown. The library enforces a provider pattern — an abstract base defines the extraction contract, and each supported platform is implemented as a separate, independent provider. Supported platforms: `medium.com` (and subdomains), `dev.to`, `substack.com` (and `*.substack.com` subdomains).
+`mdfetch` is a Python library that extracts article content from web platforms and returns it as clean, well-structured Markdown. The library enforces a provider pattern — an abstract base defines the extraction contract, and each supported platform is implemented as a separate, independent provider. Supported platforms: `medium.com` (and subdomains), `dev.to`, `substack.com` (and `*.substack.com` subdomains), `thenewstack.io`.
 
 ---
 
@@ -151,6 +151,30 @@ A developer accidentally passes a Substack URL that does not point to an article
 
 ---
 
+### US-014 — Extract a Public thenewstack.io Article to Markdown (P1)
+[Source: specs/006-thenewstack-provider]
+
+A developer calls `extract()` with a thenewstack.io article URL. The function fetches the article and returns its content as clean Markdown, with no navigation menus, subscription banners, poll widgets, author bios, social share buttons, related articles sections, or any other page chrome.
+
+**Acceptance Scenarios**:
+1. Given a valid URL pointing to a public thenewstack.io article, when `extract()` is called, then it returns a non-empty Markdown string containing the article title as a top-level heading followed by the body content.
+2. Given a thenewstack.io article with multiple headings, paragraphs, lists, and inline links, when `extract()` is called, then the returned Markdown preserves all headings, paragraphs, lists, code blocks, and hyperlinks while stripping navigation, subscription CTAs, poll widgets, and social share buttons.
+3. Given a thenewstack.io article containing images, when `extract()` is called, then images appear in the output as Markdown image syntax (`![alt](url)`).
+
+---
+
+### US-015 — Reject Non-Article thenewstack.io Pages (P2)
+[Source: specs/006-thenewstack-provider]
+
+A developer passes a thenewstack.io URL that does not point to an article (e.g., the homepage, a category listing page, or a tag archive). The function raises a typed exception rather than returning empty or garbage Markdown.
+
+**Acceptance Scenarios**:
+1. Given the thenewstack.io homepage URL, when `extract()` is called, then `UnsupportedContentTypeError` is raised.
+2. Given a thenewstack.io category/tag listing page URL, when `extract()` is called, then `UnsupportedContentTypeError` is raised.
+3. Given an article page whose extractable body text is empty after stripping all chrome, when `extract()` is called, then `EmptyContentError` is raised.
+
+---
+
 ### US-006 — Integration Tests Pass Against Real dev.to Article URLs (P3)
 [Source: specs/002-devto-provider]
 
@@ -211,6 +235,18 @@ A developer runs the integration test suite and all dev.to integration tests pas
 - **FR-039**: The library MUST NOT treat HTTP 429 responses from Substack as a non-retryable condition; 429 MUST be retried up to the configured retry count with the standard fixed delay. [Source: specs/005-substack-provider]
 - **FR-040**: The library MUST convert embedded third-party content in Substack posts (e.g., tweet embeds, YouTube video iframes, and similar rich-media widgets) to plain anchor links using the embed's source URL, matching the pattern used by the dev.to provider. [Source: specs/005-substack-provider]
 
+### The New Stack Platform
+- **FR-041**: The library MUST route all `thenewstack.io` URLs to the TheNewStack provider using the existing domain-registration mechanism (`@register` decorator + `DOMAINS` frozenset). [Source: specs/006-thenewstack-provider]
+- **FR-042**: The library MUST extract the main article body from a thenewstack.io page (`div#tns-post-body-content`) and return it as clean Markdown. [Source: specs/006-thenewstack-provider]
+- **FR-043**: The library MUST strip all non-content elements from within the article body before Markdown conversion, including: sponsored content disclosures (`div.sponsored-post-disclosure`, `div.tns-sponsored-post-disclosure`, `div.sponsor-disclosure`) and injected sponsor notes (`div.tns-sponsor-note`). Navigation, VoxPop polls, social buttons, related posts, sidebar, and footer are outside the body container and require no explicit stripping. [Source: specs/006-thenewstack-provider]
+- **FR-044**: The library MUST prepend the article title as a top-level Markdown heading (`# Title`) from `h1.title` in `div#tns-post-headline`, followed immediately by the article deck/subtitle as a plain paragraph (from `div.post-excerpt` in `div#tns-post-headline`) when one is present. [Source: specs/006-thenewstack-provider]
+- **FR-045**: The library MUST preserve the thenewstack.io article's structural content: headings (all levels), paragraphs, ordered and unordered lists, inline code, fenced code blocks, blockquotes, hyperlinks, and images. [Source: specs/006-thenewstack-provider]
+- **FR-046**: The library MUST raise `UnsupportedContentTypeError` when the fetched thenewstack.io page does not contain a recognisable article body element (`div#tns-post-body-content`). [Source: specs/006-thenewstack-provider]
+- **FR-047**: The library MUST raise `EmptyContentError` when the thenewstack.io article body is present but yields no extractable text after stripping. [Source: specs/006-thenewstack-provider]
+- **FR-048**: The library MUST collapse runs of three or more consecutive blank lines to a single blank line in the thenewstack.io output Markdown. [Source: specs/006-thenewstack-provider]
+- **FR-049**: The library MUST convert embedded third-party content (e.g., YouTube video iframes) in thenewstack.io articles to plain anchor links using the embed's source URL, discarding the embed wrapper — matching the pattern used by existing providers. [Source: specs/006-thenewstack-provider]
+- **FR-050**: The library MUST treat sponsored and native-advertising thenewstack.io article pages identically to editorial articles — extracting content as-is with no special detection, marking, or rejection. [Source: specs/006-thenewstack-provider]
+
 ### dev.to Platform
 - **FR-015**: The library MUST add `dev.to` to the provider router so that any URL with the `dev.to` domain is dispatched to the dev.to provider without any change to the caller's code. [Source: specs/002-devto-provider]
 - **FR-016**: The library MUST include a dev.to provider that fetches the article page, isolates the main article body from `<div id="article-body">`, removes all non-content elements (navigation, social reaction widgets, comments, author sidebar, tag links), and returns the body as Markdown. [Source: specs/002-devto-provider]
@@ -237,7 +273,7 @@ A developer runs the integration test suite and all dev.to integration tests pas
 |-----------|------|-------------|
 | `DOMAINS` | `frozenset[str]` | Domain suffixes this provider handles (e.g., `{"medium.com"}`, `{"dev.to"}`) |
 
-**Invariants**: Each domain suffix registered to exactly one provider. Stateless — every call is independent. Registered providers: `MediumExtractor` (medium.com), `DevToExtractor` (dev.to), `SubstackExtractor` (substack.com and all `*.substack.com` subdomains).
+**Invariants**: Each domain suffix registered to exactly one provider. Stateless — every call is independent. Registered providers: `MediumExtractor` (medium.com), `DevToExtractor` (dev.to), `SubstackExtractor` (substack.com and all `*.substack.com` subdomains), `TheNewStackExtractor` (thenewstack.io).
 
 ### Substack Post
 [Source: specs/005-substack-provider]
@@ -257,6 +293,16 @@ A developer runs the integration test suite and all dev.to integration tests pas
 | `content` | `str` | Portion of a paywalled post publicly readable without a subscription |
 
 **Boundary**: In the DOM, bounded by the last `div.subscription-widget-wrap` at the truncation point. Stripping that element silently achieves truncation.
+
+### TheNewStack Article
+[Source: specs/006-thenewstack-provider]
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `title` | `str` | Article title from `h1.title` in `div#tns-post-headline`; prepended as `# Title` |
+| `deck` | `str \| None` | Optional subtitle from `div.post-excerpt` in `div#tns-post-headline`; rendered as plain paragraph after title |
+| `body` | `Tag` | Prose content inside `div#tns-post-body-content` |
+
+**Validation**: Page must contain `div#tns-post-body-content`; absent → `UnsupportedContentTypeError`. Body must yield non-empty text after stripping → else `EmptyContentError`. No paywall — all thenewstack.io articles are publicly accessible.
 
 ### ExtractionResult (Output)
 | Attribute | Type | Description |
@@ -328,6 +374,11 @@ caller provides URL string
 - **Substack rich embeds**: `<iframe>` elements and `div[data-component-name]` containers (excluding `SubscribeWidget` and `Image2ToDOM`) are converted to plain anchor links using the embed's source URL. [Source: specs/005-substack-provider]
 - **Substack HTTP 429**: Treated as a retryable transient error (no `_no_retry_status_codes` override) — contrasts with `MediumExtractor` which uses `frozenset({403, 429})` to trigger Freedium fallback. [Source: specs/005-substack-provider]
 - **Substack HTML structure changes**: If Substack redesigns and removes `div.body.markup`, the extractor will require an update.
+- **thenewstack.io non-article pages**: Homepage, category/tag listing, and author archive pages do not render `div#tns-post-body-content` → `UnsupportedContentTypeError` is raised immediately. [Source: specs/006-thenewstack-provider]
+- **thenewstack.io VoxPop polls**: `div.tns-voxpop-screen` and `div.tns-voxpop-modal` are page-level overlay modals injected outside `div#tns-post-body-content` — confirmed via live DOM inspection. No explicit stripping is required; scoping extraction to the body container naturally excludes them. [Source: specs/006-thenewstack-provider]
+- **thenewstack.io sponsored content**: `div.tns-sponsor-note` (mid-article sponsor injection) and three disclosure div variants are inside `div#tns-post-body-content` and must be decomposed before conversion. Sponsored article pages are extracted identically to editorial articles (FR-050). [Source: specs/006-thenewstack-provider]
+- **thenewstack.io deck element**: `div.post-excerpt` is a `<div>`, not a semantic subtitle element; the extractor creates a new `<p>` tag with the deck text rather than copying the div directly, to ensure proper paragraph rendering. [Source: specs/006-thenewstack-provider]
+- **thenewstack.io HTML structure changes**: If the site redesign moves content outside `div#tns-post-body-content`, the extractor will require an update.
 
 ---
 
@@ -352,6 +403,12 @@ caller provides URL string
 - **SC-024**: The extracted Markdown for any Substack article contains no consecutive blank-line runs of three or more lines. [Source: specs/005-substack-provider]
 - **SC-025**: The Substack provider is exercised by at least one integration test using a real network request, matching the pattern established by existing providers. [Source: specs/005-substack-provider]
 
+- **SC-026**: A public thenewstack.io article returns Markdown that contains the full article title and body text with zero non-content element fragments (navigation link text, subscription prompts, poll questions, author bio text). [Source: specs/006-thenewstack-provider]
+- **SC-027**: Extraction of a thenewstack.io article completes within the base class 30-second fetch timeout on stable internet. [Source: specs/006-thenewstack-provider]
+- **SC-028**: A thenewstack.io homepage URL raises `UnsupportedContentTypeError` within the normal fetch timeout. [Source: specs/006-thenewstack-provider]
+- **SC-029**: The extracted Markdown for any thenewstack.io article contains no consecutive blank-line runs of three or more lines. [Source: specs/006-thenewstack-provider]
+- **SC-030**: The TheNewStack provider is exercised by integration tests using real network requests against all five reference article URLs, matching the pattern established by existing providers. [Source: specs/006-thenewstack-provider]
+
 ---
 
 ## Assumptions
@@ -374,4 +431,4 @@ caller provides URL string
 
 ---
 
-*Last Updated: 2026-05-15 | Sources appended: [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md]*
+*Last Updated: 2026-05-16 | Sources appended: [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md], [specs/006-thenewstack-provider/spec.md]*
