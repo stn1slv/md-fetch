@@ -4,9 +4,19 @@ A Python library that extracts article content from web platforms and returns it
 
 ## Install
 
+### pip
+
 ```bash
 pip install mdfetch
 ```
+
+### Homebrew (macOS / Linux)
+
+```bash
+brew install stn1slv/tap/md-fetch
+```
+
+No Python environment setup required.
 
 ## CLI Usage
 

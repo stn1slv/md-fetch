@@ -175,6 +175,43 @@ A developer passes a thenewstack.io URL that does not point to an article (e.g.,
 
 ---
 
+### US-016 — Install md-fetch via Homebrew (P1)
+[Source: specs/009-homebrew-tap-formula]
+
+A macOS or Linux developer who does not want to manage a Python environment installs the `md-fetch` CLI using a single Homebrew command. After installation, the `md-fetch` binary is immediately available on the PATH without any additional configuration.
+
+**Acceptance Scenarios**:
+1. Given a macOS or Linux machine with Homebrew installed, when the user runs `brew install stn1slv/tap/md-fetch`, then the installation completes without errors and `md-fetch` is available on the PATH.
+2. Given a successful installation, when the user runs `md-fetch --version`, then the command exits with code 0 and outputs the installed package version.
+3. Given a successful installation, when the user runs `md-fetch <url>` with a supported URL, then the command returns Markdown output, confirming all dependencies are correctly bundled.
+4. Given an existing installation, when the user runs `brew upgrade stn1slv/tap/md-fetch`, then the installation upgrades to the latest published version.
+
+---
+
+### US-017 — Formula Stays in Sync with PyPI Releases (P2)
+[Source: specs/009-homebrew-tap-formula]
+
+When a new version of `md-fetch` is published to PyPI, the Homebrew formula in `stn1slv/homebrew-tap` is updated automatically without any manual intervention from the maintainer. Users running `brew upgrade` receive the new version promptly.
+
+**Acceptance Scenarios**:
+1. Given a new version is successfully published to PyPI, when the release pipeline completes, then the formula in `stn1slv/homebrew-tap` reflects the new version number and correct integrity checksum.
+2. Given a new version is successfully published to PyPI, when the release pipeline completes, then the tap update is committed and pushed without any manual step from the maintainer.
+3. Given the automated tap update fails (e.g., token invalid, network error), when the pipeline completes, then the failure is reported as a visible CI job failure.
+4. Given a published package, when a user on the previous formula version runs `brew upgrade`, then they receive the newly published version.
+
+---
+
+### US-018 — Discover Homebrew Installation via Documentation (P3)
+[Source: specs/009-homebrew-tap-formula]
+
+A new user reading the project README discovers that Homebrew is an installation option on macOS and can install `md-fetch` without reading further instructions.
+
+**Acceptance Scenarios**:
+1. Given the updated README, when a user visits the install section, then `brew install stn1slv/tap/md-fetch` is present as an installation option below the existing `pip install mdfetch` instruction.
+2. Given the README install section, when a user follows the brew instruction verbatim, then the installation succeeds.
+
+---
+
 ### US-006 — Integration Tests Pass Against Real dev.to Article URLs (P3)
 [Source: specs/002-devto-provider]
 
@@ -247,6 +284,17 @@ A developer runs the integration test suite and all dev.to integration tests pas
 - **FR-049**: The library MUST convert embedded third-party content (e.g., YouTube video iframes) in thenewstack.io articles to plain anchor links using the embed's source URL, discarding the embed wrapper — matching the pattern used by existing providers. [Source: specs/006-thenewstack-provider]
 - **FR-050**: The library MUST treat sponsored and native-advertising thenewstack.io article pages identically to editorial articles — extracting content as-is with no special detection, marking, or rejection. [Source: specs/006-thenewstack-provider]
 
+### Homebrew Distribution
+- **FR-051**: A Homebrew formula for the `md-fetch` package MUST be available in the `stn1slv/homebrew-tap` repository so that users can install the tool with standard Homebrew commands. [Source: specs/009-homebrew-tap-formula]
+- **FR-052**: The formula MUST install a working `md-fetch` binary into Homebrew's `bin/` directory, making it immediately available on the user's PATH after installation. [Source: specs/009-homebrew-tap-formula]
+- **FR-053**: The formula MUST bundle all runtime dependencies so that no external Python environment or manual dependency installation is required. [Source: specs/009-homebrew-tap-formula]
+- **FR-054**: The formula MUST include a `brew test` block that verifies the installed binary runs successfully (`md-fetch --version` exits with code 0). [Source: specs/009-homebrew-tap-formula]
+- **FR-055**: When a new version is published to PyPI, the release pipeline MUST automatically update the formula with the new version and correct integrity checksum. The checksum fetch MUST retry up to 3 times with 30-second intervals before failing. [Source: specs/009-homebrew-tap-formula]
+- **FR-056**: The automated formula update MUST commit and push to `stn1slv/homebrew-tap` using a dedicated fine-grained PAT (`Contents: read+write` on that repository only). [Source: specs/009-homebrew-tap-formula]
+- **FR-057**: If the automated formula update step fails for any reason, the failure MUST surface as a failed CI job, preventing silent divergence between PyPI and Homebrew. [Source: specs/009-homebrew-tap-formula]
+- **FR-058**: The project README MUST include the `brew install stn1slv/tap/md-fetch` command as a secondary install option beneath `pip install mdfetch`. [Source: specs/009-homebrew-tap-formula]
+- **FR-059**: The `TAP_GITHUB_TOKEN` secret (a fine-grained PAT with `Contents: read+write` on `stn1slv/homebrew-tap`) must be documented as a required repository secret for the automation to function. [Source: specs/009-homebrew-tap-formula]
+
 ### dev.to Platform
 - **FR-015**: The library MUST add `dev.to` to the provider router so that any URL with the `dev.to` domain is dispatched to the dev.to provider without any change to the caller's code. [Source: specs/002-devto-provider]
 - **FR-016**: The library MUST include a dev.to provider that fetches the article page, isolates the main article body from `<div id="article-body">`, removes all non-content elements (navigation, social reaction widgets, comments, author sidebar, tag links), and returns the body as Markdown. [Source: specs/002-devto-provider]
@@ -303,6 +351,23 @@ A developer runs the integration test suite and all dev.to integration tests pas
 | `body` | `Tag` | Prose content inside `div#tns-post-body-content` |
 
 **Validation**: Page must contain `div#tns-post-body-content`; absent → `UnsupportedContentTypeError`. Body must yield non-empty text after stripping → else `EmptyContentError`. No paywall — all thenewstack.io articles are publicly accessible.
+
+### Homebrew Formula
+[Source: specs/009-homebrew-tap-formula]
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `url` | `str` | PyPI sdist tarball URL, changes on every release |
+| `sha256` | `str` | Hex SHA-256 of the sdist tarball, changes on every release |
+| `depends_on` | `str` | `"python@3.12"` (static) |
+| `uses_from_macos` | `list[str]` | `["libxml2", "libxslt"]` — required by `lxml` resource |
+| `resource` blocks | 13 entries | All runtime dependencies pinned to versions in `uv.lock` at formula creation time |
+
+**Mutable fields per release**: `url` and `sha256` only. All `resource` blocks are static until a separate manual dependency-bump PR.
+
+### TAP_GITHUB_TOKEN
+[Source: specs/009-homebrew-tap-formula]
+
+A GitHub fine-grained Personal Access Token with `Contents: read+write` on `stn1slv/homebrew-tap` only. Stored as a repository secret in `stn1slv/md-fetch` and consumed exclusively by the `update-homebrew-tap` CI job.
 
 ### ExtractionResult (Output)
 | Attribute | Type | Description |
@@ -379,6 +444,12 @@ caller provides URL string
 - **thenewstack.io sponsored content**: `div.tns-sponsor-note` (mid-article sponsor injection) and three disclosure div variants are inside `div#tns-post-body-content` and must be decomposed before conversion. Sponsored article pages are extracted identically to editorial articles (FR-050). [Source: specs/006-thenewstack-provider]
 - **thenewstack.io deck element**: `div.post-excerpt` is a `<div>`, not a semantic subtitle element; the extractor creates a new `<p>` tag with the deck text rather than copying the div directly, to ensure proper paragraph rendering. [Source: specs/006-thenewstack-provider]
 - **thenewstack.io HTML structure changes**: If the site redesign moves content outside `div#tns-post-body-content`, the extractor will require an update.
+- **Homebrew tap temporarily unavailable**: If `stn1slv/homebrew-tap` is unreachable when the pipeline tries to push, `git push` fails and the CI job surfaces a failure — the maintainer must retry manually. [Source: specs/009-homebrew-tap-formula]
+- **TAP_GITHUB_TOKEN expired or revoked**: `git clone` or `git push` exits non-zero → CI job fails → maintainer is alerted to rotate the token. [Source: specs/009-homebrew-tap-formula]
+- **PyPI release yanked after formula update**: The formula is not automatically rolled back; the maintainer handles yanked-release scenarios manually. [Source: specs/009-homebrew-tap-formula]
+- **Concurrent releases**: Addressed by `concurrency: group=homebrew-tap-update, cancel-in-progress=false` — runs are serialized so the second release waits for the first tap-update to complete. [Source: specs/009-homebrew-tap-formula]
+- **brew test fails after install**: `brew test md-fetch` exits non-zero when a transitive dependency is missing or `md-fetch --version` fails — installation validation fails. [Source: specs/009-homebrew-tap-formula]
+- **Formula structure changed (sed no-op)**: If the formula is manually edited and the url/sha256 line format changes, `sed` produces no diff and `git commit` finds nothing staged → exits non-zero → CI job fails. [Source: specs/009-homebrew-tap-formula]
 
 ---
 
@@ -409,6 +480,12 @@ caller provides URL string
 - **SC-029**: The extracted Markdown for any thenewstack.io article contains no consecutive blank-line runs of three or more lines. [Source: specs/006-thenewstack-provider]
 - **SC-030**: The TheNewStack provider is exercised by integration tests using real network requests against all five reference article URLs, matching the pattern established by existing providers. [Source: specs/006-thenewstack-provider]
 
+- **SC-031**: A user with Homebrew installed can complete the full `md-fetch` installation using a single command, with no Python environment setup required, in under 3 minutes on a standard broadband connection. [Source: specs/009-homebrew-tap-formula]
+- **SC-032**: The Homebrew formula's built-in test (`brew test md-fetch`) passes on macOS and Linux after every installation. [Source: specs/009-homebrew-tap-formula]
+- **SC-033**: The formula in `stn1slv/homebrew-tap` is updated within 10 minutes of PyPI publish confirmation — no manual maintainer action is required. [Source: specs/009-homebrew-tap-formula]
+- **SC-034**: Formula update failures produce a visible CI job failure on every failed attempt, with zero silent failures. [Source: specs/009-homebrew-tap-formula]
+- **SC-035**: The README install section includes the Homebrew installation command, enabling users to discover and use it without prior knowledge of the project's Python packaging. [Source: specs/009-homebrew-tap-formula]
+
 ---
 
 ## Assumptions
@@ -428,7 +505,12 @@ caller provides URL string
 - **SC-015**: Zero changes are required in existing caller code to benefit from the Freedium fallback — existing integrations continue to work as-is. [Source: specs/003-medium-freedium-fallback]
 - **SC-016**: When the primary Medium request succeeds, there is no additional latency attributable to the fallback mechanism. [Source: specs/003-medium-freedium-fallback]
 - **SC-017**: All existing unit and integration tests for the Medium extractor continue to pass without modification after the fallback is introduced. [Source: specs/003-medium-freedium-fallback]
+- Homebrew is already installed on the user's machine; the feature does not cover installing Homebrew itself. [Source: specs/009-homebrew-tap-formula]
+- The formula targets the standard Homebrew installation on both macOS and Linux; Windows (WSL) is out of scope. [Source: specs/009-homebrew-tap-formula]
+- Only the source distribution (sdist) is used as the formula's source artifact; binary wheels are not referenced by the formula. [Source: specs/009-homebrew-tap-formula]
+- A `TAP_GITHUB_TOKEN` PAT will be created and added to repository secrets by the maintainer before first use — this is a one-time manual prerequisite. [Source: specs/009-homebrew-tap-formula]
+- If a PyPI release is yanked after the formula has been updated, the formula is not automatically rolled back. [Source: specs/009-homebrew-tap-formula]
 
 ---
 
-*Last Updated: 2026-05-16 | Sources appended: [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md], [specs/006-thenewstack-provider/spec.md]*
+*Last Updated: 2026-05-16 | Sources appended: [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md], [specs/006-thenewstack-provider/spec.md], [specs/009-homebrew-tap-formula/spec.md]*

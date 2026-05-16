@@ -53,3 +53,68 @@ jobs:
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
+
+  update-homebrew-tap:
+    name: Update Homebrew tap
+    runs-on: ubuntu-latest
+    needs: publish
+    concurrency:
+      group: homebrew-tap-update
+      cancel-in-progress: false
+    permissions:
+      contents: read
+
+    steps:
+      - name: Fetch sdist info from PyPI (with retry)
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: |
+          VERSION="${VERSION#v}"
+          SHA256=""
+          for i in 1 2 3; do
+            RESPONSE=$(curl -sf "https://pypi.org/pypi/mdfetch/${VERSION}/json" || true)
+            if [ -n "$RESPONSE" ]; then
+              SDIST_URL=$(echo "$RESPONSE" | python3 -c \
+                "import sys,json; d=json.load(sys.stdin); \
+                 urls=[u for u in d['urls'] if u['packagetype']=='sdist']; \
+                 print(urls[0]['url'] if urls else '')" 2>/dev/null || true)
+              SHA256=$(echo "$RESPONSE" | python3 -c \
+                "import sys,json; d=json.load(sys.stdin); \
+                 urls=[u for u in d['urls'] if u['packagetype']=='sdist']; \
+                 print(urls[0]['digests']['sha256'] if urls else '')" 2>/dev/null || true)
+              if [ -n "$SHA256" ] && [ -n "$SDIST_URL" ]; then break; fi
+            fi
+            echo "PyPI not ready, retrying in 30s (attempt $i/3)..."
+            sleep 30
+          done
+          if [ -z "$SHA256" ]; then
+            echo "ERROR: Could not fetch sdist info from PyPI after 3 retries" >&2; exit 1
+          fi
+          echo "SDIST_URL=${SDIST_URL}" >> "$GITHUB_ENV"
+          echo "SHA256=${SHA256}"       >> "$GITHUB_ENV"
+          echo "VERSION=${VERSION}"     >> "$GITHUB_ENV"
+
+      - name: Clone homebrew-tap and update formula
+        env:
+          TAP_GITHUB_TOKEN: ${{ secrets.TAP_GITHUB_TOKEN }}
+        run: |
+          git clone "https://x-access-token:${TAP_GITHUB_TOKEN}@github.com/stn1slv/homebrew-tap.git"
+          cd homebrew-tap
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          sed -i "s|  url \"https://files.pythonhosted.org/packages/.*/mdfetch-.*\.tar\.gz\"|  url \"${SDIST_URL}\"|" \
+            Formula/md-fetch.rb
+          sed -i "0,/  sha256 \"[a-f0-9]*\"/{s|  sha256 \"[a-f0-9]*\"|  sha256 \"${SHA256}\"|}" Formula/md-fetch.rb
+
+          if ! grep -qF "  url \"${SDIST_URL}\"" Formula/md-fetch.rb; then
+            echo "ERROR: URL substitution made no change — formula URL pattern may have drifted" >&2; exit 1
+          fi
+          if ! grep -qF "  sha256 \"${SHA256}\"" Formula/md-fetch.rb; then
+            echo "ERROR: SHA256 substitution made no change — formula sha256 pattern may have drifted" >&2; exit 1
+          fi
+
+          git add Formula/md-fetch.rb
+          git commit -m "chore: bump md-fetch to v${VERSION}"
+          git pull --rebase
+          git push

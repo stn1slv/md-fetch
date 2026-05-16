@@ -55,10 +55,6 @@ make typecheck    # type check
 ```
 
 <!-- SPECKIT START -->
-## Active Feature Plan
-
-Active feature: `008-mdfetch-cli`. Implementation plan: [`specs/008-mdfetch-cli/plan.md`](specs/008-mdfetch-cli/plan.md).
-
 ## Known Issues & Gotchas
 
 ### ⚠️ test_router.py "unsupported domain" fixture must be updated per new provider
@@ -75,4 +71,9 @@ Active feature: `008-mdfetch-cli`. Implementation plan: [`specs/008-mdfetch-cli/
 **Issue:** VoxPop poll widgets (`div.tns-voxpop-screen`) appear to be inline article content but are actually page-level overlay modals.
 **Root Cause:** VoxPop is injected outside `div#tns-post-body-content` — confirmed via live DOM inspection across all 5 reference articles.
 **Prevention Rule:** Do not add VoxPop stripping to `TheNewStackExtractor.clean_html()`. If a future redesign moves VoxPop inside the body container, update `clean_html()` to decompose `div.tns-voxpop-screen`.
+
+### ⚠️ Homebrew formula requires `uses_from_macos` for lxml
+**Issue:** `brew audit --strict --new Formula/md-fetch.rb` fails with missing system library declarations when `lxml` is a resource block.
+**Root Cause:** `lxml` requires `libxml2` and `libxslt`, which are macOS system libraries. Homebrew requires these to be declared explicitly via `uses_from_macos`.
+**Prevention Rule:** Any Homebrew formula that includes `lxml` as a resource MUST declare `uses_from_macos "libxml2"` and `uses_from_macos "libxslt"` after the `depends_on` lines. Discovered via `brew audit --strict --new` during implementation.
 <!-- SPECKIT END -->

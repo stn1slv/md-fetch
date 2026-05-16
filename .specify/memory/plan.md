@@ -165,7 +165,45 @@ tests/
 specs/                       # Speckit feature specifications
 pyproject.toml               # hatchling build backend, uv package manager
 Makefile                     # setup / test / integration / lint / typecheck / format / build / clean / upgrade-deps
+.github/workflows/
+├── ci.yml                   # lint + unit tests on push/PR (Python 3.12–3.14)
+├── integration.yml          # scheduled integration tests
+└── publish.yml              # PyPI publish + Homebrew tap update on release tag
 ```
+
+**External repository: `stn1slv/homebrew-tap`** [009-homebrew-tap-formula]
+```
+Formula/
+└── md-fetch.rb              # Language::Python::Virtualenv formula; 13 resource blocks;
+                             # depends_on "python@3.12"; uses_from_macos "libxml2" + "libxslt"
+README.md                    # Available Formulas table updated with md-fetch row
+```
+
+---
+
+## Homebrew Distribution Architecture [009-homebrew-tap-formula]
+
+```
+GitHub Release tag vX.Y.Z
+  ↓
+build job → publish job (PyPI)
+  ↓
+update-homebrew-tap job (NEW, needs: publish)
+  [concurrency: group=homebrew-tap-update, cancel-in-progress=false]
+  1. Poll https://pypi.org/pypi/mdfetch/{VERSION}/json (retry 3× / 30s)
+  2. Extract SDIST_URL and SHA256
+  3. Clone stn1slv/homebrew-tap via TAP_GITHUB_TOKEN (fine-grained PAT)
+  4. sed patch Formula/md-fetch.rb (url + first sha256 only)
+  5. git commit + pull --rebase + push
+```
+
+**Formula pattern**: `Language::Python::Virtualenv` — creates isolated venv in Cellar, installs 13 resource blocks, symlinks `libexec/bin/md-fetch` → `bin/md-fetch`.
+
+**System library dependencies** (required by `lxml` resource):
+- `uses_from_macos "libxml2"`
+- `uses_from_macos "libxslt"`
+
+**TAP_GITHUB_TOKEN**: Fine-grained PAT with `Contents: read+write` on `stn1slv/homebrew-tap` only. Stored as repository secret in `stn1slv/md-fetch`. Must NOT be a classic `repo`-scoped PAT.
 
 ---
 
@@ -261,4 +299,4 @@ Makefile                     # setup / test / integration / lint / typecheck / f
 
 ---
 
-*Last Updated: 2026-05-16 | Sources appended: [specs/004-remove-backoff/plan.md], [specs/005-substack-provider/plan.md], [specs/006-thenewstack-provider/plan.md]*
+*Last Updated: 2026-05-16 | Sources appended: [specs/004-remove-backoff/plan.md], [specs/005-substack-provider/plan.md], [specs/006-thenewstack-provider/plan.md], [specs/009-homebrew-tap-formula/plan.md]*
