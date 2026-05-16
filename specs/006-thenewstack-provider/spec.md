@@ -95,4 +95,4 @@ A developer passes a thenewstack.io URL that does not point to an article (e.g.,
 - VoxPop poll widgets embedded mid-article are non-content and MUST be stripped entirely; their removal should not introduce extra blank lines beyond the collapsed-blank-line rule.
 - The implementation follows the existing provider pattern: one new file `src/mdfetch/providers/thenewstack.py`, no changes to shared infrastructure.
 - The base class retry/timeout behaviour (3 retries, 30-second timeout) is inherited without modification.
-- Integration tests use the two reference article URLs provided: `https://thenewstack.io/using-a-developer-portal-for-api-management/` and `https://thenewstack.io/api-management-for-asynchronous-apis/`.
+- Integration tests use the five reference article URLs: `https://thenewstack.io/using-a-developer-portal-for-api-management/`, `https://thenewstack.io/api-management-for-asynchronous-apis/`, `https://thenewstack.io/json-schema-ai-reliability/`, `https://thenewstack.io/mcp-api-governance-readiness/`, and `https://thenewstack.io/api-mcp-agent-integration/`. All five were verified to share identical HTML structure.

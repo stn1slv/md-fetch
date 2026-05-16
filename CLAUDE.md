@@ -52,6 +52,11 @@ uv run mypy src/  # type check
 ```
 
 <!-- SPECKIT START -->
+## Active Feature Plan
+
+**Feature**: The New Stack Platform Provider (`006-thenewstack-provider`)
+**Plan**: [specs/006-thenewstack-provider/plan.md](specs/006-thenewstack-provider/plan.md)
+
 ## Known Issues & Gotchas
 
 ### ⚠️ test_router.py "unsupported domain" fixture must be updated per new provider
