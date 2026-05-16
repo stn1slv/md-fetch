@@ -54,11 +54,8 @@ For each of the 5 reference articles, generate a snapshot by running:
 uv run python -c "
 from mdfetch import extract
 content = extract('https://thenewstack.io/using-a-developer-portal-for-api-management/')
-# Save a representative excerpt (not full content) as snapshot
-lines = content.split('\n')
-# Use first 20 non-empty lines as snapshot
-snapshot = '\n'.join(l for l in lines if l.strip())[:800]
-open('tests/integration/snapshots/thenewstack-developer-portal-api.md', 'w').write(snapshot)
+snapshot = '\n'.join(content.split('\n')[:30]).rstrip()
+open('tests/integration/snapshots/thenewstack-developer-portal-api.md', 'w', encoding='utf-8').write(snapshot)
 "
 ```
 

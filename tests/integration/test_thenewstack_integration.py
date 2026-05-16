@@ -52,7 +52,7 @@ def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
         f'  uv run python -c "'
         f"from mdfetch import extract; "
         f"content = extract('{url}'); snapshot = '\\n'.join(content.split('\\n')[:30]).rstrip(); "
-        f"open('tests/integration/snapshots/{snapshot}', 'w').write(snapshot)"
+        f"open('tests/integration/snapshots/{snapshot}', 'w', encoding='utf-8').write(snapshot)"
         f'"'
     )
 
