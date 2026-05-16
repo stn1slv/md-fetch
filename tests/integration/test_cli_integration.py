@@ -63,3 +63,27 @@ def test_error_handling_with_runner(mocker: pytest_mock.MockerFixture) -> None:
 
     assert result.exit_code == 1
     assert "Network timeout after 3 retries" in result.stderr
+
+
+def test_version_flag() -> None:
+    from click.testing import CliRunner
+
+    from mdfetch.cli import main
+
+    runner = CliRunner()
+    result = runner.invoke(main, ["--version"])
+    assert result.exit_code == 0
+    assert "mdfetch" in result.output
+    assert "version" in result.output
+
+
+def test_retries_flag(mocker: pytest_mock.MockerFixture) -> None:
+    from click.testing import CliRunner
+
+    from mdfetch.cli import main
+
+    mock_extract = mocker.patch("mdfetch.cli.extract", return_value="# Test")
+    runner = CliRunner()
+    runner.invoke(main, ["https://dev.to/test", "--retries", "5", "--retry-delay", "0.5"])
+
+    mock_extract.assert_called_once_with("https://dev.to/test", retries=5, retry_delay=0.5)

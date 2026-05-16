@@ -80,3 +80,33 @@ class TestUrlValidation:
 
         provider = route("https://dzone.com/articles/some-article")
         assert isinstance(provider, DZoneExtractor)
+
+    def test_returns_cached_instance(self) -> None:
+        """Routing the same domain twice must return the same provider instance."""
+        a = route("https://dev.to/article1")
+        b = route("https://dev.to/article2")
+        assert a is b
+
+
+class TestSupportedDomains:
+    def test_returns_frozenset(self) -> None:
+        from mdfetch.router import supported_domains
+
+        result = supported_domains()
+        assert isinstance(result, frozenset)
+
+    def test_contains_known_domains(self) -> None:
+        from mdfetch.router import supported_domains
+
+        result = supported_domains()
+        assert "medium.com" in result
+        assert "dev.to" in result
+        assert "substack.com" in result
+        assert "thenewstack.io" in result
+        assert "dzone.com" in result
+
+    def test_does_not_contain_unregistered_domain(self) -> None:
+        from mdfetch.router import supported_domains
+
+        result = supported_domains()
+        assert "wordpress.com" not in result

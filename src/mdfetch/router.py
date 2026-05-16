@@ -10,6 +10,7 @@ from mdfetch.base import BaseExtractor
 from mdfetch.exceptions import InvalidURLError, UnsupportedPlatformError
 
 _REGISTRY: dict[str, type[BaseExtractor]] = {}
+_INSTANCES: dict[type[BaseExtractor], BaseExtractor] = {}
 
 
 def register(provider_cls: type[BaseExtractor]) -> type[BaseExtractor]:
@@ -51,7 +52,17 @@ def route(url: str) -> BaseExtractor:
     if provider_cls is None:
         raise UnsupportedPlatformError(f"No provider registered for domain {hostname!r}", url=url)
 
-    return provider_cls()
+    # Cache instances — providers are stateless so a single instance per class suffices.
+    instance = _INSTANCES.get(provider_cls)
+    if instance is None:
+        instance = provider_cls()
+        _INSTANCES[provider_cls] = instance
+    return instance
+
+
+def supported_domains() -> frozenset[str]:
+    """Return the set of domains that have a registered provider."""
+    return frozenset(_REGISTRY)
 
 
 def _autodiscover_providers() -> None:

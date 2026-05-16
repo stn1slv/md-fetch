@@ -12,7 +12,8 @@ from mdfetch import extract
 from mdfetch.exceptions import MdfetchError
 
 
-@click.command()
+@click.command(name="mdfetch")
+@click.version_option(package_name="mdfetch", prog_name="mdfetch")
 @click.argument("url")
 @click.option(
     "-o",
@@ -20,10 +21,24 @@ from mdfetch.exceptions import MdfetchError
     type=click.Path(writable=True, dir_okay=False),
     help="Save Markdown to this file",
 )
-def main(url: str, output: str | None) -> None:
+@click.option(
+    "--retries",
+    type=int,
+    default=3,
+    show_default=True,
+    help="Total number of fetch attempts on transient errors",
+)
+@click.option(
+    "--retry-delay",
+    type=float,
+    default=2.0,
+    show_default=True,
+    help="Seconds to wait between retry attempts",
+)
+def main(url: str, output: str | None, retries: int, retry_delay: float) -> None:
     """Fetch and extract Markdown from the given URL."""
     try:
-        content = extract(url)
+        content = extract(url, retries=retries, retry_delay=retry_delay)
 
         if output:
             with open(output, "w", encoding="utf-8") as f:

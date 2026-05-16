@@ -11,10 +11,11 @@ from mdfetch.exceptions import (
     UnsupportedContentTypeError,
     UnsupportedPlatformError,
 )
-from mdfetch.router import route
+from mdfetch.router import route, supported_domains
 
 __all__ = [
     "extract",
+    "supported_domains",
     "MdfetchError",
     "InvalidURLError",
     "UnsupportedPlatformError",
