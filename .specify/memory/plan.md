@@ -44,7 +44,9 @@ BaseExtractor (ABC)               — src/mdfetch/base.py
 │                                   fixed delay of retry_delay seconds between attempts (not exponential);
 │                                   codes in _no_retry_codes (or class attribute) raise immediately
 ├── clean_html(soup) → Tag        — abstract: platform-specific HTML isolation
-├── convert_to_markdown(tag) → str— abstract: platform-specific Markdown conversion
+├── _markdownify_kwargs() → dict  — hook: platform-specific markdownify options (defaults to ATX + empty language)
+├── _replace_iframes_with_links(tag) — helper: converts <iframe> embeds to plain anchors
+├── convert_to_markdown(tag) → str— concrete: base implementation using markdownify and 3+ newlines collapse
 └── extract(url) → str            — concrete template method (orchestrates the above)
 
 MediumExtractor(BaseExtractor)    — src/mdfetch/providers/medium.py
@@ -59,33 +61,35 @@ MediumExtractor(BaseExtractor)    — src/mdfetch/providers/medium.py
 
 DevToExtractor(BaseExtractor)     — src/mdfetch/providers/devto.py
 ├── DOMAINS = frozenset({"dev.to"})
-├── clean_html() → locates div#article-body; raises UnsupportedContentTypeError if absent;
-│                  replaces iframes and ltag embeds with anchor links; strips empty anchor-name
-│                  elements; prepends h1 + cover image from crayons-article__header
-└── convert_to_markdown() → markdownify with ATX headings; collapses 3+ newlines to 2
+└── clean_html() → locates div#article-body; raises UnsupportedContentTypeError if absent;
+                   replaces iframes and ltag embeds with anchor links (via helper); strips empty anchor-name
+                   elements; prepends h1 + cover image from crayons-article__header
 
 SubstackExtractor(BaseExtractor)  — src/mdfetch/providers/substack.py  [005-substack-provider]
 ├── DOMAINS = frozenset({"substack.com"})  — also matches *.substack.com via suffix routing
 ├── _no_retry_status_codes = frozenset()  — HTTP 429 retried (no Freedium-style fallback)
-├── clean_html() → locates div.body.markup; raises UnsupportedContentTypeError if absent;
-│                  strips div.subscription-widget-wrap (inline CTAs + paywall terminal);
-│                  replaces iframes with anchor links using src/data-src;
-│                  replaces div[data-component-name] (except SubscribeWidget, Image2ToDOM) with anchor links;
-│                  prepends h3.subtitle from div.post-header (if present);
-│                  prepends h1.post-title from div.post-header (unconditional — structurally outside body)
-└── convert_to_markdown() → markdownify with ATX headings; collapses 3+ newlines to 2; raises EmptyContentError if empty
+└── clean_html() → locates div.body.markup; raises UnsupportedContentTypeError if absent;
+                   strips div.subscription-widget-wrap (inline CTAs + paywall terminal);
+                   replaces iframes with anchor links (via helper);
+                   replaces div[data-component-name] (except SubscribeWidget, Image2ToDOM) with anchor links;
+                   prepends h3.subtitle from div.post-header (if present);
+                   prepends h1.post-title from div.post-header (unconditional — structurally outside body)
 
 TheNewStackExtractor(BaseExtractor) — src/mdfetch/providers/thenewstack.py  [006-thenewstack-provider]
 ├── DOMAINS = frozenset({"thenewstack.io"})  — no subdomain routing needed (single-site WordPress)
 ├── _no_retry_status_codes = frozenset()  — inherits base class default (no overrides needed)
-├── clean_html() → locates div#tns-post-body-content; raises UnsupportedContentTypeError if absent;
-│                  decomposes 4 sponsored-content selectors: div.sponsored-post-disclosure,
-│                    div.tns-sponsored-post-disclosure, div.sponsor-disclosure, div.tns-sponsor-note;
-│                  replaces iframes with anchor links using src/data-src (defensive; not observed in reference articles);
-│                  prepends div.post-excerpt text as new <p> tag (deck) from div#tns-post-headline (if present);
-│                  prepends copy.copy(h1.title) from div#tns-post-headline (if present)
-│                  Note: VoxPop polls (div.tns-voxpop-screen) are page-level modals outside body — no stripping needed
-└── convert_to_markdown() → markdownify with ATX headings; collapses 3+ newlines to 2; raises EmptyContentError if empty
+└── clean_html() → locates div#tns-post-body-content; raises UnsupportedContentTypeError if absent;
+                   decomposes 4 sponsored-content selectors: div.sponsored-post-disclosure,
+                     div.tns-sponsored-post-disclosure, div.sponsor-disclosure, div.tns-sponsor-note;
+                   replaces iframes with anchor links (via helper);
+                   prepends div.post-excerpt text as new <p> tag (deck) from div#tns-post-headline (if present);
+                   prepends copy.copy(h1.title) from div#tns-post-headline (if present)
+                   Note: VoxPop polls (div.tns-voxpop-screen) are page-level modals outside body — no stripping needed
+
+DZoneExtractor(BaseExtractor) — src/mdfetch/providers/dzone.py
+├── DOMAINS = frozenset({"dzone.com"})
+├── _markdownify_kwargs() → overrides to add code_language_callback
+└── clean_html() → locates div.article-content; raises UnsupportedContentTypeError if absent;
 ```
 
 ### Router / Auto-Discovery
@@ -93,9 +97,11 @@ TheNewStackExtractor(BaseExtractor) — src/mdfetch/providers/thenewstack.py  [0
 ```
 router.py
 ├── _REGISTRY: dict[str, type[BaseExtractor]]
+├── _INSTANCES: dict[type[BaseExtractor], BaseExtractor]  — provider caching
 ├── @register decorator          — self-enrolls provider at class definition time
 ├── _autodiscover_providers()    — pkgutil.iter_modules scans mdfetch/providers/ at import
-├── route(url) → BaseExtractor   — exact hostname match, then longest-suffix fallback
+├── supported_domains() → frozenset[str] — returns all registered domain strings
+├── route(url) → BaseExtractor   — exact hostname match, then longest-suffix fallback; reuses _INSTANCES
 └── Duplicate domain registration raises ValueError
 ```
 
@@ -118,13 +124,15 @@ src/
     ├── __init__.py          # Public surface: exposes extract(), exception re-exports
     ├── exceptions.py        # MdfetchError hierarchy (6 exception classes)
     ├── router.py            # @register, _autodiscover_providers(), route()
-    ├── base.py              # BaseExtractor ABC + fetch_html() + extract() template
+    ├── base.py              # BaseExtractor ABC + fetch_html() + convert_to_markdown() + extract() template
+    ├── cli.py               # click-based command line interface
     └── providers/
         ├── __init__.py      # Empty — auto-discovery handles registration
         ├── medium.py        # MediumExtractor
         ├── devto.py         # DevToExtractor [002-devto-provider]
         ├── substack.py      # SubstackExtractor [005-substack-provider]
-        └── thenewstack.py   # TheNewStackExtractor [006-thenewstack-provider]
+        ├── thenewstack.py   # TheNewStackExtractor [006-thenewstack-provider]
+        └── dzone.py         # DZoneExtractor
 
 tests/
 ├── unit/
