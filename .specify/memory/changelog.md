@@ -15,7 +15,7 @@
 **New Components**:
 - Updates across `base.py`, `router.py`, `cli.py`, and `__init__.py`.
 - Refactored providers (`devto.py`, `substack.py`, `thenewstack.py`, `dzone.py`) to leverage `BaseExtractor` defaults.
-- Additional unit and integration test coverage for CLI flags, content types, and router caching.
+- Additional unit and integration test coverage for CLI flags and content types.
 
 **Tasks Completed**: Refactoring and PR Review updates
 

@@ -25,13 +25,14 @@ def test_error_handling_with_runner(mocker: pytest_mock.MockerFixture, runner: C
 def test_version_flag(runner: CliRunner) -> None:
     result = runner.invoke(main, ["--version"])
     assert result.exit_code == 0
-    assert "mdfetch" in result.output
+    assert "md-fetch" in result.output
     assert "version" in result.output
 
 
 def test_retries_flag(mocker: pytest_mock.MockerFixture, runner: CliRunner) -> None:
     mock_extract = mocker.patch("mdfetch.cli.extract", return_value="# Test")
-    runner.invoke(main, ["https://dev.to/test", "--retries", "5", "--retry-delay", "0.5"])
+    result = runner.invoke(main, ["https://dev.to/test", "--retries", "5", "--retry-delay", "0.5"])
+    assert result.exit_code == 0
     mock_extract.assert_called_once_with("https://dev.to/test", retries=5, retry_delay=0.5)
 
 

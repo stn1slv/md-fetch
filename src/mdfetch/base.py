@@ -110,11 +110,11 @@ class BaseExtractor(ABC):
         """Isolate the article body, strip non-content elements, and return the root Tag."""
 
     def _markdownify_kwargs(self) -> dict[str, Any]:
-        """Return extra keyword arguments for :func:`markdownify`.
+        """Return markdownify keyword arguments for this provider.
 
-        Override in subclasses to customise the conversion (e.g. a
-        ``code_language_callback``).  The base implementation returns an
-        empty dict.
+        The returned dict is merged with (and may override) the base defaults
+        ``heading_style="ATX"``, ``code_language=""``, ``strip=["script","style"]``.
+        Override in subclasses to customise or extend the conversion options.
         """
         return {}
 
@@ -122,10 +122,12 @@ class BaseExtractor(ABC):
         """Convert the cleaned Tag to a Markdown string."""
         md = markdownify(
             str(tag),
-            heading_style="ATX",
-            code_language="",
-            strip=["script", "style"],
-            **self._markdownify_kwargs(),
+            **{
+                "heading_style": "ATX",
+                "code_language": "",
+                "strip": ["script", "style"],
+                **self._markdownify_kwargs(),
+            },
         )
         md = md.strip()
         md = re.sub(r"\n{3,}", "\n\n", md)

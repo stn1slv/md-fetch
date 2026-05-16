@@ -13,8 +13,8 @@ from mdfetch.exceptions import MdfetchError, UnsupportedPlatformError
 from mdfetch.router import supported_domains
 
 
-@click.command(name="mdfetch")
-@click.version_option(package_name="mdfetch", prog_name="mdfetch")
+@click.command(name="md-fetch")
+@click.version_option(package_name="mdfetch", prog_name="md-fetch")
 @click.argument("url")
 @click.option(
     "-o",

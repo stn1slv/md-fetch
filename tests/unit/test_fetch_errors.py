@@ -143,3 +143,13 @@ class TestFetchErrors:
             with pytest.raises(UnsupportedContentTypeError):
                 extractor.fetch_html("https://medium.com/article", retries=1)
         mock.stream.return_value.__enter__.return_value.iter_bytes.assert_not_called()
+
+    def test_unsupported_content_type_is_not_retried(self, extractor: MediumExtractor) -> None:
+        """UnsupportedContentTypeError must propagate immediately with no retry attempts."""
+        mock = make_stream_mock(content_type="application/pdf")
+        with patch("httpx.Client", return_value=mock):
+            with patch("mdfetch.base.time.sleep") as mock_sleep:
+                with pytest.raises(UnsupportedContentTypeError):
+                    extractor.fetch_html("https://medium.com/article", retries=3)
+        mock_sleep.assert_not_called()
+        assert mock.stream.call_count == 1
