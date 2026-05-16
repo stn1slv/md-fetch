@@ -12,15 +12,15 @@
 
 ### User Story 1 - Fetch to Standard Output (Priority: P1)
 
-As a terminal user, I want to run `mdfetch <URL>` so that I can see the extracted Markdown content directly in my terminal.
+As a terminal user, I want to run `md-fetch <URL>` so that I can see the extracted Markdown content directly in my terminal.
 
 **Why this priority**: This is the core minimal use case for a CLI tool—providing immediate access to the extraction logic without writing Python code.
 
-**Independent Test**: Can be tested by running `mdfetch` with a valid, supported URL and verifying that the stdout contains the expected Markdown content and exits with code 0.
+**Independent Test**: Can be tested by running `md-fetch` with a valid, supported URL and verifying that the stdout contains the expected Markdown content and exits with code 0.
 
 **Acceptance Scenarios**:
 
-1. **Given** a valid URL from a supported provider, **When** I run `mdfetch <URL>`, **Then** the extracted Markdown is printed to stdout and the process exits with code 0.
+1. **Given** a valid URL from a supported provider, **When** I run `md-fetch <URL>`, **Then** the extracted Markdown is printed to stdout and the process exits with code 0.
 
 ---
 
@@ -30,11 +30,11 @@ As a terminal user, I want to specify an output file using an `--output` or `-o`
 
 **Why this priority**: Shell redirection (`>`) works, but a built-in output flag provides a better user experience and can prevent issues with encoding or partial outputs.
 
-**Independent Test**: Can be tested by running `mdfetch <URL> -o output.md`, verifying the file is created with the correct content, and that stdout is empty.
+**Independent Test**: Can be tested by running `md-fetch <URL> -o output.md`, verifying the file is created with the correct content, and that stdout is empty.
 
 **Acceptance Scenarios**:
 
-1. **Given** a valid URL, **When** I run `mdfetch <URL> -o article.md`, **Then** the content is saved to `article.md`, nothing is printed to stdout, and the process exits with code 0.
+1. **Given** a valid URL, **When** I run `md-fetch <URL> -o article.md`, **Then** the content is saved to `article.md`, nothing is printed to stdout, and the process exits with code 0.
 
 ---
 
@@ -48,8 +48,8 @@ As a terminal user, I want to see clear, human-readable error messages when some
 
 **Acceptance Scenarios**:
 
-1. **Given** an unsupported URL, **When** I run `mdfetch <URL>`, **Then** a clear error message is printed to stderr and the process exits with a non-zero code.
-2. **Given** a URL that times out, **When** I run `mdfetch <URL>`, **Then** a clear network error message is printed to stderr and the process exits with a non-zero code.
+1. **Given** an unsupported URL, **When** I run `md-fetch <URL>`, **Then** a clear error message is printed to stderr and the process exits with a non-zero code.
+2. **Given** a URL that times out, **When** I run `md-fetch <URL>`, **Then** a clear network error message is printed to stderr and the process exits with a non-zero code.
 
 ### Edge Cases
 
@@ -62,7 +62,7 @@ As a terminal user, I want to see clear, human-readable error messages when some
 
 ### Functional Requirements
 
-- **FR-001**: The system MUST provide a CLI entry point named `mdfetch` that can be executed directly from the terminal after installation.
+- **FR-001**: The system MUST provide a CLI entry point named `md-fetch` that can be executed directly from the terminal after installation.
 - **FR-002**: The CLI MUST accept a single positional argument for the target URL.
 - **FR-003**: The CLI MUST accept an optional `-o` / `--output` parameter to specify an output file path.
 - **FR-004**: If `--output` is not provided, the CLI MUST print the extracted Markdown to standard output (stdout).
@@ -81,10 +81,16 @@ As a terminal user, I want to see clear, human-readable error messages when some
 
 ### Measurable Outcomes
 
-- **SC-001**: After package installation/sync, typing `mdfetch --help` in the terminal successfully displays usage instructions.
-- **SC-002**: Running `mdfetch` against a supported test URL successfully outputs Markdown to the terminal and exits with code 0.
-- **SC-003**: Running `mdfetch` with an unsupported domain returns a non-zero exit code and prints a friendly error message to stderr (no Python traceback).
+- **SC-001**: After package installation/sync, typing `md-fetch --help` in the terminal successfully displays usage instructions.
+- **SC-002**: Running `md-fetch` against a supported test URL successfully outputs Markdown to the terminal and exits with code 0.
+- **SC-003**: Running `md-fetch` with an unsupported domain returns a non-zero exit code and prints a friendly error message to stderr (no Python traceback).
 - **SC-004**: The `--output` flag successfully writes the correct Markdown string to the specified file path.
+
+## Clarifications
+
+### Session 2026-05-16
+
+- Q: What should the CLI command be named? → A: `md-fetch` (to align with the user's existing `md-paste` command).
 
 ## Assumptions
 
