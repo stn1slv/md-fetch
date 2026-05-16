@@ -96,3 +96,6 @@ A developer passes a thenewstack.io URL that does not point to an article (e.g.,
 - The implementation follows the existing provider pattern: one new file `src/mdfetch/providers/thenewstack.py`, no changes to shared infrastructure.
 - The base class retry/timeout behaviour (3 retries, 30-second timeout) is inherited without modification.
 - Integration tests use the five reference article URLs: `https://thenewstack.io/using-a-developer-portal-for-api-management/`, `https://thenewstack.io/api-management-for-asynchronous-apis/`, `https://thenewstack.io/json-schema-ai-reliability/`, `https://thenewstack.io/mcp-api-governance-readiness/`, and `https://thenewstack.io/api-mcp-agent-integration/`. All five were verified to share identical HTML structure.
+
+### Revision: Implementation Sync 2026-05-16
+- Reason: Post-implementation reconciliation via `/speckit-reconcile-run`. All 10 FRs and 5 SCs verified implemented. One documentation gap corrected: integration test snapshot regeneration command updated from old stripped-blank-lines approach (25 lines) to verbatim first-30-line approach, ensuring regenerated snapshots are valid substring assertions. No spec behavior changes required.

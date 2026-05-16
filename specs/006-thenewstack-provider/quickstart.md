@@ -28,7 +28,7 @@ Required HTML fixtures (inline strings):
 - `NO_ARTICLE_HTML` — page without `div#tns-post-body-content` (homepage-like)
 - `EMPTY_BODY_HTML` — body present but whitespace-only
 - `IFRAME_EMBED_HTML` — article with an embedded iframe
-- `SPONSOR_NOTE_HTML` — article with `div.tns-sponsor-note` mid-content
+- `SPONSOR_DISCLOSURE_HTML` — body with all three disclosure div variants (`div.sponsored-post-disclosure`, `div.tns-sponsored-post-disclosure`, `div.sponsor-disclosure`); sponsor note (`div.tns-sponsor-note`) is covered via `ARTICLE_HTML`
 
 Required test cases:
 - `test_routes_thenewstack_io` (in `test_router.py`)
@@ -37,7 +37,7 @@ Required test cases:
 - `test_clean_html_prepends_deck_as_paragraph`
 - `test_clean_html_no_deck_when_absent`
 - `test_clean_html_strips_sponsor_note`
-- `test_clean_html_strips_sponsor_disclosure`
+- `test_clean_html_strips_all_disclosure_variants`
 - `test_clean_html_converts_iframe_to_anchor`
 - `test_convert_to_markdown_starts_with_title`
 - `test_convert_to_markdown_no_triple_blank_lines`

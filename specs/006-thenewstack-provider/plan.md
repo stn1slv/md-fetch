@@ -134,3 +134,6 @@ convert_to_markdown(tag):
 | Sponsored disclosure (3 variants) | `div.sponsored-post-disclosure`, `div.tns-sponsored-post-disclosure`, `div.sponsor-disclosure` |
 | Injected sponsor note | `div.tns-sponsor-note` |
 | VoxPop (not in body — no action needed) | `div.tns-voxpop-screen` (page-level modal) |
+
+### Revision: Implementation Sync 2026-05-16
+- Reason: Post-implementation reconciliation. Implementation matches plan exactly. Snapshot approach confirmed as verbatim first-30-line prefix (not stripped blank lines); integration test error message corrected to reflect this. No plan changes required.

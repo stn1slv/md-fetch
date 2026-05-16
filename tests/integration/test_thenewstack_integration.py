@@ -51,8 +51,8 @@ def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
         f"To regenerate the snapshot, run:\n"
         f'  uv run python -c "'
         f"from mdfetch import extract; "
-        f"lines = [l for l in extract('{url}').split('\\n') if l.strip()]; "
-        f"open('tests/integration/snapshots/{snapshot}', 'w').write('\\n'.join(lines[:25]))"
+        f"content = extract('{url}'); snapshot = '\\n'.join(content.split('\\n')[:30]).rstrip(); "
+        f"open('tests/integration/snapshots/{snapshot}', 'w').write(snapshot)"
         f'"'
     )
 
