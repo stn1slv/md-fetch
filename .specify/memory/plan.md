@@ -45,7 +45,7 @@ BaseExtractor (ABC)               — src/mdfetch/base.py
 │                                   codes in _no_retry_codes (or class attribute) raise immediately
 ├── clean_html(soup) → Tag        — abstract: platform-specific HTML isolation
 ├── _markdownify_kwargs() → dict  — hook: platform-specific markdownify options (defaults to ATX + empty language)
-├── _replace_iframes_with_links(tag) — helper: converts <iframe> embeds to plain anchors
+├── _replace_iframes_with_links(container, soup) — helper: converts <iframe> embeds to plain anchors
 ├── convert_to_markdown(tag) → str— concrete: base implementation using markdownify and 3+ newlines collapse
 └── extract(url) → str            — concrete template method (orchestrates the above)
 
@@ -89,7 +89,7 @@ TheNewStackExtractor(BaseExtractor) — src/mdfetch/providers/thenewstack.py  [0
 DZoneExtractor(BaseExtractor) — src/mdfetch/providers/dzone.py
 ├── DOMAINS = frozenset({"dzone.com"})
 ├── _markdownify_kwargs() → overrides to add code_language_callback
-└── clean_html() → locates div.article-content; raises UnsupportedContentTypeError if absent;
+└── clean_html() → locates div.content-html; raises UnsupportedContentTypeError if absent;
 ```
 
 ### Router / Auto-Discovery

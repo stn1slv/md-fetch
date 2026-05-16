@@ -18,7 +18,7 @@ def make_stream_mock(
     mock_response.is_success = is_success
     mock_response.status_code = status_code
     mock_response.encoding = "utf-8"
-    mock_response.iter_bytes.return_value = iter([body])
+    mock_response.iter_bytes.side_effect = lambda: iter([body])
     mock_response.headers = {"content-type": content_type}
 
     mock_stream_ctx = MagicMock()

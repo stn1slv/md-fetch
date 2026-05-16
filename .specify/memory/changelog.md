@@ -6,7 +6,6 @@
 - Centralized duplicated markdown conversion and iframe stripping into `BaseExtractor`, utilizing a `_markdownify_kwargs()` hook.
 - Added strict `Content-Type` header validation in `_do_fetch` to eagerly reject non-HTML responses (e.g., `application/json`, `application/pdf`).
 - Implemented `httpx.Client` connection pooling across retry attempts.
-- Added provider instance caching to the routing layer to avoid redundant instantiations.
 - Exported new public API `mdfetch.supported_domains()` which returns a `frozenset[str]` of all registered domains.
 - Expanded the CLI (`mdfetch.cli:main`) with configurable options: `--retries`, `--retry-delay` (with click `IntRange`/`FloatRange` validation), and `--version`.
 - Removed control-flow assertions in favor of explicit `RuntimeError` guards.

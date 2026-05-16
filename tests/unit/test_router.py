@@ -104,3 +104,10 @@ class TestSupportedDomains:
 
         result = supported_domains()
         assert "wordpress.com" not in result
+
+    def test_public_api_import(self) -> None:
+        from mdfetch import supported_domains
+
+        result = supported_domains()
+        assert isinstance(result, frozenset)
+        assert "medium.com" in result
