@@ -169,8 +169,8 @@ description: "Task list for DZone Platform Provider"
 
 ### Tests for User Story 3
 
-- [ ] T019 [P] [US3] Verify `test_clean_html_raises_on_no_article_body` in `tests/unit/test_dzone_extractor.py` covers the `UnsupportedContentTypeError` path (test created in T010 — confirm it uses `NO_ARTICLE_HTML` and asserts the correct exception type)
-- [ ] T020 [P] [US3] Verify `test_convert_to_markdown_raises_on_empty_body` in `tests/unit/test_dzone_extractor.py` covers the `EmptyContentError` path (test created in T011 — confirm it uses `EMPTY_BODY_HTML` and asserts the correct exception type)
+- [ ] T019 [P] [US3] Checkpoint: confirm `test_clean_html_raises_on_no_article_body` (created in T010) parses `NO_ARTICLE_HTML` and asserts `UnsupportedContentTypeError` — no new code; run `make test` to validate
+- [ ] T020 [P] [US3] Checkpoint: confirm `test_convert_to_markdown_raises_on_empty_body` (created in T011) parses `EMPTY_BODY_HTML`, calls `clean_html` then `convert_to_markdown`, and asserts `EmptyContentError` — no new code; run `make test` to validate
 - [ ] T021 [US3] Add integration test `test_non_article_url_raises_unsupported_content_type_error` in `tests/integration/test_dzone_integration.py`: assert `extract("https://dzone.com/refcardz/corecss-part1", retries=1, retry_delay=0.0)` raises `UnsupportedContentTypeError`
 
 **Checkpoint**: All US1, US2, and US3 tests pass. All error scenarios verified.
@@ -205,7 +205,7 @@ description: "Task list for DZone Platform Provider"
 - **Foundational (Phase 2)**: Depends on Phase 1 — BLOCKS all user stories
 - **US1 (Phase 3)**: Depends on Phase 2; T007 (fixtures) can start in parallel with T008–T009 (implementation)
 - **US2 (Phase 4)**: Depends on Phase 3 completion; T014 (fixtures) can start in parallel with T015 (implementation)
-- **US3 (Phase 5)**: Depends on Phase 2; uses fixtures from T007 (created in Phase 3); tests are verification-only
+- **US3 (Phase 5)**: Depends on T010 and T011 (test functions created in Phase 3); uses fixtures from T007; tests are verification-only checkpoints
 - **Polish (Phase 6)**: Depends on all user stories complete
 
 ### User Story Dependencies

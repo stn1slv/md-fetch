@@ -50,7 +50,7 @@ specs/007-dzone-provider/
 ├── quickstart.md        # Phase 1: Step-by-step implementation guide
 ├── contracts/
 │   └── public-api.md    # Phase 1: Public API contract
-└── tasks.md             # Phase 2 output (/speckit-tasks — not yet created)
+└── tasks.md             # Phase 2 output (/speckit-tasks)
 ```
 
 ### Source Code
