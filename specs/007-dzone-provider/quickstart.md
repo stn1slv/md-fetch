@@ -91,7 +91,11 @@ tests/integration/test_dzone_integration.py
 
 Pattern: identical to `test_thenewstack_integration.py` — parametrized over URL/snapshot pairs, `@pytest.mark.integration`, snapshot containment check.
 
-Also include: `test_non_article_url_raises_unsupported_content_type_error` using a DZone refcard URL.
+Also include: `test_non_article_url_raises_unsupported_content_type_error` using a DZone non-article URL. Use `https://dzone.com/refcardz` (the refcard listing page) — individual refcard pages like `/refcardz/corecss-part1` contain `div.content-html` and extract successfully, so they cannot be used as the non-article test case.
+
+### Note: `EMPTY_BODY_HTML` fixture design
+
+The `EMPTY_BODY_HTML` fixture intentionally omits `h1.article-title`. If the fixture included a title element, `clean_html` would prepend it into the body, making the body non-empty and preventing `EmptyContentError` from being raised. Without a title element, the whitespace-only `div.content-html` stays empty after `clean_html`, and `convert_to_markdown` raises `EmptyContentError` as expected.
 
 ### 5. Run verification
 

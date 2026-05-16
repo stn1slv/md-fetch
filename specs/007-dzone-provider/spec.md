@@ -4,7 +4,7 @@
 
 **Created**: 2026-05-16
 
-**Status**: Draft
+**Status**: Implemented
 
 **Input**: User description: "Let's add Dzone provider support."
 
@@ -103,6 +103,9 @@ A developer accidentally passes a DZone URL that is not a standard article page 
 - **SC-004**: The extracted Markdown contains no consecutive blank-line runs of three or more lines.
 - **SC-005**: Articles containing CodeMirror code blocks have all code blocks preserved as fenced Markdown code blocks with the correct language tag.
 - **SC-006**: The new provider is exercised by at least three integration tests using real network requests to the three reference article URLs provided by the user, matching the snapshot-based pattern established by existing providers.
+
+### Revision: Implementation Sync 2026-05-16
+- Reason: Status promoted from Draft → Implemented after full implementation and passing integration tests across all three reference articles.
 
 ## Assumptions
 

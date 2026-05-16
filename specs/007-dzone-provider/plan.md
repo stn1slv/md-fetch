@@ -14,6 +14,8 @@ Add `dzone.com` as a supported extraction platform. The provider isolates the ar
 
 **Primary Dependencies**: `httpx` (HTTP fetch), `BeautifulSoup` / `lxml` (HTML parsing), `markdownify` (Markdown conversion), `pytest` (testing)
 
+**Provider Imports**: `copy`, `re`, `typing.Any`, `bs4.BeautifulSoup`, `bs4.element.Tag`, `bs4.element.AttributeValueList`, `markdownify.markdownify`, `mdfetch.base.BaseExtractor`, `mdfetch.exceptions.EmptyContentError`, `mdfetch.exceptions.UnsupportedContentTypeError`, `mdfetch.router.register`
+
 **Storage**: N/A — stateless extraction library
 
 **Testing**: `pytest` via `uv run pytest` — unit tests (no network) + integration tests (`-m integration`, real URLs + snapshots)
@@ -94,11 +96,24 @@ clean_html(soup):
   4. Return body tag (div.content-html)
 
 convert_to_markdown(tag):
-  md ← markdownify(str(tag), heading_style="ATX", code_language="", strip=["script","style"])
+  md ← markdownify(str(tag), heading_style="ATX", code_language="",
+                   code_language_callback=_code_language_callback,
+                   strip=["script","style"])
   md ← strip leading/trailing whitespace
   md ← collapse 3+ blank lines → single blank line (re.sub(r"\n{3,}", "\n\n", md))
   if md empty → raise EmptyContentError
   return md
+
+_code_language_callback(el):
+  # markdownify calls this with the <pre> element; reads language-X class
+  # from the inner <code> child, which clean_html already tagged.
+  code_el ← el.find("code")
+  if not isinstance(code_el, Tag): return ""
+  raw ← code_el.get("class")   # str | AttributeValueList | None
+  cls_list ← [raw] if isinstance(raw, str) else list(raw or [])
+  for cls in cls_list:
+    if cls.startswith("language-"): return cls[len("language-"):]
+  return ""
 ```
 
 ## Error Mapping
@@ -113,3 +128,9 @@ convert_to_markdown(tag):
 ## Complexity Tracking
 
 No Constitution Check violations. No complexity justification required.
+
+### Revision: Implementation Sync 2026-05-16
+- Reason: Algorithm drift reconciled after implementation. Two undocumented additions discovered:
+  1. `_code_language_callback` module-level helper added to `convert_to_markdown` — required because markdownify reads language info from `<pre>` via `code_language_callback`, not from CSS classes on `<code>` elements. Without this, all fenced code blocks rendered without language info strings.
+  2. `AttributeValueList` imported from `bs4.element` — required for mypy-compliant `code_el["class"]` assignment (BS4 typed attribute value is `str | AttributeValueList`, not `list[str]`).
+- Both additions documented above in Provider Imports and Extraction Algorithm sections.
