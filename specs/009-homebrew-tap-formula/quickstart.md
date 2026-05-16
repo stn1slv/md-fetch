@@ -64,8 +64,10 @@ echo "SHA256: $SHA256"
 
 ## Step 5: Add the `TAP_GITHUB_TOKEN` secret
 
-1. Create a GitHub PAT at Settings → Developer settings → Personal access tokens
-   - Scopes: `repo` (or fine-grained `contents:write` on `stn1slv/homebrew-tap`)
+1. Create a fine-grained GitHub PAT at Settings → Developer settings → Personal access tokens → Fine-grained tokens
+   - Repository access: `stn1slv/homebrew-tap` only
+   - Permissions: **Contents** → Read and write
+   - Do not use a classic PAT with the broad `repo` scope — it grants unnecessary write access to all repositories
 2. Add to `stn1slv/md-fetch` → Settings → Secrets and variables → Actions
    - Name: `TAP_GITHUB_TOKEN`
 

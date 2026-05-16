@@ -58,6 +58,9 @@ jobs:
     name: Update Homebrew tap
     runs-on: ubuntu-latest
     needs: publish
+    concurrency:
+      group: homebrew-tap-update
+      cancel-in-progress: false
     permissions:
       contents: read
 
