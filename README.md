@@ -8,7 +8,19 @@ A Python library that extracts article content from web platforms and returns it
 pip install mdfetch
 ```
 
-## Usage
+## CLI Usage
+
+You can use the built-in `md-fetch` command directly from your terminal:
+
+```bash
+# Fetch and print Markdown to standard output
+md-fetch https://medium.com/example/article
+
+# Fetch and save Markdown to a file
+md-fetch https://dev.to/example/article --output article.md
+```
+
+## Python Usage
 
 ```python
 from mdfetch import extract

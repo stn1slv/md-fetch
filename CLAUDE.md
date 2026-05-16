@@ -55,7 +55,7 @@ uv run mypy src/  # type check
 <!-- SPECKIT START -->
 ## Active Feature Plan
 
-Active feature: `007-dzone-provider`. Implementation plan: [`specs/007-dzone-provider/plan.md`](specs/007-dzone-provider/plan.md).
+Active feature: `008-mdfetch-cli`. Implementation plan: [`specs/008-mdfetch-cli/plan.md`](specs/008-mdfetch-cli/plan.md).
 
 ## Known Issues & Gotchas
 
