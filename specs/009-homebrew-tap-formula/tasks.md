@@ -102,8 +102,8 @@ description: "Task list for Homebrew Tap Formula feature"
 **Purpose**: Validate the full end-to-end flow and confirm no regressions.
 
 - [x] T012 [P] Run `make test` in `md-fetch` and confirm all unit tests still pass after `publish.yml` changes
-- [ ] T013 [P] Commit and push all changes in `homebrew-tap` (`Formula/md-fetch.rb` + `README.md`) to `stn1slv/homebrew-tap` main branch
-- [ ] T014 [P] Commit and push all changes in `md-fetch` (`publish.yml` + `README.md`) to the `009-homebrew-tap-formula` branch, open a PR targeting `main`, and confirm CI passes
+- [x] T013 [P] Commit and push all changes in `homebrew-tap` (`Formula/md-fetch.rb` + `README.md`) to `stn1slv/homebrew-tap` main branch
+- [x] T014 [P] Commit and push all changes in `md-fetch` (`publish.yml` + `README.md`) to the `009-homebrew-tap-formula` branch, open a PR targeting `main`, and confirm CI passes
 - [ ] T015 After T013 and T014 are merged, verify the live tap works: run `brew install stn1slv/tap/md-fetch` on a clean machine (or `brew reinstall stn1slv/tap/md-fetch`) and confirm `md-fetch --version` exits 0
 
 ---
