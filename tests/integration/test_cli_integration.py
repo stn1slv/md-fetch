@@ -4,9 +4,11 @@ Integration tests for the mdfetch CLI.
 
 from __future__ import annotations
 
+import pathlib
 import subprocess
 
 import pytest
+import pytest_mock
 
 
 @pytest.mark.integration
@@ -21,10 +23,10 @@ def test_fetch_to_stdout() -> None:
 
 
 @pytest.mark.integration
-def test_fetch_to_file(tmp_path: pytest.TempPathFactory) -> None:
+def test_fetch_to_file(tmp_path: pathlib.Path) -> None:
     """Test fetching a URL and saving it to a file."""
     url = "https://dev.to/stn1slv/integration-digest-for-december-2025-5dlp"
-    output_file = tmp_path / "output.md"  # type: ignore
+    output_file = tmp_path / "output.md"
     result = subprocess.run(
         ["uv", "run", "md-fetch", url, "-o", str(output_file)],
         capture_output=True,
@@ -49,7 +51,7 @@ def test_unsupported_url_error() -> None:
     assert result.stdout == ""
 
 
-def test_error_handling_with_runner(mocker) -> None:
+def test_error_handling_with_runner(mocker: pytest_mock.MockerFixture) -> None:
     from click.testing import CliRunner
 
     from mdfetch.cli import main

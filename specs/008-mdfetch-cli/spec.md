@@ -1,6 +1,6 @@
 # Feature Specification: mdfetch-cli
 
-**Feature Branch**: `[###-feature-name]`
+**Feature Branch**: `008-mdfetch-cli`
 
 **Created**: Saturday, May 16, 2026
 
