@@ -51,7 +51,7 @@ make format       # ruff format
 make build        # uv build (wheel + sdist)
 make upgrade-deps # uv sync --all-extras --upgrade
 make integration  # integration tests (network required)
-uv run mypy src/  # type check
+make typecheck    # type check
 ```
 
 <!-- SPECKIT START -->
