@@ -68,3 +68,9 @@ class TestUrlValidation:
         with pytest.raises(UnsupportedPlatformError) as exc_info:
             route("https://wordpress.com/post")
         assert "wordpress.com" in exc_info.value.message
+
+    def test_routes_thenewstack_io(self) -> None:
+        from mdfetch.providers.thenewstack import TheNewStackExtractor
+
+        provider = route("https://thenewstack.io/some-article/")
+        assert isinstance(provider, TheNewStackExtractor)

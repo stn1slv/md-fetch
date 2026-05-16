@@ -29,10 +29,10 @@ description: "Task list for The New Stack Platform Provider"
 
 **Purpose**: Verify baseline and create file stubs.
 
-- [ ] T001 Run `make test` and confirm all existing unit tests pass (green baseline before any changes)
-- [ ] T002 Create `src/mdfetch/providers/thenewstack.py` with module docstring `"""The New Stack platform extractor."""`, `from __future__ import annotations`, and required imports (`copy`, `re`, `BeautifulSoup`, `Tag`, `markdownify`, `BaseExtractor`, `EmptyContentError`, `UnsupportedContentTypeError`, `register`)
-- [ ] T003 [P] Create `tests/unit/test_thenewstack_extractor.py` with module docstring, imports (`pytest`, `BeautifulSoup`, `TheNewStackExtractor`, `EmptyContentError`, `UnsupportedContentTypeError`, `route`), and empty `extractor` fixture returning `TheNewStackExtractor()`
-- [ ] T004 [P] Create `tests/integration/test_thenewstack_integration.py` with module docstring, imports (`Path`, `pytest`, `extract`, `UnsupportedContentTypeError`), `SNAPSHOTS_DIR` constant, and empty `THENEWSTACK_TEST_CASES` list
+- [X] T001 Run `make test` and confirm all existing unit tests pass (green baseline before any changes)
+- [X] T002 Create `src/mdfetch/providers/thenewstack.py` with module docstring `"""The New Stack platform extractor."""`, `from __future__ import annotations`, and required imports (`copy`, `re`, `BeautifulSoup`, `Tag`, `markdownify`, `BaseExtractor`, `EmptyContentError`, `UnsupportedContentTypeError`, `register`)
+- [X] T003 [P] Create `tests/unit/test_thenewstack_extractor.py` with module docstring, imports (`pytest`, `BeautifulSoup`, `TheNewStackExtractor`, `EmptyContentError`, `UnsupportedContentTypeError`, `route`), and empty `extractor` fixture returning `TheNewStackExtractor()`
+- [X] T004 [P] Create `tests/integration/test_thenewstack_integration.py` with module docstring, imports (`Path`, `pytest`, `extract`, `UnsupportedContentTypeError`), `SNAPSHOTS_DIR` constant, and empty `THENEWSTACK_TEST_CASES` list
 
 ---
 
@@ -42,8 +42,8 @@ description: "Task list for The New Stack Platform Provider"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T005 Add `TheNewStackExtractor(BaseExtractor)` class in `src/mdfetch/providers/thenewstack.py` with `@register` decorator, `DOMAINS: frozenset[str] = frozenset({"thenewstack.io"})`, and stub bodies for `clean_html` and `convert_to_markdown` (raise `NotImplementedError`)
-- [ ] T006 [P] Add routing test `test_routes_thenewstack_io` to `tests/unit/test_router.py`: assert `route("https://thenewstack.io/some-article/")` returns a `TheNewStackExtractor` instance
+- [X] T005 Add `TheNewStackExtractor(BaseExtractor)` class in `src/mdfetch/providers/thenewstack.py` with `@register` decorator, `DOMAINS: frozenset[str] = frozenset({"thenewstack.io"})`, and stub bodies for `clean_html` and `convert_to_markdown` (raise `NotImplementedError`)
+- [X] T006 [P] Add routing test `test_routes_thenewstack_io` to `tests/unit/test_router.py`: assert `route("https://thenewstack.io/some-article/")` returns a `TheNewStackExtractor` instance
 
 **Checkpoint**: `make test` passes (stubs present, routing verified). Note: `wordpress.com` unsupported-domain fixture requires no change (already correct per research.md).
 
@@ -57,7 +57,7 @@ description: "Task list for The New Stack Platform Provider"
 
 ### HTML Fixtures
 
-- [ ] T007 [P] [US1] Add inline HTML fixtures to `tests/unit/test_thenewstack_extractor.py`:
+- [X] T007 [P] [US1] Add inline HTML fixtures to `tests/unit/test_thenewstack_extractor.py`:
   - `ARTICLE_HTML` — includes `div#tns-post-headline` with `h1.title` + `div.post-excerpt`, and `div#tns-post-body-content` with paragraphs, a link, an image, and a `div.tns-sponsor-note` block
   - `ARTICLE_NO_DECK_HTML` — same as above but without `div.post-excerpt` (no deck)
   - `SPONSOR_DISCLOSURE_HTML` — body contains `div.sponsored-post-disclosure`, `div.tns-sponsored-post-disclosure`, `div.sponsor-disclosure` variants
@@ -67,7 +67,7 @@ description: "Task list for The New Stack Platform Provider"
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement `clean_html(self, soup: BeautifulSoup) -> Tag` in `src/mdfetch/providers/thenewstack.py`:
+- [X] T008 [US1] Implement `clean_html(self, soup: BeautifulSoup) -> Tag` in `src/mdfetch/providers/thenewstack.py`:
   1. `body = soup.find("div", id="tns-post-body-content")` → raise `UnsupportedContentTypeError("URL is not an article page — no article body element found")` if not a `Tag` (FR-006)
   2. Decompose sponsored disclosures from body (FR-003): `div.sponsored-post-disclosure`, `div.tns-sponsored-post-disclosure`, `div.sponsor-disclosure`, `div.tns-sponsor-note`
   3. Convert iframes to anchor links (FR-009): for each `iframe`, replace with `<a href=src>src</a>` or decompose if no `src`
@@ -75,7 +75,7 @@ description: "Task list for The New Stack Platform Provider"
      - Find `div.post-excerpt`; if present, create `<p>` with deck text and insert at `body` position 0 (FR-004 deck clarification)
      - Find `h1.title`; if present, `copy.copy()` and insert at `body` position 0 (FR-004 title)
   5. Return `body`
-- [ ] T009 [US1] Implement `convert_to_markdown(self, tag: Tag) -> str` in `src/mdfetch/providers/thenewstack.py`:
+- [X] T009 [US1] Implement `convert_to_markdown(self, tag: Tag) -> str` in `src/mdfetch/providers/thenewstack.py`:
   1. `md = markdownify(str(tag), heading_style="ATX", code_language="", strip=["script", "style"])`
   2. `md = md.strip()`
   3. `md = re.sub(r"\n{3,}", "\n\n", md)` (FR-008)
@@ -84,7 +84,7 @@ description: "Task list for The New Stack Platform Provider"
 
 ### Tests for User Story 1
 
-- [ ] T010 [P] [US1] Add `clean_html` happy-path unit tests in `tests/unit/test_thenewstack_extractor.py`:
+- [X] T010 [P] [US1] Add `clean_html` happy-path unit tests in `tests/unit/test_thenewstack_extractor.py`:
   - `test_clean_html_returns_body_content_div` — result is a `Tag` with `id="tns-post-body-content"`
   - `test_clean_html_prepends_title` — first element child is `h1` with title text
   - `test_clean_html_prepends_deck_as_paragraph` — second element child is `p` with deck text
@@ -92,7 +92,7 @@ description: "Task list for The New Stack Platform Provider"
   - `test_clean_html_strips_sponsor_note` — `result.find("div", class_="tns-sponsor-note")` is `None`
   - `test_clean_html_strips_all_disclosure_variants` — using `SPONSOR_DISCLOSURE_HTML`, all three disclosure div variants absent from result
   - `test_clean_html_converts_iframe_to_anchor` — using `IFRAME_EMBED_HTML`, `result.find("iframe")` is `None`; anchor `href="https://www.youtube.com/embed/abc"` present
-- [ ] T011 [P] [US1] Add `convert_to_markdown` unit tests in `tests/unit/test_thenewstack_extractor.py`:
+- [X] T011 [P] [US1] Add `convert_to_markdown` unit tests in `tests/unit/test_thenewstack_extractor.py`:
   - `test_convert_to_markdown_starts_with_title` — result starts with `# ` followed by title text
   - `test_convert_to_markdown_deck_paragraph_after_title` — deck text appears in output after title heading
   - `test_convert_to_markdown_no_triple_blank_lines` — `"\n\n\n"` not in result
@@ -101,7 +101,7 @@ description: "Task list for The New Stack Platform Provider"
 
 ### Integration for User Story 1
 
-- [ ] T012 [US1] Generate snapshot files for all 5 reference articles using real network calls (run from repo root):
+- [X] T012 [US1] Generate snapshot files for all 5 reference articles using real network calls (run from repo root):
   ```
   uv run python -c "
   from mdfetch import extract
@@ -118,7 +118,7 @@ description: "Task list for The New Stack Platform Provider"
       open(f'tests/integration/snapshots/{name}', 'w').write('\n'.join(lines[:25]))
   "
   ```
-- [ ] T013 [US1] Add integration tests in `tests/integration/test_thenewstack_integration.py`:
+- [X] T013 [US1] Add integration tests in `tests/integration/test_thenewstack_integration.py`:
   - Populate `THENEWSTACK_TEST_CASES` with all 5 (url, snapshot_filename) pairs
   - Add `@pytest.mark.integration @pytest.mark.parametrize` test `test_extract_contains_snapshot` with snapshot containment assertion (matching pattern from `test_substack_integration.py`)
   - Run `make integration` and confirm all 5 pass
@@ -135,9 +135,9 @@ description: "Task list for The New Stack Platform Provider"
 
 ### Tests for User Story 2
 
-- [ ] T014 [P] [US2] Add unit test `test_clean_html_raises_on_no_article_body` in `tests/unit/test_thenewstack_extractor.py`: parse `NO_ARTICLE_HTML`, assert `clean_html(soup)` raises `UnsupportedContentTypeError`
-- [ ] T015 [P] [US2] Add unit test `test_convert_to_markdown_raises_on_empty_body` in `tests/unit/test_thenewstack_extractor.py`: parse `EMPTY_BODY_HTML`, call `clean_html(soup)` to get the body tag, assert `convert_to_markdown(tag)` raises `EmptyContentError`
-- [ ] T016 [US2] Add integration test `test_homepage_raises_unsupported_content_type_error` in `tests/integration/test_thenewstack_integration.py`: assert `extract("https://thenewstack.io/", retries=1, retry_delay=0.0)` raises `UnsupportedContentTypeError`
+- [X] T014 [P] [US2] Add unit test `test_clean_html_raises_on_no_article_body` in `tests/unit/test_thenewstack_extractor.py`: parse `NO_ARTICLE_HTML`, assert `clean_html(soup)` raises `UnsupportedContentTypeError`
+- [X] T015 [P] [US2] Add unit test `test_convert_to_markdown_raises_on_empty_body` in `tests/unit/test_thenewstack_extractor.py`: parse `EMPTY_BODY_HTML`, call `clean_html(soup)` to get the body tag, assert `convert_to_markdown(tag)` raises `EmptyContentError`
+- [X] T016 [US2] Add integration test `test_homepage_raises_unsupported_content_type_error` in `tests/integration/test_thenewstack_integration.py`: assert `extract("https://thenewstack.io/", retries=1, retry_delay=0.0)` raises `UnsupportedContentTypeError`
 
 **Checkpoint**: All US1 and US2 tests pass. All error scenarios verified.
 
@@ -147,10 +147,10 @@ description: "Task list for The New Stack Platform Provider"
 
 **Purpose**: Final quality gate across all new and modified files.
 
-- [ ] T017 [P] Run `uv run mypy src/mdfetch/providers/thenewstack.py` and fix any type errors (ensure return types, `isinstance` guards, and `copy.copy` import are all correct)
-- [ ] T018 [P] Run `make format` then `make lint` and fix any ruff violations in `src/mdfetch/providers/thenewstack.py`, `tests/unit/test_thenewstack_extractor.py`, `tests/integration/test_thenewstack_integration.py`
-- [ ] T019 Run `make test` and confirm all unit tests pass with no regressions in existing providers
-- [ ] T020 Run `make integration` and confirm all integration tests pass (5 thenewstack articles + homepage error case)
+- [X] T017 [P] Run `uv run mypy src/mdfetch/providers/thenewstack.py` and fix any type errors (ensure return types, `isinstance` guards, and `copy.copy` import are all correct)
+- [X] T018 [P] Run `make format` then `make lint` and fix any ruff violations in `src/mdfetch/providers/thenewstack.py`, `tests/unit/test_thenewstack_extractor.py`, `tests/integration/test_thenewstack_integration.py`
+- [X] T019 Run `make test` and confirm all unit tests pass with no regressions in existing providers
+- [X] T020 Run `make integration` and confirm all integration tests pass (5 thenewstack articles + homepage error case)
 
 ---
 
