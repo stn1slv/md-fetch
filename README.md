@@ -17,6 +17,8 @@ from mdfetch import extract
 markdown = extract("https://medium.com/some-publication/article-slug-abc123")
 markdown = extract("https://dev.to/username/article-slug")
 markdown = extract("https://example.substack.com/p/article-slug")
+markdown = extract("https://thenewstack.io/article-slug")
+markdown = extract("https://dzone.com/articles/article-slug")
 print(markdown)
 ```
 
@@ -58,6 +60,8 @@ except EmptyContentError as e:
 | Medium   | `medium.com`, `*.medium.com` |
 | dev.to   | `dev.to` |
 | Substack | `substack.com`, `*.substack.com` |
+| The New Stack | `thenewstack.io` |
+| DZone | `dzone.com` |
 
 ## Development
 
