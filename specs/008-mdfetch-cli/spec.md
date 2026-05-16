@@ -56,6 +56,7 @@ As a terminal user, I want to see clear, human-readable error messages when some
 - What happens when no arguments are provided? (Should print help text and exit with an error code).
 - What happens when an invalid URL string (not a URL at all) is provided?
 - How does the system handle an `--output` path that points to a non-existent or read-only directory?
+  *Decision: The CLI must print the standard OS/Click file error to stderr and exit with a non-zero code.*
 - What happens if the `mdfetch` library raises an unexpected exception not in the `MdfetchError` hierarchy?
 
 ## Requirements *(mandatory)*

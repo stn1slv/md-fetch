@@ -93,6 +93,7 @@ description: "Task list for mdfetch-cli implementation"
 ### Tests for User Story 3
 
 - [ ] T014 [US3] Add integration test for unsupported URL in `tests/integration/test_cli_integration.py`, asserting stderr output and exit code 1.
+- [ ] T014b [US3] Add mock test for network timeout (`FetchError`) in `tests/integration/test_cli_integration.py`, asserting stderr output and exit code 1.
 
 **Checkpoint**: All user stories independently functional; graceful error handling verified.
 
@@ -106,6 +107,7 @@ description: "Task list for mdfetch-cli implementation"
 - [ ] T016 [P] Run `make lint` and fix any ruff violations in `src/mdfetch/cli.py` and `tests/integration/test_cli_integration.py`
 - [ ] T017 Run `make format` to ensure consistent code styling
 - [ ] T018 Run `make test` and confirm all existing unit tests still pass
+- [ ] T018b Run `make integration` and confirm the new CLI integration tests pass alongside the others
 - [ ] T019 Update `README.md` to document the new `md-fetch` CLI command usage (stdout and file output).
 
 ---
