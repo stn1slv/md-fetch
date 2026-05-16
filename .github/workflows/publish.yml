@@ -110,6 +110,9 @@ jobs:
           if ! grep -qF "  url \"${SDIST_URL}\"" Formula/md-fetch.rb; then
             echo "ERROR: URL substitution made no change — formula URL pattern may have drifted" >&2; exit 1
           fi
+          if ! grep -qF "  sha256 \"${SHA256}\"" Formula/md-fetch.rb; then
+            echo "ERROR: SHA256 substitution made no change — formula sha256 pattern may have drifted" >&2; exit 1
+          fi
 
           git add Formula/md-fetch.rb
           git commit -m "chore: bump md-fetch to v${VERSION}"
