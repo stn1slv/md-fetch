@@ -75,10 +75,10 @@ A new user reading the project README discovers that Homebrew is the recommended
 - **FR-002**: The formula MUST install a working `md-fetch` binary into Homebrew's `bin/` directory, making it immediately available on the user's PATH after installation.
 - **FR-003**: The formula MUST bundle all runtime dependencies so that no external Python environment or manual dependency installation is required by the user.
 - **FR-004**: The formula MUST include a `brew test` block that verifies the installed binary runs successfully (i.e., `md-fetch --version` exits with code 0).
-- **FR-005**: When a new version is published to the PyPI package index, the release pipeline MUST automatically update the formula with the new version number and the correct integrity checksum of the published source archive.
+- **FR-005**: When a new version is published to the PyPI package index, the release pipeline MUST automatically update the formula with the new version number and the correct integrity checksum of the published source archive. The checksum fetch MUST retry up to 3 times with 30-second intervals if PyPI does not yet serve the new release, before treating the step as failed.
 - **FR-006**: The automated formula update MUST commit and push the change to `stn1slv/homebrew-tap` using a dedicated access token with write permissions scoped to that repository only.
-- **FR-007**: If the automated formula update step fails for any reason (network error, authentication failure, conflict), the failure MUST be surfaced as a failed CI job, preventing silent divergence between PyPI and Homebrew.
-- **FR-008**: The project README MUST include the `brew install stn1slv/tap/md-fetch` command in the installation section so that Homebrew users can discover and use it without searching elsewhere.
+- **FR-007**: If the automated formula update step fails for any reason (network error, authentication failure, PyPI propagation timeout after 3 retries, push conflict), the failure MUST be surfaced as a failed CI job, preventing silent divergence between PyPI and Homebrew.
+- **FR-008**: The project README MUST include the `brew install stn1slv/tap/md-fetch` command in the installation section as a secondary option beneath the existing `pip install mdfetch` instruction, so that Homebrew users can discover it without searching elsewhere.
 - **FR-009**: The repository settings MUST document the required `HOMEBREW_TAP_TOKEN` secret (a personal access token with write access to `stn1slv/homebrew-tap`) so that the automation can be reproduced by any future maintainer.
 
 ### Key Entities
@@ -94,9 +94,17 @@ A new user reading the project README discovers that Homebrew is the recommended
 
 - **SC-001**: A user with Homebrew installed can complete the full `md-fetch` installation using a single command, with no Python environment setup required, in under 3 minutes on a standard broadband connection.
 - **SC-002**: The Homebrew formula's built-in test (`brew test md-fetch`) passes on macOS and Linux after every installation.
-- **SC-003**: The formula in `stn1slv/homebrew-tap` is updated within the duration of the release pipeline run after a successful PyPI publication — no manual maintainer action is required.
+- **SC-003**: The formula in `stn1slv/homebrew-tap` is updated within 10 minutes of PyPI publish confirmation — no manual maintainer action is required.
 - **SC-004**: Formula update failures produce a visible CI job failure on every failed attempt, with zero silent failures.
 - **SC-005**: The README install section includes the Homebrew installation command, enabling users to discover and use it without prior knowledge of the project's Python packaging.
+
+## Clarifications
+
+### Session 2026-05-16
+
+- Q: Should the tap-update job retry if PyPI does not immediately serve the new release's sdist checksum? → A: Retry up to 3 times with 30-second intervals before failing.
+- Q: What is the measurable time bound for SC-003 (formula update after PyPI publish)? → A: Within 10 minutes of PyPI publish confirmation.
+- Q: Where should the brew install option appear in the README relative to pip? → A: Pip remains first (universal); brew added as a secondary option below.
 
 ## Assumptions
 
