@@ -136,9 +136,7 @@ class TestFetchErrors:
             result = extractor.fetch_html("https://medium.com/article", retries=1)
         assert "Test" in result
 
-    def test_unsupported_content_type_does_not_read_body(
-        self, extractor: MediumExtractor
-    ) -> None:
+    def test_unsupported_content_type_does_not_read_body(self, extractor: MediumExtractor) -> None:
         """Body stream must not be consumed when content-type is rejected."""
         mock = make_stream_mock(content_type="application/json")
         with patch("httpx.Client", return_value=mock):
