@@ -4,7 +4,9 @@ Command-line interface for mdfetch.
 
 from __future__ import annotations
 
+import os
 import sys
+from urllib.parse import urlparse
 
 import click
 
@@ -36,8 +38,28 @@ from mdfetch.router import supported_domains
     show_default=True,
     help="Seconds to wait between retry attempts",
 )
-def main(url: str, output: str | None, retries: int, retry_delay: float) -> None:
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    help="Overwrite the output file if it already exists",
+)
+def main(
+    url: str,
+    output: str | None,
+    retries: int,
+    retry_delay: float,
+    force: bool,
+) -> None:
     """Fetch and extract Markdown from the given URL."""
+    if output and os.path.exists(output) and not force:
+        click.secho(
+            f"Error: '{output}' already exists. Use --force to overwrite.",
+            err=True,
+            fg="red",
+        )
+        sys.exit(1)
     try:
         content = extract(url, retries=retries, retry_delay=retry_delay)
 
@@ -47,8 +69,6 @@ def main(url: str, output: str | None, retries: int, retry_delay: float) -> None
         else:
             click.echo(content)
     except UnsupportedPlatformError as e:
-        from urllib.parse import urlparse
-
         domain = (urlparse(e.url).hostname if e.url else None) or str(e)
         domains = ", ".join(sorted(supported_domains()))
         click.secho(
