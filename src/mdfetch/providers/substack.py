@@ -18,6 +18,7 @@ class SubstackExtractor(BaseExtractor):
     """Extracts article content from substack.com and its subdomains."""
 
     DOMAINS: frozenset[str] = frozenset({"substack.com"})
+    MATCH_SUBDOMAINS = True
 
     def clean_html(self, soup: BeautifulSoup) -> Tag:
         """Isolate the article body and strip all non-content elements."""
@@ -36,16 +37,15 @@ class SubstackExtractor(BaseExtractor):
 
         # Convert other Substack embed containers to plain anchor links (FR-011)
         _safe_components = {"SubscribeWidget", "Image2ToDOM"}
-        for embed in body.find_all(attrs={"data-component-name": True}):
-            if embed.get("data-component-name") in _safe_components:
-                continue
-            url = str(embed.get("href") or embed.get("data-url") or embed.get("src") or "")
-            if url:
-                link = soup.new_tag("a", href=url)
-                link.string = url
-                embed.replace_with(link)
-            else:
-                embed.decompose()
+        self._replace_embeds_with_links(
+            [
+                e
+                for e in body.find_all(attrs={"data-component-name": True})
+                if e.get("data-component-name") not in _safe_components
+            ],
+            soup,
+            attrs=("href", "data-url", "src"),
+        )
 
         # Prepend subtitle from post-header (FR-005)
         header = soup.find("div", class_="post-header")

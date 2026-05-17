@@ -81,6 +81,26 @@ class TestUrlValidation:
         provider = route("https://dzone.com/articles/some-article")
         assert isinstance(provider, DZoneExtractor)
 
+    def test_rejects_subdomain_of_single_tenant_domain(self) -> None:
+        # dev.to does not opt in to MATCH_SUBDOMAINS, so foo.dev.to must not
+        # be routed to DevToExtractor — it should raise UnsupportedPlatformError.
+        with pytest.raises(UnsupportedPlatformError):
+            route("https://foo.dev.to/some-article")
+
+    def test_rejects_subdomain_of_dzone(self) -> None:
+        with pytest.raises(UnsupportedPlatformError):
+            route("https://blog.dzone.com/articles/some-article")
+
+    def test_rejects_subdomain_of_thenewstack(self) -> None:
+        with pytest.raises(UnsupportedPlatformError):
+            route("https://blog.thenewstack.io/some-article")
+
+    def test_routes_substack_subdomain(self) -> None:
+        from mdfetch.providers.substack import SubstackExtractor
+
+        provider = route("https://newsletter.substack.com/p/post")
+        assert isinstance(provider, SubstackExtractor)
+
 
 class TestSupportedDomains:
     def test_returns_frozenset(self) -> None:

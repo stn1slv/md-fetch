@@ -30,15 +30,15 @@ class DevToExtractor(BaseExtractor):
         # Replace iframes with plain anchor links (FR-008)
         self._replace_iframes_with_links(body, soup)
 
-        # Replace dev.to liquid-tag embeds with plain anchor links (FR-008)
-        for embed in body.find_all(class_=re.compile(r"ltag", re.IGNORECASE)):
-            src = str(embed.get("data-url") or embed.get("data-src") or embed.get("src") or "")
-            if src:
-                link = soup.new_tag("a", href=src)
-                link.string = src
-                embed.replace_with(link)
-            else:
-                embed.decompose()
+        # Replace dev.to liquid-tag embeds with plain anchor links (FR-008).
+        # Anchor at the start of the class name so unrelated classes that merely
+        # contain "ltag" (e.g. "ultraltagrelated") are not matched — bs4 matches
+        # each class independently via re.search.
+        self._replace_embeds_with_links(
+            body.find_all(class_=re.compile(r"^ltag(?:[-_]|$)", re.IGNORECASE)),
+            soup,
+            attrs=("data-url", "data-src", "src"),
+        )
 
         # Strip empty anchor-name links inserted before headings
         for anchor in body.find_all("a", attrs={"name": True}):

@@ -37,15 +37,16 @@ def route(url: str) -> BaseExtractor:
     if parsed.scheme not in ("http", "https") or not hostname:
         raise InvalidURLError(f"Invalid URL: {url!r}", url=url)
 
-    # Exact match first; fall back to subdomain suffix check so any provider whose
-    # DOMAINS entry is a parent domain automatically handles its subdomains.
-    # Sort candidates by length descending so the most-specific suffix wins when
-    # multiple registered domains are suffixes of the same hostname.
+    # Exact match first; fall back to a subdomain suffix check only for providers
+    # that opt in via MATCH_SUBDOMAINS=True (multi-tenant sites like Medium and
+    # Substack).  Sort candidates by length descending so the most-specific
+    # suffix wins when multiple registered domains are suffixes of the same host.
     provider_cls = _REGISTRY.get(hostname)
     if provider_cls is None:
         for domain in sorted(_REGISTRY, key=len, reverse=True):
-            if hostname.endswith(f".{domain}"):
-                provider_cls = _REGISTRY[domain]
+            candidate = _REGISTRY[domain]
+            if candidate.MATCH_SUBDOMAINS and hostname.endswith(f".{domain}"):
+                provider_cls = candidate
                 break
 
     if provider_cls is None:

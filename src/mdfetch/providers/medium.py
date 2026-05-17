@@ -22,6 +22,7 @@ class MediumExtractor(BaseExtractor):
     """Extracts article content from medium.com and its subdomains."""
 
     DOMAINS: frozenset[str] = frozenset({"medium.com"})
+    MATCH_SUBDOMAINS = True
     _FREEDIUM_BASE = "https://freedium-mirror.cfd/"
     _no_retry_status_codes: frozenset[int] = frozenset({403, 429})
     # Smart-quote characters that Medium serves but Freedium replaces with ASCII;

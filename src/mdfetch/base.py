@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 import time
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from typing import Any
 
 import httpx
@@ -28,6 +29,10 @@ class BaseExtractor(ABC):
     """Contract all platform-specific extractors must fulfil."""
 
     DOMAINS: frozenset[str] = frozenset()
+    # When True, the router also matches hostnames that are subdomains of any
+    # entry in DOMAINS (e.g. ``foo.medium.com`` → MediumExtractor).  Leave as
+    # False for single-tenant sites where subdomains are not article URLs.
+    MATCH_SUBDOMAINS: bool = False
     _no_retry_status_codes: frozenset[int] = frozenset()
 
     # FR-014: use a browser-like UA (no mdfetch-specific branding) so servers serve readable HTML
@@ -139,17 +144,35 @@ class BaseExtractor(ABC):
 
         return md
 
-    @staticmethod
-    def _replace_iframes_with_links(container: Tag, soup: BeautifulSoup) -> None:
-        """Replace ``<iframe>`` elements inside *container* with plain anchor links."""
-        for iframe in container.find_all("iframe"):
-            src = str(iframe.get("src") or iframe.get("data-src") or "")
-            if src:
-                link = soup.new_tag("a", href=src)
-                link.string = src
-                iframe.replace_with(link)
+    _DEFAULT_EMBED_URL_ATTRS: tuple[str, ...] = ("src", "data-src", "data-url", "href")
+
+    @classmethod
+    def _replace_embeds_with_links(
+        cls,
+        embeds: Iterable[Tag],
+        soup: BeautifulSoup,
+        *,
+        attrs: tuple[str, ...] = _DEFAULT_EMBED_URL_ATTRS,
+    ) -> None:
+        """Replace each tag in *embeds* with an anchor pointing at its URL, or decompose."""
+        for embed in embeds:
+            url = ""
+            for attr in attrs:
+                val = embed.get(attr)
+                if val:
+                    url = str(val)
+                    break
+            if url:
+                link = soup.new_tag("a", href=url)
+                link.string = url
+                embed.replace_with(link)
             else:
-                iframe.decompose()
+                embed.decompose()
+
+    @classmethod
+    def _replace_iframes_with_links(cls, container: Tag, soup: BeautifulSoup) -> None:
+        """Replace ``<iframe>`` elements inside *container* with plain anchor links."""
+        cls._replace_embeds_with_links(container.find_all("iframe"), soup)
 
     def extract(self, url: str, *, retries: int = 3, retry_delay: float = 2.0) -> str:
         """Orchestrate fetch → clean → convert and return Markdown."""
