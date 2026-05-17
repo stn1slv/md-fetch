@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pathlib
+
 import pytest
 import pytest_mock
 from click.testing import CliRunner
@@ -44,10 +46,10 @@ def test_unsupported_domain_error_message(runner: CliRunner) -> None:
 
 
 def test_output_refuses_to_clobber_existing_file(
-    mocker: pytest_mock.MockerFixture, runner: CliRunner, tmp_path: pytest.TempPathFactory
+    mocker: pytest_mock.MockerFixture, runner: CliRunner, tmp_path: pathlib.Path
 ) -> None:
     mocker.patch("mdfetch.cli.extract", return_value="# Test")
-    out = tmp_path / "out.md"  # type: ignore[attr-defined]
+    out = tmp_path / "out.md"
     out.write_text("existing content")
     result = runner.invoke(main, ["https://dev.to/test", "-o", str(out)])
     assert result.exit_code == 1
@@ -56,10 +58,10 @@ def test_output_refuses_to_clobber_existing_file(
 
 
 def test_output_force_overwrites_existing_file(
-    mocker: pytest_mock.MockerFixture, runner: CliRunner, tmp_path: pytest.TempPathFactory
+    mocker: pytest_mock.MockerFixture, runner: CliRunner, tmp_path: pathlib.Path
 ) -> None:
     mocker.patch("mdfetch.cli.extract", return_value="# Test")
-    out = tmp_path / "out.md"  # type: ignore[attr-defined]
+    out = tmp_path / "out.md"
     out.write_text("existing content")
     result = runner.invoke(main, ["https://dev.to/test", "-o", str(out), "--force"])
     assert result.exit_code == 0
