@@ -92,12 +92,19 @@ class MediumExtractor(BaseExtractor):
         return md
 
     def _parse_freedium(self, soup: BeautifulSoup) -> str:
-        """Parse Freedium mirror HTML, which uses div.main-content instead of <article>."""
-        content = soup.find("div", class_="main-content")
+        """Parse Freedium mirror HTML, whose Svelte rebuild holds the body in div.prose."""
+        # Scope to the article so a stray .prose block (e.g. a bio/summary) can't
+        # match first; fall back to a bare .prose if the <article> wrapper is absent.
+        content = soup.select_one("article .prose") or soup.find("div", class_="prose")
         if not isinstance(content, Tag):
             raise UnsupportedContentTypeError(
-                "Fallback page missing main-content element",
+                "Fallback page missing prose element",
             )
+        # Freedium's Shiki highlighter emits each code block twice — a light-theme
+        # and a dark-theme variant — so the visible text is duplicated. Drop the
+        # dark variant before conversion to avoid repeated fenced-code output.
+        for pre in content.select("pre.github-dark"):
+            pre.decompose()
         # Freedium renders section headings one level deeper than medium.com (h4 vs h3).
         # Remap so the output heading levels match the medium.com direct path.
         for level in (4, 5, 6):

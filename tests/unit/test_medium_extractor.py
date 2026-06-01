@@ -174,27 +174,38 @@ class TestConvertToMarkdown:
         assert "line one  \nline two" in md
 
 
+# Mirrors the Svelte/Tailwind Freedium rebuild: body in div.prose, code blocks
+# rendered twice via Shiki (light + dark theme variants).
 _FREEDIUM_ARTICLE_HTML = """
 <html><body>
-<div class="main-content">
+<main>
+<article>
+<div class="prose max-w-none prose-external-links">
     <h4>Section One</h4>
     <p>First paragraph of the article.</p>
     <h4>Section Two</h4>
     <p>Second paragraph with more content.</p>
-    <pre><code>print("hello")</code></pre>
+    <div class="dark:hidden">
+        <pre class="shiki github-light"><code>print("hello")</code></pre>
+    </div>
+    <div class="hidden dark:block">
+        <pre class="shiki github-dark"><code>print("hello")</code></pre>
+    </div>
 </div>
+</article>
+</main>
 </body></html>
 """
 
 _FREEDIUM_NO_CONTENT_HTML = """
 <html><body>
-<div class="header">No main-content div here</div>
+<div class="header">No prose div here</div>
 </body></html>
 """
 
 
 class TestParseFreedium:
-    def test_returns_markdown_from_main_content(self, extractor: MediumExtractor) -> None:
+    def test_returns_markdown_from_prose(self, extractor: MediumExtractor) -> None:
         soup = BeautifulSoup(_FREEDIUM_ARTICLE_HTML, "lxml")
         md = extractor._parse_freedium(soup)
         assert "Section One" in md
@@ -206,9 +217,15 @@ class TestParseFreedium:
         assert "###" in md
         assert "####" not in md
 
-    def test_raises_when_main_content_missing(self, extractor: MediumExtractor) -> None:
+    def test_dark_theme_code_block_deduplicated(self, extractor: MediumExtractor) -> None:
+        """Shiki renders each code block twice (light + dark); only one must survive."""
+        soup = BeautifulSoup(_FREEDIUM_ARTICLE_HTML, "lxml")
+        md = extractor._parse_freedium(soup)
+        assert md.count('print("hello")') == 1
+
+    def test_raises_when_prose_missing(self, extractor: MediumExtractor) -> None:
         soup = BeautifulSoup(_FREEDIUM_NO_CONTENT_HTML, "lxml")
-        with pytest.raises(UnsupportedContentTypeError, match="main-content"):
+        with pytest.raises(UnsupportedContentTypeError, match="prose"):
             extractor._parse_freedium(soup)
 
 
