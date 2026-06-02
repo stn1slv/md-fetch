@@ -96,8 +96,8 @@ clean_html(soup):                              # KongExtractor implementation
         ".toc-wrap"                   (sticky "on this page" TOC sidebar)
         ".order-top"                  (inline topic-tag list)
         ".section-header-block" without "intro"   (trailing "See Kong in action" CTA)
-  5. hero ← sections[0]
-        title ← hero.find("h1")                       # exactly one; the article title
+  5. hero ← first non-content <section> containing an <h1>   (survives a prepended banner)
+        title ← hero.find("h1")                       # the article title
         date  ← first hero <div> whose text matches DATE_RE  (e.g. "May 26, 2026")
   6. wrapper ← new <div>; append copy(title); if date: append <p>date</p>; append content
   7. strip every ".agent" span in wrapper (agent-mode affordances injecting literal Markdown)

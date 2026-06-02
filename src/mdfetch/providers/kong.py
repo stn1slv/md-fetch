@@ -68,9 +68,18 @@ class KongExtractor(BaseExtractor):
         for el in content.select(".section-header-block:not(.intro)"):
             el.decompose()
 
+        # Locate the hero by content, not position: it is the first non-content
+        # <section> that contains the article <h1>. Searching for the <h1> (rather
+        # than assuming ``sections[0]``) survives a prepended banner/announcement
+        # section; the hero always precedes the recommended-posts carousel, whose
+        # cards also contain <h1>s, so document order keeps this correct.
+        hero = next(
+            (s for s in sections if s is not content and s.find("h1") is not None),
+            None,
+        )
+
         # Build the output: title, then publication date, then the cleaned body.
         wrapper = soup.new_tag("div")
-        hero = sections[0] if sections else None
         if isinstance(hero, Tag):
             title_el = hero.find("h1")
             if isinstance(title_el, Tag):

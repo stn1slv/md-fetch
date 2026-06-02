@@ -71,7 +71,7 @@
   1. `main = soup.find("main")`; if not a `Tag` or `"type-article"` not in its class list → raise `UnsupportedContentTypeError("URL is not an article page — no article body element found")`
   2. `sections = main.find_all("section", recursive=False)`; choose `content` = the section with the most `.rich-text-block` descendants; if there is none or it has zero `.rich-text-block` → raise `UnsupportedContentTypeError`
   3. Decompose in-body chrome inside `content`: every `.component.video`, `.component.more-on-this`, `.toc-wrap` (NOT `[class*=TableOfContents]` — that wraps the whole body), `.order-top`, and every `.section-header-block` whose class list does NOT contain `intro`
-  4. `hero = sections[0]`; `title_el = hero.find("h1")`; `date_el = next((d for d in hero.find_all("div") if _DATE_RE.match(d.get_text(strip=True))), None)`
+  4. `hero =` first non-content `<section>` containing an `<h1>` (survives a prepended banner); `title_el = hero.find("h1")`; `date_el = next((d for d in hero.find_all("div") if _DATE_RE.match(d.get_text(strip=True))), None)`
   5. Build a new wrapper `div` (via `soup.new_tag("div")`): append `copy.copy(title_el)` if present; if `date_el` present, append a new `<p>` whose text is the date string; append `content`
   6. Decompose every `.agent` span in the wrapper ("agent mode" affordances that inject literal Markdown duplicating the styled content)
   7. Return the wrapper `Tag`

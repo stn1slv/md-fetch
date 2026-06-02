@@ -155,6 +155,20 @@ class TestCleanHtml:
         assert img.get("src") == "https://example.com/inline.png"
         assert result.select_one(".component.pull-quote blockquote") is not None
 
+    def test_clean_html_finds_hero_after_prepended_banner(self, extractor: KongExtractor) -> None:
+        # A banner/announcement <section> (no <h1>) prepended before the hero must
+        # not shift hero detection — the title/date come from the <h1>-bearing section.
+        banner = '<section class="Section_section__x announcement"><div>Heads up!</div></section>'
+        html = ARTICLE_HTML.replace(
+            '<nav class="breadcrumbs"><a href="/blog">Blog</a> Test Article</nav>',
+            '<nav class="breadcrumbs"><a href="/blog">Blog</a> Test Article</nav>\n  ' + banner,
+        )
+        result = extractor.clean_html(BeautifulSoup(html, "lxml"))
+        children = [c for c in result.children if isinstance(c, Tag)]
+        assert children[0].name == "h1"
+        assert "Test Article Title" in children[0].get_text()
+        assert children[1].get_text(strip=True) == "May 26, 2026"
+
     def test_clean_html_raises_without_type_article(self, extractor: KongExtractor) -> None:
         soup = BeautifulSoup(NO_ARTICLE_HTML, "lxml")
         with pytest.raises(UnsupportedContentTypeError):
