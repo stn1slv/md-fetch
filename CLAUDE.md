@@ -17,11 +17,12 @@ src/mdfetch/
     ├── devto.py      # DevToExtractor (dev.to)
     ├── substack.py   # SubstackExtractor (substack.com + *.substack.com)
     ├── thenewstack.py  # TheNewStackExtractor (thenewstack.io)
-    └── dzone.py      # DZoneExtractor (dzone.com)
+    ├── dzone.py      # DZoneExtractor (dzone.com)
+    └── boomi.py      # BoomiExtractor (boomi.com/blog)
 
 tests/
 ├── unit/             # pytest unit tests (no network)
-└── integration/      # real network tests (Medium + dev.to + Substack + TheNewStack URLs + snapshots)
+└── integration/      # real network tests (Medium + dev.to + Substack + TheNewStack + DZone + Boomi URLs + snapshots)
 
 .github/workflows/
 ├── ci.yml            # lint + unit tests on push/PR (Python 3.12–3.14)
@@ -76,4 +77,9 @@ make typecheck    # type check
 **Issue:** `brew audit --strict --new Formula/md-fetch.rb` fails with missing system library declarations when `lxml` is a resource block.
 **Root Cause:** `lxml` requires `libxml2` and `libxslt`, which are macOS system libraries. Homebrew requires these to be declared explicitly via `uses_from_macos`.
 **Prevention Rule:** Any Homebrew formula that includes `lxml` as a resource MUST declare `uses_from_macos "libxml2"` and `uses_from_macos "libxslt"` after the `depends_on` lines. Discovered via `brew audit --strict --new` during implementation.
+
+### ⚠️ boomi.com article detection relies on `div.post-content`, NOT `section.wysiwyg-section`
+**Issue:** The Boomi blog index (`/blog/`) renders a `section.wysiwyg-section` intro but NO `div.post-content`. Selecting `wysiwyg-section` as the body container would fail to raise `UnsupportedContentTypeError` for the index and other non-article pages.
+**Root Cause:** Confirmed via live DOM inspection: only article pages render `div.post-content` (containing `section.wysiwyg-section` + a `div.blog-nav` prev/next block); the index renders `wysiwyg-section` only.
+**Prevention Rule:** `BoomiExtractor.clean_html()` MUST select `div.post-content` as the body container (its presence is the article discriminator) and strip the inner `div.blog-nav`. Do not switch to `wysiwyg-section`. The title `<h1>` lives in the page hero outside the body and is prepended.
 <!-- SPECKIT END -->
