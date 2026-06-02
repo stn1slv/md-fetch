@@ -72,7 +72,10 @@ tests/integration/
 └── test_boomi_integration.py         # NEW: integration tests (real URLs)
 ```
 
-**Non-runtime changes**: `README.md` (add Boomi row to Supported platforms table). No `test_router.py` fixture change required — the unsupported-domain fixture uses `wordpress.com`, which Boomi does not register.
+**Non-runtime changes**: `README.md` (add Boomi row to Supported platforms table + usage example); `pyproject.toml` (version bump `0.5.2` → `0.6.0`, new provider = minor per dev.to/Substack precedent); `CLAUDE.md` (provider tree + integration-test description + Boomi discriminator gotcha). No `test_router.py` fixture change required — the unsupported-domain fixture uses `wordpress.com`, which Boomi does not register.
+
+### Revision: Implementation Sync 2026-06-02
+- Reason: Reconciled release/docs drift found after implementation — version was not bumped and `CLAUDE.md` (project structure, integration-test description, gotchas) did not reflect the new Boomi provider. No behavioral drift; extraction output verified clean against all 3 reference articles.
 
 ## Extraction Algorithm
 

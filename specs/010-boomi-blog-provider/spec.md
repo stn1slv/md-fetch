@@ -94,3 +94,6 @@ A user passes a Boomi URL that is not a readable blog article (the blog index, a
 - The implementation follows the existing provider pattern: one new file under `src/mdfetch/providers/` subclassing `BaseExtractor` and reusing its shared conversion methods, with no changes to shared infrastructure.
 - The base class retry/timeout behavior (existing defaults) is inherited without modification.
 - The `test_router.py` unsupported-domain fixture remains valid (Boomi registers `boomi.com`, which is not currently used as the unsupported-domain example — `wordpress.com` is); no fixture update is required unless that changes.
+
+### Revision: Implementation Sync 2026-06-02
+- Reason: Post-implementation audit confirmed the shipped extraction matches all functional requirements with no behavioral drift. Reconciled release/docs drift only (version bump + `CLAUDE.md` provider listing); no spec requirements changed.

@@ -108,6 +108,17 @@
 
 ---
 
+## Remediation: Gaps
+
+<!-- Discovered via /speckit-reconcile-run 2026-06-02 (gap report: "please check everything" + version/docs reminders). -->
+
+- [X] T022 Bump `version` from `0.5.2` to `0.6.0` in `pyproject.toml` (new provider = minor bump, matching dev.to #3 and Substack #9 precedent) [Sync: Gap Report]
+- [X] T023 Sync `CLAUDE.md` to the shipped provider: add `boomi.py` to the project-structure tree, add Boomi to the integration-test description, and add the "post-content is the article discriminator" gotcha [Sync: Gap Report]
+
+> Note: `README.md` (Supported platforms table + usage example) was already synced in T018. No `CHANGELOG` exists. The Homebrew formula version is updated automatically on release by `publish.yml` (tap automation), so no manual `Formula/md-fetch.rb` edit is needed now.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Phase Dependencies
