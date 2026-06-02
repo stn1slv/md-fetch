@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Draft
+**Status**: Completed
 
 **Input**: User description: "I would like to add operation to cli tool for listing all supported platforms"
 
