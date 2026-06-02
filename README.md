@@ -42,6 +42,7 @@ markdown = extract("https://example.substack.com/p/article-slug")
 markdown = extract("https://thenewstack.io/article-slug")
 markdown = extract("https://dzone.com/articles/article-slug")
 markdown = extract("https://boomi.com/blog/article-slug")
+markdown = extract("https://konghq.com/blog/category/article-slug")
 print(markdown)
 ```
 
@@ -86,6 +87,7 @@ except EmptyContentError as e:
 | The New Stack | `thenewstack.io` |
 | DZone | `dzone.com` |
 | Boomi | `boomi.com` |
+| Kong | `konghq.com` |
 
 ## Development
 

@@ -1,3 +1,25 @@
+### mdfetch — Kong Blog Provider — 2026-06-02
+
+**Branch**: `011-konghq-blog-provider`
+**Spec**: specs/011-konghq-blog-provider
+
+**What was added**:
+- `KongExtractor` for `konghq.com/blog/<category>/<slug>` articles. Kong is a Next.js site with hashed CSS-module class names, so selection pins to stable companion classes only.
+- Article discriminator: `<main class="type-article">` (absent on the blog index and category listings). Body = the `<main>` `<section>` richest in `.rich-text-block`.
+- In-body chrome stripped: `.toc-wrap` (TOC sidebar — NOT `[class*=TableOfContents]`, which wraps the whole body), `.component.video`, `.component.more-on-this`, `.order-top`, and trailing non-`intro` `.section-header-block`.
+- `.agent` "agent mode" spans stripped (they inject literal Markdown duplicating styled content; also fixed a `# #` double-heading on the title).
+- Title `<h1>` + publication date prepended (date matched by a month-name regex); author bylines and read time dropped per spec clarification.
+- `README.md` (Supported platforms row + usage example), `pyproject.toml` version bump `0.6.0` → `0.7.0`, and a `CLAUDE.md` gotcha documenting the discriminator and CSS-module fragility.
+
+**New Components**:
+- `src/mdfetch/providers/kong.py` — `KongExtractor`
+- `tests/unit/test_kong_extractor.py` — 12 unit tests
+- `tests/integration/test_kong_integration.py` + 3 snapshots — real-URL tests (3 articles + index/category rejection)
+
+**Tasks Completed**: 26/26
+
+---
+
 ### mdfetch — Homebrew Tap Formula — 2026-05-16
 
 **Branch**: `009-homebrew-tap-formula`

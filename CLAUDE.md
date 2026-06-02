@@ -18,11 +18,12 @@ src/mdfetch/
     ├── substack.py   # SubstackExtractor (substack.com + *.substack.com)
     ├── thenewstack.py  # TheNewStackExtractor (thenewstack.io)
     ├── dzone.py      # DZoneExtractor (dzone.com)
-    └── boomi.py      # BoomiExtractor (boomi.com/blog)
+    ├── boomi.py      # BoomiExtractor (boomi.com/blog)
+    └── kong.py       # KongExtractor (konghq.com/blog)
 
 tests/
 ├── unit/             # pytest unit tests (no network)
-└── integration/      # real network tests (Medium + dev.to + Substack + TheNewStack + DZone + Boomi URLs + snapshots)
+└── integration/      # real network tests (Medium + dev.to + Substack + TheNewStack + DZone + Boomi + Kong URLs + snapshots)
 
 .github/workflows/
 ├── ci.yml            # lint + unit tests on push/PR (Python 3.12–3.14)
@@ -41,6 +42,8 @@ Makefile              # setup / test / lint / format / build / upgrade-deps / cl
 - **No logging**: all failures communicated via typed exceptions only (FR-013)
 - **Type hints**: strict (`mypy src/` must pass with zero errors)
 - **Linter/formatter**: `ruff` (`make lint` / `make format`)
+- **Version bump**: every user-facing change MUST bump `version` in `pyproject.toml` (SemVer — new provider/feature = minor, bug fix = patch). Adding a provider follows the dev.to/Substack/Boomi minor-bump precedent. Don't forget this — it gates the PyPI release (`publish.yml`) and the Homebrew tap auto-update.
+- **README sync**: any change to supported platforms or public usage MUST update `README.md` (add the provider to the Supported platforms table + a usage example). Keep the `## Project structure` tree above and the integration-test description in this file in sync too.
 
 ## Common commands
 
@@ -82,4 +85,9 @@ make typecheck    # type check
 **Issue:** The Boomi blog index (`/blog/`) renders a `section.wysiwyg-section` intro but NO `div.post-content`. Selecting `wysiwyg-section` as the body container would fail to raise `UnsupportedContentTypeError` for the index and other non-article pages.
 **Root Cause:** Confirmed via live DOM inspection: only article pages render `div.post-content` (containing `section.wysiwyg-section` + a `div.blog-nav` prev/next block); the index renders `wysiwyg-section` only.
 **Prevention Rule:** `BoomiExtractor.clean_html()` MUST select `div.post-content` as the body container (its presence is the article discriminator) and strip the inner `div.blog-nav`. Do not switch to `wysiwyg-section`. The title `<h1>` lives in the page hero outside the body and is prepended.
+
+### ⚠️ konghq.com is a Next.js site — pin to stable classes, NOT hashed CSS-module suffixes
+**Issue:** Kong's per-component class names are Next.js CSS-module build hashes (e.g. `Section_section__Grz_Y`, `Article_toc__LOyCI`) that change between site builds. Selecting on a `__xxxxx` suffix would silently break on the next Kong deploy.
+**Root Cause:** Confirmed via live DOM inspection: every block carries a hashed module class plus a stable, human-authored companion class. Only the companion classes are durable.
+**Prevention Rule:** `KongExtractor.clean_html()` MUST use only stable classes: `main.type-article` is the **article discriminator** (absent on the blog index and category listings, which also have 0 `.rich-text-block`); the body is the `<section>` richest in `.rich-text-block`; strip in-body chrome via `.component.video`, `.component.more-on-this`, `.toc-wrap`, `.order-top`, and `.section-header-block:not(.intro)`. NOTE: `.toc-wrap` (not `[class*=TableOfContents]`) is the TOC sidebar — the `TableOfContents` component WRAPS the whole body, so matching it would delete the article. Also strip `.agent` spans everywhere: they are "agent mode" affordances that inject literal Markdown (`**`, `- `, `# `) duplicating the styled content. Title `<h1>` + the publication date (a class-less hero `<div>` matched by a month-name regex) are prepended; author bylines and read time are dropped.
 <!-- SPECKIT END -->

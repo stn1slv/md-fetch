@@ -223,6 +223,28 @@ A developer runs the integration test suite and all dev.to integration tests pas
 
 ---
 
+### US-019 — Extract a Kong Blog Article to Markdown (P1)
+[Source: specs/011-konghq-blog-provider]
+
+A user passes a public Kong (`konghq.com`) blog article URL and receives the article's title, publication date, and full body as clean Markdown, with all site chrome (navigation, breadcrumbs, table-of-contents, demo CTAs, recommended-posts carousel, author bios, newsletter, footer) removed.
+
+**Acceptance Scenarios**:
+1. Given a public Kong blog article URL, when `extract()` is called, then the result is Markdown whose first line is `# <article title>`, followed by the publication date, then the body content.
+2. Given a Kong article with H2/H3 sections, lists, and inline code, when extracted, then those are preserved as Markdown in document order, and no author byline or read-time text is present.
+
+---
+
+### US-020 — Reject Non-Article Kong URLs (P2)
+[Source: specs/011-konghq-blog-provider]
+
+A user passes a Kong URL that is not a readable article (the blog index or a category listing). The library raises a typed error rather than returning garbage.
+
+**Acceptance Scenarios**:
+1. Given the Kong blog index or a category listing URL, when `extract()` is called, then `UnsupportedContentTypeError` is raised.
+2. Given a Kong article whose body yields no text after stripping, when `extract()` is called, then `EmptyContentError` is raised.
+
+---
+
 ## Functional Requirements
 
 ### Extraction
@@ -302,6 +324,17 @@ A developer runs the integration test suite and all dev.to integration tests pas
 - **FR-018**: The dev.to provider MUST raise `UnsupportedContentTypeError` when a `dev.to` URL is provided but the page is not an article (e.g., an author profile, a tag listing, or an organisation page). [Source: specs/002-devto-provider]
 - **FR-019**: The dev.to provider MUST replace embedded third-party content (GitHub Gists, CodePen demos, YouTube videos, liquid-tag embeds) with a plain Markdown link to the embedded resource URL. Embeds must not be silently dropped. [Source: specs/002-devto-provider]
 
+### Kong Platform
+- **FR-060**: The library MUST route `konghq.com` blog URLs to the Kong provider using the existing domain-registration mechanism (`@register` decorator + `DOMAINS` frozenset). [Source: specs/011-konghq-blog-provider]
+- **FR-061**: The library MUST extract the main article body from a Kong blog page and return it as clean Markdown. The body is the `<main>` `<section>` richest in `.rich-text-block` blocks. [Source: specs/011-konghq-blog-provider]
+- **FR-062**: The library MUST strip all non-content elements before conversion: navigation, breadcrumbs, topic tags, the table-of-contents sidebar (`.toc-wrap`), demo CTAs, recommended-posts carousel, author byline/bio blocks, the read-time estimate, newsletter signup, and footer. [Source: specs/011-konghq-blog-provider]
+- **FR-063**: The library MUST prepend the article title as a top-level Markdown heading (`# Title`), followed by the publication date when present. Author bylines and read time MUST NOT be included. [Source: specs/011-konghq-blog-provider]
+- **FR-064**: The library MUST preserve structural body content: H2/H3 headings, paragraphs, ordered/unordered lists, inline and block code, blockquotes, hyperlinks, and images inside the body. Images outside the body (hero/banner) MUST be excluded. [Source: specs/011-konghq-blog-provider]
+- **FR-065**: The library MUST raise `UnsupportedContentTypeError` when the page is not a recognisable article — i.e. `<main>` lacks the `type-article` class (blog index, category listing, non-article page). [Source: specs/011-konghq-blog-provider]
+- **FR-066**: The library MUST raise `EmptyContentError` when the Kong article body yields no extractable text after stripping. [Source: specs/011-konghq-blog-provider]
+- **FR-067**: The library MUST collapse runs of three or more consecutive blank lines to a single blank line in the Kong output Markdown. [Source: specs/011-konghq-blog-provider]
+- **FR-068**: The Kong provider MUST depend only on stable, human-authored CSS classes (never Next.js hashed CSS-module suffixes), and MUST strip `.agent` "agent mode" spans that inject literal Markdown duplicating the styled content. [Source: specs/011-konghq-blog-provider]
+
 ---
 
 ## Key Entities
@@ -368,6 +401,18 @@ A developer runs the integration test suite and all dev.to integration tests pas
 [Source: specs/009-homebrew-tap-formula]
 
 A GitHub fine-grained Personal Access Token with `Contents: read+write` on `stn1slv/homebrew-tap` only. Stored as a repository secret in `stn1slv/md-fetch` and consumed exclusively by the `update-homebrew-tap` CI job.
+
+### Kong Blog Post
+[Source: specs/011-konghq-blog-provider]
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `is-article` | discriminator | `<main>` carries the stable `type-article` class; absence ⇒ non-article |
+| `title` | `str` | Single `<h1>` in the hero section; prepended as `# Title` (with `.agent` `#` affordance stripped) |
+| `date` | `str \| None` | Publication date — a class-less hero `<div>` matched by `^[A-Z][a-z]+ \d{1,2}, \d{4}$`; rendered under the title |
+| `body` | `Tag` | The `<main>` `<section>` richest in `.rich-text-block`; in-body chrome stripped (`.toc-wrap`, `.component.video`, `.component.more-on-this`, `.order-top`, trailing non-`intro` `.section-header-block`) |
+| authors / read time | chrome | Dropped (clarification: keep date only) |
+
+**Validation**: `main.type-article` must exist and a content section must contain ≥1 `.rich-text-block` → else `UnsupportedContentTypeError`. Body must yield non-empty text → else `EmptyContentError`. No paywall — all Kong blog articles are publicly accessible.
 
 ### ExtractionResult (Output)
 | Attribute | Type | Description |
@@ -450,6 +495,9 @@ caller provides URL string
 - **Concurrent releases**: Addressed by `concurrency: group=homebrew-tap-update, cancel-in-progress=false` — runs are serialized so the second release waits for the first tap-update to complete. [Source: specs/009-homebrew-tap-formula]
 - **brew test fails after install**: `brew test md-fetch` exits non-zero when a transitive dependency is missing or `md-fetch --version` fails — installation validation fails. [Source: specs/009-homebrew-tap-formula]
 - **Formula structure changed (sed no-op)**: If the formula is manually edited and the url/sha256 line format changes, `sed` produces no diff and `git commit` finds nothing staged → exits non-zero → CI job fails. [Source: specs/009-homebrew-tap-formula]
+- **Kong non-article pages**: The blog index (`/blog`) and category listings (`/blog/product-releases`) render `<main>` without the `type-article` class (and zero `.rich-text-block`) → `UnsupportedContentTypeError`. [Source: specs/011-konghq-blog-provider]
+- **Kong Next.js CSS-module hashes**: Per-component class names (e.g. `Section_section__Grz_Y`) change between builds; selection pins to stable companion classes only. The TOC sidebar is `.toc-wrap` — NOT `[class*=TableOfContents]`, which wraps the entire body and would delete the article. [Source: specs/011-konghq-blog-provider]
+- **Kong "agent mode" duplicates**: `<span class="agent">` elements inject literal Markdown (`**`, `- `, `# `) duplicating styled content (and cause a `# #` double-heading on the title); all `.agent` spans are decomposed before conversion. [Source: specs/011-konghq-blog-provider]
 
 ---
 
@@ -486,6 +534,13 @@ caller provides URL string
 - **SC-034**: Formula update failures produce a visible CI job failure on every failed attempt, with zero silent failures. [Source: specs/009-homebrew-tap-formula]
 - **SC-035**: The README install section includes the Homebrew installation command, enabling users to discover and use it without prior knowledge of the project's Python packaging. [Source: specs/009-homebrew-tap-formula]
 
+- **SC-036**: Each of the three reference Kong articles returns Markdown containing the full title and all body section headings and paragraph text, with zero non-content elements. [Source: specs/011-konghq-blog-provider]
+- **SC-037**: Extraction of a Kong article completes within the base class 30-second fetch timeout on a stable connection. [Source: specs/011-konghq-blog-provider]
+- **SC-038**: A non-article Kong URL (the blog index or a category listing) raises `UnsupportedContentTypeError` within the normal fetch timeout. [Source: specs/011-konghq-blog-provider]
+- **SC-039**: The extracted Markdown for any Kong article contains no consecutive blank-line runs of three or more lines. [Source: specs/011-konghq-blog-provider]
+- **SC-040**: The Kong provider is exercised by integration tests using real network requests against the reference URLs, matching the pattern established by existing providers. [Source: specs/011-konghq-blog-provider]
+- **SC-041**: For a Kong article with a visible publication date, the extracted Markdown contains the date directly beneath the title and contains no author byline or read-time text. [Source: specs/011-konghq-blog-provider]
+
 ---
 
 ## Assumptions
@@ -513,4 +568,8 @@ caller provides URL string
 
 ---
 
-*Last Updated: 2026-05-16 | Sources appended: [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md], [specs/006-thenewstack-provider/spec.md], [specs/009-homebrew-tap-formula/spec.md]*
+### Revision: Archival 2026-06-02
+- Archived **011-konghq-blog-provider**: added US-019/US-020, FR-060–FR-068 (Kong Platform), the Kong Blog Post entity, Kong edge cases, and SC-036–SC-041. [Source: specs/011-konghq-blog-provider]
+- Note: features **007-dzone-provider** and **010-boomi-blog-provider** are not present in this memory spec (un-archived gap pre-dating this run).
+
+*Last Updated: 2026-06-02 | Sources appended: [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md], [specs/006-thenewstack-provider/spec.md], [specs/009-homebrew-tap-formula/spec.md], [specs/011-konghq-blog-provider/spec.md]*
