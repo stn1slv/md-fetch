@@ -94,6 +94,16 @@ NO_BODY_HTML = """
 </body></html>
 """
 
+# type-article present but with NO direct-child <section> at all — exercises the
+# max(..., default=None) fall-through in clean_html.
+NO_SECTIONS_HTML = """
+<html><body>
+<main class="Layout_main__abc type-article">
+  <nav class="breadcrumbs"><a href="/blog">Blog</a></nav>
+</main>
+</body></html>
+"""
+
 # type-article present with a .rich-text-block that yields no text after stripping,
 # and no title/date in the hero, so the converted Markdown is empty.
 EMPTY_BODY_HTML = """
@@ -176,6 +186,12 @@ class TestCleanHtml:
 
     def test_clean_html_raises_without_rich_text_block(self, extractor: KongExtractor) -> None:
         soup = BeautifulSoup(NO_BODY_HTML, "lxml")
+        with pytest.raises(UnsupportedContentTypeError):
+            extractor.clean_html(soup)
+
+    def test_clean_html_raises_without_any_section(self, extractor: KongExtractor) -> None:
+        # type-article present but zero <section>s → max(..., default=None) fall-through.
+        soup = BeautifulSoup(NO_SECTIONS_HTML, "lxml")
         with pytest.raises(UnsupportedContentTypeError):
             extractor.clean_html(soup)
 
