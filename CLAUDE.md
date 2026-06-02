@@ -41,6 +41,8 @@ Makefile              # setup / test / lint / format / build / upgrade-deps / cl
 - **No logging**: all failures communicated via typed exceptions only (FR-013)
 - **Type hints**: strict (`mypy src/` must pass with zero errors)
 - **Linter/formatter**: `ruff` (`make lint` / `make format`)
+- **Version bump**: every user-facing change MUST bump `version` in `pyproject.toml` (SemVer — new provider/feature = minor, bug fix = patch). Adding a provider follows the dev.to/Substack/Boomi minor-bump precedent. Don't forget this — it gates the PyPI release (`publish.yml`) and the Homebrew tap auto-update.
+- **README sync**: any change to supported platforms or public usage MUST update `README.md` (add the provider to the Supported platforms table + a usage example). Keep the `## Project structure` tree above and the integration-test description in this file in sync too.
 
 ## Common commands
 
