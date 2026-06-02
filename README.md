@@ -28,6 +28,9 @@ md-fetch https://medium.com/example/article
 
 # Fetch and save Markdown to a file
 md-fetch https://dev.to/example/article --output article.md
+
+# List all supported platforms (no URL or network needed)
+md-fetch --list-platforms
 ```
 
 ## Python Usage

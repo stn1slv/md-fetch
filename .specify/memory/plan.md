@@ -132,9 +132,9 @@ src/
 └── mdfetch/
     ├── __init__.py          # Public surface: exposes extract(), exception re-exports
     ├── exceptions.py        # MdfetchError hierarchy (6 exception classes)
-    ├── router.py            # @register, _autodiscover_providers(), route()
+    ├── router.py            # @register, _autodiscover_providers(), route(), supported_domains(), supported_platforms() [012-list-platforms]
     ├── base.py              # BaseExtractor ABC + fetch_html() + convert_to_markdown() + extract() template
-    ├── cli.py               # click-based command line interface
+    ├── cli.py               # click CLI; `md-fetch <URL>` + `--list-platforms` (URL optional with flag) [012-list-platforms]
     └── providers/
         ├── __init__.py      # Empty — auto-discovery handles registration
         ├── medium.py        # MediumExtractor
@@ -233,7 +233,7 @@ update-homebrew-tap job (NEW, needs: publish)
 ## Testing Strategy
 
 **Unit tests** (101 tests, offline):
-- Router: domain routing, subdomain suffix matching, duplicate registration, invalid URLs, unsupported platforms
+- Router: domain routing, subdomain suffix matching, duplicate registration, invalid URLs, unsupported platforms; `supported_platforms()` accessor (sorted `(domain, bool)`, covers every `supported_domains()` entry, subdomain flags) [012-list-platforms]
 - MediumExtractor: clean_html, convert_to_markdown, empty content, non-article pages, _parse_freedium (heading remap, missing main-content), fallback on 403/429 (URL construction, exc.url contract, no-sleep on 429), no-fallback on 200, UnsupportedContentTypeError.url on Freedium path [003-medium-freedium-fallback]
 - DevToExtractor: clean_html (title/cover/heading/image preservation, iframe/ltag embed→link, anchor stripping, non-article error), convert_to_markdown (headings/code/lists/images, no raw HTML, empty content error) [002-devto-provider]
 - SubstackExtractor: routing (subdomain + root domain + _no_retry_status_codes assertion), clean_html (body.markup tag return, subscription-widget strip, title prepend, subtitle prepend, prose preservation, iframe→anchor), convert_to_markdown (title heading, no triple blank lines, image syntax, link preservation), paywalled post (non-empty, Subscribe text absent, free preview present), error cases (UnsupportedContentTypeError on no body, EmptyContentError on whitespace body) [005-substack-provider]
@@ -241,6 +241,7 @@ update-homebrew-tap job (NEW, needs: publish)
 - KongExtractor: routing (konghq.com domain), clean_html (title+date prepend order, chrome strip — .toc-wrap/.component.video/.component.more-on-this/.order-top/non-intro .section-header-block, .agent affordance strip, body-block preservation, raises without type-article, raises without .rich-text-block), convert_to_markdown (title then date, structure + inline code preserved, chrome/authors excluded, no triple blank lines, EmptyContentError on whitespace body) [011-konghq-blog-provider]
 - Fetch errors: HTTP 404, 503, timeout, connection error, size limit exceeded; `_no_retry_status_codes` immediate-raise + `_no_retry_codes` override [003-medium-freedium-fallback]
 - Silent: no stdout/stderr output, no logging during extraction
+- CLI: `--list-platforms` lists all registered domains (subdomain-annotated), exits 0 with no network and no `extract` call, list takes precedence over a supplied URL, and missing-URL-without-flag exits 2 [012-list-platforms]
 
 **Integration tests** (15 tests, network required):
 - Parametrized over 3 real stn1slv.medium.com articles (including a known paywalled URL that exercises the Freedium fallback when medium.com returns 403) [003-medium-freedium-fallback]
@@ -315,4 +316,7 @@ update-homebrew-tap job (NEW, needs: publish)
 - Archived **011-konghq-blog-provider**: added the `KongExtractor` architecture block, `kong.py` to the project-structure tree, and its unit/integration test coverage. No new runtime dependencies. [Source: specs/011-konghq-blog-provider]
 - Note: features **007-dzone-provider** (partially present) and **010-boomi-blog-provider** (absent) are not fully archived in this memory plan (gap pre-dating this run).
 
-*Last Updated: 2026-06-02 | Sources appended: [specs/004-remove-backoff/plan.md], [specs/005-substack-provider/plan.md], [specs/006-thenewstack-provider/plan.md], [specs/009-homebrew-tap-formula/plan.md], [specs/011-konghq-blog-provider/plan.md]*
+### Revision: Archival 2026-06-02 (012-list-platforms)
+- Archived **012-list-platforms**: annotated `cli.py` (`--list-platforms`, URL optional) and `router.py` (`supported_platforms()`) in the project-structure tree; added CLI + router-accessor unit-test coverage notes. No new runtime dependencies; no integration test (operation is offline). Reconciled pre-merge at the user's request. [Source: specs/012-list-platforms]
+
+*Last Updated: 2026-06-02 | Sources appended: [specs/004-remove-backoff/plan.md], [specs/005-substack-provider/plan.md], [specs/006-thenewstack-provider/plan.md], [specs/009-homebrew-tap-formula/plan.md], [specs/011-konghq-blog-provider/plan.md], [specs/012-list-platforms/plan.md]*

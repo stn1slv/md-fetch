@@ -12,12 +12,18 @@ import click
 
 from mdfetch import extract
 from mdfetch.exceptions import MdfetchError, UnsupportedPlatformError
-from mdfetch.router import supported_domains
+from mdfetch.router import supported_domains, supported_platforms
 
 
 @click.command(name="md-fetch")
 @click.version_option(package_name="mdfetch", prog_name="md-fetch")
-@click.argument("url")
+@click.argument("url", required=False)
+@click.option(
+    "--list-platforms",
+    is_flag=True,
+    default=False,
+    help="List all supported platforms and exit.",
+)
 @click.option(
     "-o",
     "--output",
@@ -46,13 +52,24 @@ from mdfetch.router import supported_domains
     help="Overwrite the output file if it already exists",
 )
 def main(
-    url: str,
+    url: str | None,
+    list_platforms: bool,
     output: str | None,
     retries: int,
     retry_delay: float,
     force: bool,
 ) -> None:
     """Fetch and extract Markdown from the given URL."""
+    if list_platforms:
+        click.echo("Supported platforms:")
+        for domain, matches_subdomains in supported_platforms():
+            line = f"{domain} (and *.{domain})" if matches_subdomains else domain
+            click.echo(f"  {line}")
+        return
+
+    if url is None:
+        raise click.UsageError("Missing argument 'URL'.")
+
     if output and os.path.exists(output) and not force:
         click.secho(
             f"Error: '{output}' already exists. Use --force to overwrite.",

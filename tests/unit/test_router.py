@@ -131,3 +131,30 @@ class TestSupportedDomains:
         result = supported_domains()
         assert isinstance(result, frozenset)
         assert "medium.com" in result
+
+
+class TestSupportedPlatforms:
+    def test_returns_sorted_domain_bool_tuples(self) -> None:
+        from mdfetch.router import supported_platforms
+
+        result = supported_platforms()
+        assert isinstance(result, list)
+        assert all(isinstance(domain, str) and isinstance(subs, bool) for domain, subs in result)
+        domains = [domain for domain, _ in result]
+        assert domains == sorted(domains)
+
+    def test_covers_every_supported_domain(self) -> None:
+        # Registry-derived equality with supported_domains() is what guarantees
+        # SC-003: a newly registered provider appears automatically with no edit
+        # to the list operation.
+        from mdfetch.router import supported_domains, supported_platforms
+
+        assert {domain for domain, _ in supported_platforms()} == set(supported_domains())
+
+    def test_marks_subdomain_matching_providers(self) -> None:
+        from mdfetch.router import supported_platforms
+
+        flags = dict(supported_platforms())
+        assert flags["medium.com"] is True
+        assert flags["substack.com"] is True
+        assert flags["dev.to"] is False

@@ -245,6 +245,29 @@ A user passes a Kong URL that is not a readable article (the blog index or a cat
 
 ---
 
+### US-021 — List Supported Platforms from the CLI (P1)
+[Source: specs/012-list-platforms]
+
+A user runs the `md-fetch` CLI with a dedicated flag and receives a readable list of every supported platform domain, printed to standard output with a success exit code, without supplying a URL or making any network request.
+
+**Acceptance Scenarios**:
+1. Given the CLI is installed, when the user runs `md-fetch --list-platforms`, then every supported platform domain is printed to standard output and the process exits 0, with no network request made.
+2. Given a new provider has been registered, when the user runs `md-fetch --list-platforms`, then the newly supported domain appears with no change to the list operation itself.
+3. Given neither a URL nor `--list-platforms` is supplied, when `md-fetch` is run, then a usage error is printed and the process exits with code 2 (the existing `md-fetch <URL>` behaviour is unchanged).
+
+---
+
+### US-022 — Distinguish Multi-Tenant Platforms in the Listing (P2)
+[Source: specs/012-list-platforms]
+
+A user listing platforms can tell which platforms also accept per-author subdomains (e.g. Medium, Substack) from those that match an exact domain only.
+
+**Acceptance Scenarios**:
+1. Given a provider that matches subdomains, when the user lists platforms, then the output indicates subdomains of that platform are supported (e.g. `medium.com (and *.medium.com)`).
+2. Given a provider that matches an exact domain only, when the user lists platforms, then the output shows the bare domain with no subdomain indicator.
+
+---
+
 ## Functional Requirements
 
 ### Extraction
@@ -334,6 +357,17 @@ A user passes a Kong URL that is not a readable article (the blog index or a cat
 - **FR-066**: The library MUST raise `EmptyContentError` when the Kong article body yields no extractable text after stripping. [Source: specs/011-konghq-blog-provider]
 - **FR-067**: The library MUST collapse runs of three or more consecutive blank lines to a single blank line in the Kong output Markdown. [Source: specs/011-konghq-blog-provider]
 - **FR-068**: The Kong provider MUST depend only on stable, human-authored CSS classes (never Next.js hashed CSS-module suffixes), and MUST strip `.agent` "agent mode" spans that inject literal Markdown duplicating the styled content. [Source: specs/011-konghq-blog-provider]
+
+### CLI — List Platforms
+- **FR-069**: The CLI MUST provide a `--list-platforms` flag on the existing `md-fetch` command that lists all currently supported platform domains. [Source: specs/012-list-platforms]
+- **FR-070**: When `--list-platforms` is supplied, the `URL` argument MUST be optional; without the flag, the existing behaviour (URL required) MUST be unchanged. [Source: specs/012-list-platforms]
+- **FR-071**: The list output MUST be derived from the live provider registry so adding or removing a provider changes the output with no separately maintained list. [Source: specs/012-list-platforms]
+- **FR-072**: The list operation MUST print to standard output and exit with code 0. [Source: specs/012-list-platforms]
+- **FR-073**: The list operation MUST NOT require a URL and MUST NOT perform any network request. [Source: specs/012-list-platforms]
+- **FR-074**: The list output ordering MUST be deterministic (alphabetical by domain). [Source: specs/012-list-platforms]
+- **FR-075**: The list output MUST indicate, for multi-tenant platforms, that subdomains are also supported (`<domain> (and *.<domain>)`), while showing exact-match-only platforms as the bare domain. [Source: specs/012-list-platforms]
+- **FR-076**: The `--list-platforms` flag MUST be documented in the CLI's own `--help` text. [Source: specs/012-list-platforms]
+- **FR-077**: When `--list-platforms` is requested, the CLI MUST NOT attempt extraction in the same invocation, even if a URL is also supplied (the list takes precedence). [Source: specs/012-list-platforms]
 
 ---
 
@@ -434,6 +468,18 @@ MdfetchError (base)
 
 All exceptions carry `message: str` and `url: str | None`. `HTTPStatusError` additionally carries `status_code: int`.
 
+### Supported Platform
+[Source: specs/012-list-platforms]
+
+A read-only projection of one entry in the provider registry, exposed by `router.supported_platforms() -> list[tuple[str, bool]]` (sorted ascending by domain).
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `domain` | `str` | Registered domain (e.g. `medium.com`, `dev.to`) |
+| `matches_subdomains` | `bool` | Whether subdomains of `domain` also route to this provider (the provider's `MATCH_SUBDOMAINS` flag) |
+
+**Validation**: One tuple per registered domain — no missing, no extras; domains unique. This is the subdomain-aware superset of `supported_domains() -> frozenset[str]`, which is retained unchanged.
+
 ---
 
 ## Call Lifecycle / State Transitions
@@ -498,6 +544,8 @@ caller provides URL string
 - **Kong non-article pages**: The blog index (`/blog`) and category listings (`/blog/product-releases`) render `<main>` without the `type-article` class (and zero `.rich-text-block`) → `UnsupportedContentTypeError`. [Source: specs/011-konghq-blog-provider]
 - **Kong Next.js CSS-module hashes**: Per-component class names (e.g. `Section_section__Grz_Y`) change between builds; selection pins to stable companion classes only. The TOC sidebar is `.toc-wrap` — NOT `[class*=TableOfContents]`, which wraps the entire body and would delete the article. [Source: specs/011-konghq-blog-provider]
 - **Kong "agent mode" duplicates**: `<span class="agent">` elements inject literal Markdown (`**`, `- `, `# `) duplicating styled content (and cause a `# #` double-heading on the title); all `.agent` spans are decomposed before conversion. [Source: specs/011-konghq-blog-provider]
+- **CLI list + output/fetch options**: When `--list-platforms` is combined with `-o/--output`, `--retries`, or `--force`, the list is printed to stdout and those options are ignored — the list operation returns before any extraction. [Source: specs/012-list-platforms]
+- **CLI missing URL**: Running `md-fetch` with neither a URL nor `--list-platforms` raises a Click usage error and exits with code 2. [Source: specs/012-list-platforms]
 
 ---
 
@@ -541,6 +589,12 @@ caller provides URL string
 - **SC-040**: The Kong provider is exercised by integration tests using real network requests against the reference URLs, matching the pattern established by existing providers. [Source: specs/011-konghq-blog-provider]
 - **SC-041**: For a Kong article with a visible publication date, the extracted Markdown contains the date directly beneath the title and contains no author byline or read-time text. [Source: specs/011-konghq-blog-provider]
 
+- **SC-042**: A user can list every supported platform with a single `md-fetch --list-platforms` invocation and no URL, completing in well under one second with no network access. [Source: specs/012-list-platforms]
+- **SC-043**: The listed domains exactly match the set of domains registered to providers — no missing entries and no extras. [Source: specs/012-list-platforms]
+- **SC-044**: After a new provider is added, its domain appears in the list output with no edit to the list operation's code. [Source: specs/012-list-platforms]
+- **SC-045**: Multi-tenant platforms (those accepting subdomains) are visually distinguishable from exact-match platforms in the output. [Source: specs/012-list-platforms]
+- **SC-046**: The list operation is exercised by at least one automated unit test that asserts the output contains the known supported domains and exits successfully. [Source: specs/012-list-platforms]
+
 ---
 
 ## Assumptions
@@ -571,5 +625,8 @@ caller provides URL string
 ### Revision: Archival 2026-06-02
 - Archived **011-konghq-blog-provider**: added US-019/US-020, FR-060–FR-068 (Kong Platform), the Kong Blog Post entity, Kong edge cases, and SC-036–SC-041. [Source: specs/011-konghq-blog-provider]
 - Note: features **007-dzone-provider** and **010-boomi-blog-provider** are not present in this memory spec (un-archived gap pre-dating this run).
+
+### Revision: Archival 2026-06-02 (012-list-platforms)
+- Archived **012-list-platforms**: added US-021/US-022, FR-069–FR-077 (CLI — List Platforms), the Supported Platform entity, two CLI edge cases, and SC-042–SC-046. Reconciled pre-merge at the user's request (deviates from the usual post-merge archival). [Source: specs/012-list-platforms]
 
 *Last Updated: 2026-06-02 | Sources appended: [specs/004-remove-backoff/spec.md], [specs/005-substack-provider/spec.md], [specs/006-thenewstack-provider/spec.md], [specs/009-homebrew-tap-formula/spec.md], [specs/011-konghq-blog-provider/spec.md]*

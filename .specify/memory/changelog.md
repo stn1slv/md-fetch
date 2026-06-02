@@ -1,3 +1,27 @@
+### mdfetch — CLI: List Supported Platforms — 2026-06-02
+
+**Branch**: `012-list-platforms`
+**Spec**: specs/012-list-platforms
+
+**What was added**:
+- `md-fetch --list-platforms` flag that prints every supported platform domain (alphabetical) to stdout and exits 0 — no URL, no network request.
+- Multi-tenant platforms annotated with their wildcard (e.g. `medium.com (and *.medium.com)`); exact-match platforms shown plain.
+- `URL` argument made optional: required only when `--list-platforms` is absent, preserving the existing `md-fetch <URL>` contract (no breaking change). Missing URL without the flag → Click usage error, exit 2.
+- New subdomain-aware router accessor `supported_platforms() -> list[tuple[str, bool]]` (sorted, registry-derived); existing `supported_domains()` unchanged.
+- `README.md` usage example + `pyproject.toml` version bump `0.7.1` → `0.8.0`.
+
+**New Components**:
+- `src/mdfetch/router.py` — `supported_platforms()` accessor (modified, no new file)
+- `src/mdfetch/cli.py` — `--list-platforms` flag, optional URL (modified, no new file)
+- `tests/unit/test_router.py` — 3 new tests; `tests/unit/test_cli.py` — 5 new tests
+- No integration test (operation is offline)
+
+**Tasks Completed**: 10/10
+
+**Note**: Archived pre-merge at the user's request (deviates from the usual post-merge archival).
+
+---
+
 ### mdfetch — Kong Blog Provider — 2026-06-02
 
 **Branch**: `011-konghq-blog-provider`
