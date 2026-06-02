@@ -139,9 +139,7 @@ class TestSupportedPlatforms:
 
         result = supported_platforms()
         assert isinstance(result, list)
-        assert all(
-            isinstance(domain, str) and isinstance(subs, bool) for domain, subs in result
-        )
+        assert all(isinstance(domain, str) and isinstance(subs, bool) for domain, subs in result)
         domains = [domain for domain, _ in result]
         assert domains == sorted(domains)
 
