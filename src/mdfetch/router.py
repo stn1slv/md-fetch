@@ -60,6 +60,17 @@ def supported_domains() -> frozenset[str]:
     return frozenset(_REGISTRY)
 
 
+def supported_platforms() -> list[tuple[str, bool]]:
+    """Return ``(domain, matches_subdomains)`` for every registered provider.
+
+    Sorted ascending by domain.  The boolean is the provider's
+    ``MATCH_SUBDOMAINS`` flag, so callers can distinguish multi-tenant
+    platforms (e.g. ``medium.com``) from exact-match-only ones.  This is the
+    subdomain-aware superset of :func:`supported_domains`.
+    """
+    return sorted((domain, cls.MATCH_SUBDOMAINS) for domain, cls in _REGISTRY.items())
+
+
 def _autodiscover_providers() -> None:
     """Import every module in mdfetch.providers; classes decorated with @register self-enrol."""
     import mdfetch.providers as _providers_pkg  # noqa: PLC0415

@@ -66,3 +66,49 @@ def test_output_force_overwrites_existing_file(
     result = runner.invoke(main, ["https://dev.to/test", "-o", str(out), "--force"])
     assert result.exit_code == 0
     assert out.read_text() == "# Test"
+
+
+def test_list_platforms_lists_every_domain(runner: CliRunner) -> None:
+    from mdfetch.router import supported_domains
+
+    result = runner.invoke(main, ["--list-platforms"])
+    assert result.exit_code == 0
+    assert "Supported platforms:" in result.output
+    for domain in supported_domains():
+        assert domain in result.output
+
+
+def test_list_platforms_makes_no_network_call(
+    mocker: pytest_mock.MockerFixture, runner: CliRunner
+) -> None:
+    mock_extract = mocker.patch("mdfetch.cli.extract")
+    result = runner.invoke(main, ["--list-platforms"])
+    assert result.exit_code == 0
+    mock_extract.assert_not_called()
+
+
+def test_list_platforms_takes_precedence_over_url(
+    mocker: pytest_mock.MockerFixture, runner: CliRunner
+) -> None:
+    # FR-008: when both --list-platforms and a URL are supplied, the list wins
+    # and no extraction occurs.
+    mock_extract = mocker.patch("mdfetch.cli.extract")
+    result = runner.invoke(main, ["--list-platforms", "https://dev.to/test"])
+    assert result.exit_code == 0
+    assert "Supported platforms:" in result.output
+    mock_extract.assert_not_called()
+
+
+def test_missing_url_without_flag_is_usage_error(runner: CliRunner) -> None:
+    result = runner.invoke(main, [])
+    assert result.exit_code == 2
+    assert "URL" in result.output
+
+
+def test_list_platforms_annotates_subdomain_support(runner: CliRunner) -> None:
+    # FR-006: multi-tenant platforms show a wildcard; exact-match ones do not.
+    result = runner.invoke(main, ["--list-platforms"])
+    assert result.exit_code == 0
+    assert "*.medium.com" in result.output
+    # dev.to is exact-match only — it must appear without a wildcard prefix.
+    assert "*.dev.to" not in result.output
