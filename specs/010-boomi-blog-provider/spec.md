@@ -62,7 +62,7 @@ A user passes a Boomi URL that is not a readable blog article (the blog index, a
 - **FR-006**: The system MUST raise `UnsupportedContentTypeError` when the page does not contain a recognizable single article body element (e.g., the blog index or a non-article page).
 - **FR-007**: The system MUST raise `EmptyContentError` when the article body yields no extractable text after stripping.
 - **FR-008**: The system MUST collapse runs of three or more consecutive blank lines to a single blank line.
-- **FR-009**: The system MUST scope extraction to blog article pages under `boomi.com/blog/`; non-blog pages on `boomi.com` MUST NOT yield article output (they raise `UnsupportedContentTypeError`).
+- **FR-009**: The system MUST yield article output only for pages that contain a recognizable article body container. Pages on `boomi.com` without one — the blog index, category/tag listings, and non-blog pages — MUST NOT yield article output and MUST raise `UnsupportedContentTypeError`. (In practice all article pages live under `boomi.com/blog/<slug>/`; scoping is enforced by body-container presence rather than URL path matching.)
 
 ### Key Entities *(include if feature involves data)*
 
