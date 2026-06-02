@@ -18,7 +18,8 @@ A single article page at `https://konghq.com/blog/<category>/<slug>`.
 | read time (chrome) | hero `<div>` "… min read" | Dropped (clarification) |
 | authors (chrome) | hero author `<div>`s + meta `Article_authors` block | Dropped (clarification) |
 | category/topics (chrome) | hero category link, `.order-top`, meta section | Stripped/excluded |
-| TOC (chrome) | `[class*="TableOfContents"]` (when present) | Stripped |
+| TOC (chrome) | `.toc-wrap` (when present) | Stripped (the `TableOfContents` component wraps the whole body — do NOT match it) |
+| agent-mode affordances (chrome) | `.agent` spans | Stripped everywhere (literal-Markdown duplicates) |
 | video placeholder (chrome) | `.component.video` | Stripped (no usable URL) |
 | more-on-this (chrome) | `.component.more-on-this` | Stripped |
 | footer CTA (chrome) | trailing `.section-header-block` (non-`intro`) + `section.footer-cta` | Stripped/excluded |
@@ -54,9 +55,10 @@ A single Markdown `str` (the public `extract()` return value):
 | hero date `<div>` (date regex) | **prepend** (as `<p>`) | Publication date (clarification) |
 | `.component.video` | **strip** (`decompose`) | Undisplayable video placeholder |
 | `.component.more-on-this` | **strip** | Related-content widget |
-| `[class*="TableOfContents"]` | **strip** | On-page TOC |
+| `.toc-wrap` | **strip** | On-page TOC sidebar (NOT `[class*=TableOfContents]`, which wraps the body) |
 | `.order-top` | **strip** | Inline topic-tag list |
 | trailing `.section-header-block` (non-`intro`) | **strip** | "See Kong in action" CTA |
+| `.agent` (anywhere) | **strip** | Agent-mode affordance injecting literal Markdown |
 | every other `<section>` / `nav` under `main` | **excluded** implicitly | Hero meta, topics/authors, carousel, footer CTA, breadcrumbs |
 
 ## State Transitions

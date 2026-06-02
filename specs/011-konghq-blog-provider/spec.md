@@ -4,7 +4,7 @@
 
 **Created**: 2026-06-02
 
-**Status**: Draft
+**Status**: Completed
 
 **Input**: User description: "I would like to add support of the articles from https://konghq.com/blog. Please use the following ones as references: 1. https://konghq.com/blog/product-releases/insomnia-12-6 2. https://konghq.com/blog/enterprise/kong-ai-gateway-vs-litellm 3. https://konghq.com/blog/product-releases/kong-gateway-3-14"
 
@@ -51,6 +51,7 @@ A user passes a Kong URL that is not a readable blog article (the blog index, a 
 - **Inline images vs. hero/featured image**: Only images inside the article body container (e.g., feature screenshots, diagrams) are preserved as Markdown images; a featured hero/banner image rendered outside the body is treated as chrome and excluded.
 - **Embedded media**: Some articles embed videos or downloadable comparison-chart CTAs (linked PDFs). Embedded video/iframe players are not converted to body text; an in-body hyperlink to a downloadable asset is preserved as a normal link. No feature-specific media handling beyond inherited base behavior is introduced.
 - **Code snippets**: Inline and block code (e.g., `git status`, `git commit`) are preserved as Markdown code.
+- **"Agent mode" duplicate content**: The platform renders a hidden alternate ("agent mode") copy of much of the page that embeds literal Markdown punctuation. This duplicate is treated as non-content and excluded so the output is not doubled or corrupted.
 - **HTTP errors**: A 404/410 for a removed article, or a 429/503 transient error, is surfaced via the base class's existing fetch/error behavior — this feature introduces no new network handling.
 
 ## Requirements *(mandatory)*
@@ -99,3 +100,6 @@ A user passes a Kong URL that is not a readable blog article (the blog index, a 
 - The implementation follows the existing provider pattern: one new file under `src/mdfetch/providers/` subclassing `BaseExtractor` and reusing its shared conversion methods, with no changes to shared infrastructure.
 - The base class retry/timeout behavior (existing defaults) is inherited without modification.
 - The `test_router.py` unsupported-domain fixture remains valid (Kong registers `konghq.com`, which is not currently used as the unsupported-domain example — `wordpress.com` is); no fixture update is required.
+
+### Revision: Implementation Sync 2026-06-02
+- Reason: Post-implementation audit ("please check all the things"). The shipped extraction satisfies all functional requirements; one edge case was added to document the platform's "agent mode" duplicate-content quirk (stripped during extraction). No requirements changed. Selector-level reconciliation (TOC = `.toc-wrap`, `.agent` stripping) was recorded in plan.md / research.md / data-model.md / contracts.

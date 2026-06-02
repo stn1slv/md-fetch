@@ -35,10 +35,11 @@ class KongExtractor(BaseExtractor):
 | C1 | Return a `Tag` containing: a copy of the page `<h1>`, then the publication date (when present), then the cleaned article body, in that order. |
 | C2 | Raise `UnsupportedContentTypeError` when `main.type-article` is absent (index, category listing, non-article). |
 | C3 | Select the body as the `main` `<section>` with the most `.rich-text-block` descendants; raise `UnsupportedContentTypeError` if none. |
-| C4 | Decompose in-body chrome: `.component.video`, `.component.more-on-this`, `[class*="TableOfContents"]`, `.order-top`, and trailing `.section-header-block` not carrying `intro`. |
+| C4 | Decompose in-body chrome: `.component.video`, `.component.more-on-this`, `.toc-wrap` (NOT `[class*="TableOfContents"]`, which wraps the whole body), `.order-top`, and trailing `.section-header-block` not carrying `intro`. |
 | C5 | Keep the publication date (hero `<div>` matching a month-name date pattern); MUST NOT include author bylines or read time. |
 | C6 | Depend only on stable companion classes (no hashed `__xxxxx` CSS-module suffixes). |
-| C7 | MUST NOT modify the base class or shared utilities; MUST NOT add image-specific logic (body images flow through default conversion). |
+| C7 | Decompose all `.agent` spans (agent-mode affordances that inject literal Markdown duplicating the styled content). |
+| C8 | MUST NOT modify the base class or shared utilities; MUST NOT add image-specific logic (body images flow through default conversion). |
 
 `extract()` and `convert_to_markdown()` are inherited unchanged; the latter enforces the
 ATX-heading, blank-line-collapsing, and `EmptyContentError` behavior.

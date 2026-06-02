@@ -39,20 +39,39 @@ most per-component class names are CSS-module hashes (e.g. `Section_section__Grz
 ## Decision: Strip in-body chrome blocks by stable class
 
 - **Decision**: Inside the content section, `decompose()` these blocks before conversion:
-  `.component.video`, `.component.more-on-this`, `[class*="TableOfContents"]`,
+  `.component.video`, `.component.more-on-this`, `.toc-wrap`,
   `.order-top`, and any `.section-header-block` **without** the `intro` class.
 - **Rationale**: These are the only chrome elements that render *inside* the content
   section:
   - `.component.video` → a "This content contains a video which can not be displayed"
     placeholder with no usable URL → decompose (do not link).
   - `.component.more-on-this` → a "More on this topic" related-content widget.
-  - `[class*="TableOfContents"]` → the optional on-page TOC (not present on every article).
+  - `.toc-wrap` → the sticky on-page "On this page" TOC sidebar (not present on every
+    article).
   - `.order-top` → an inline topic-tag list duplicated from the meta section.
   - trailing `.section-header-block` (non-`intro`) → the "See Kong in action" CTA banner.
   The opening TL;DR is `.section-header-block.intro` and is **kept** (it is article lead),
   which is why the `intro` class must be excluded from the CTA strip.
-- **Alternatives considered**: Keeping the video placeholder as a link — **rejected**: no
-  resolvable media URL on the placeholder element.
+- **Alternatives considered**:
+  - `[class*="TableOfContents"]` for the TOC — **rejected (found during implementation)**:
+    the `TableOfContents` CSS-module component is the layout *wrapper* around the entire
+    article body, so a substring match deletes all content. The stable `.toc-wrap` class
+    targets only the TOC sidebar (verified: 0 `.rich-text-block` inside, present on all 3
+    references).
+  - Keeping the video placeholder as a link — **rejected**: no resolvable media URL on the
+    placeholder element.
+
+## Decision: Strip `.agent` "agent mode" affordances (found during implementation)
+
+- **Decision**: After assembling the output, `decompose()` every `<span class="agent">`.
+- **Rationale**: Kong renders an "agent mode" variant of much of its content as sibling
+  `.agent` spans containing literal Markdown syntax (`**`, `- `, `# `) alongside the styled
+  HTML. Left in place these duplicate the body and corrupt the conversion — e.g. the title
+  `<h1>` carries `<span class="agent"># </span>`, producing a `# #` double-heading, and the
+  TL;DR list items carry `<span class="agent">- </span>` prefixes. Stripping all `.agent`
+  spans leaves the clean styled content. Verified: ~116 `.agent` spans in one reference body.
+- **Alternatives considered**: Stripping only the title's `.agent` span — **rejected**: the
+  affordance appears throughout the body, not just the title.
 
 ## Decision: Title + publication date from the hero; authors/read-time dropped
 
@@ -98,7 +117,8 @@ most per-component class names are CSS-module hashes (e.g. `Section_section__Grz
 | Article discriminator | `<main>` with stable class `type-article` |
 | Body container | the `main` `<section>` richest in `.rich-text-block` |
 | Body blocks kept | `.section-header-block.intro` (TL;DR), `.rich-text-block`, `.component.image`, `.component.pull-quote` |
-| In-body chrome stripped | `.component.video`, `.component.more-on-this`, `[class*=TableOfContents]`, `.order-top`, trailing non-`intro` `.section-header-block` |
+| In-body chrome stripped | `.component.video`, `.component.more-on-this`, `.toc-wrap`, `.order-top`, trailing non-`intro` `.section-header-block` |
+| Agent-mode affordances | `.agent` spans (literal-Markdown duplicates) stripped everywhere |
 | Title | single `<h1>` in the hero section (outside the body) |
 | Publication date | class-less hero `<div>`, text like "May 26, 2026" — kept under title |
 | Authors / read time | hero `<div>`s — dropped (per clarification) |

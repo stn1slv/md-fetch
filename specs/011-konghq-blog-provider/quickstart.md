@@ -54,5 +54,7 @@ open('tests/integration/snapshots/kong-<slug>.md','w',encoding='utf-8').write('\
 Kong is a Next.js site; per-component class names like `Section_section__Grz_Y` are build
 hashes and will change. Pin selectors only to the stable companion classes (`type-article`,
 `rich-text-block`, `component`, `video`, `more-on-this`, `section-header-block`, `intro`,
-`order-top`) plus the `TableOfContents` substring match and the date regex — never the
-hashed `__xxxxx` suffixes. Record this as a `CLAUDE.md` gotcha during implementation.
+`order-top`, `toc-wrap`, `agent`) plus the date regex — never the hashed `__xxxxx`
+suffixes. The TOC sidebar is `.toc-wrap` (NOT `[class*=TableOfContents]`, which wraps the
+whole body), and all `.agent` spans must be stripped (they inject literal Markdown). This
+is recorded as a `CLAUDE.md` gotcha.

@@ -39,7 +39,7 @@
 
 - [X] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
 - [X] T002 Create `src/mdfetch/providers/kong.py` with module docstring `"""Kong blog platform extractor."""`, `from __future__ import annotations`, and imports (`copy`, `re`, `BeautifulSoup`, `Tag`, `BaseExtractor`, `UnsupportedContentTypeError`, `register`)
-- [X] T003 [P] Create `tests/unit/test_kong_extractor.py` with module docstring, imports, and sample HTML fixtures: an article fixture mirroring the real DOM — `<main class="... type-article">` containing a hero `<section>` (category link, a date `<div>` "May 26, 2026", a "5 min read" `<div>`, an `<h1>`, author `<div>`s) and a content `<section>` with several `.rich-text-block` blocks plus chrome blocks (`.component.video`, `.component.more-on-this`, a `[class*=TableOfContents]` block, a `.order-top` block, a trailing non-`intro` `.section-header-block`, and a kept `.section-header-block.intro` TL;DR)
+- [X] T003 [P] Create `tests/unit/test_kong_extractor.py` with module docstring, imports, and sample HTML fixtures: an article fixture mirroring the real DOM — `<main class="... type-article">` containing a hero `<section>` (category link, a date `<div>` "May 26, 2026", a "5 min read" `<div>`, an `<h1>`, author `<div>`s) and a content `<section>` with several `.rich-text-block` blocks plus chrome blocks (`.component.video`, `.component.more-on-this`, a `.toc-wrap` block, a `.order-top` block, a trailing non-`intro` `.section-header-block`, a kept `.section-header-block.intro` TL;DR, and `.agent` affordance spans)
 - [X] T004 [P] Create `tests/integration/test_kong_integration.py` with module docstring, imports, `SNAPSHOTS_DIR`, and the `KONG_TEST_CASES` list (3 reference URLs → snapshot filenames)
 
 ---
@@ -78,7 +78,7 @@
 
 ### Tests for User Story 1
 
-- [X] T010 [P] [US1] Unit test in `tests/unit/test_kong_extractor.py`: `clean_html` on the article fixture returns a `Tag` whose first child is the `<h1>` title, whose second child is a `<p>` containing the publication date, and which no longer contains any `.component.video`, `.component.more-on-this`, `[class*=TableOfContents]`, `.order-top`, or trailing non-`intro` `.section-header-block`
+- [X] T010 [P] [US1] Unit test in `tests/unit/test_kong_extractor.py`: `clean_html` on the article fixture returns a `Tag` whose first child is the `<h1>` title, whose second child is a `<p>` containing the publication date, and which no longer contains any `.component.video`, `.component.more-on-this`, `.toc-wrap`, `.order-top`, trailing non-`intro` `.section-header-block`, or `.agent` spans
 - [X] T011 [P] [US1] Unit test in `tests/unit/test_kong_extractor.py`: the `.section-header-block.intro` (TL;DR) and `.rich-text-block` / `.component.image` / `.component.pull-quote` content blocks are PRESERVED in the returned `Tag`
 - [X] T012 [P] [US1] Unit test in `tests/unit/test_kong_extractor.py`: end-to-end `extractor.convert_to_markdown(extractor.clean_html(soup))` (inherited convert) yields Markdown starting with `# <title>` followed by the date line, preserving a heading, list, and inline code, with no 3+ blank-line runs, and containing no author-name or "min read" text
 - [X] T013 [US1] Generate the 3 snapshots from real network calls (first 30 lines, blank lines preserved) into `tests/integration/snapshots/`:
@@ -121,6 +121,20 @@
 - [X] T024 Verify `tests/unit/test_router.py` unsupported-domain fixture still uses `wordpress.com` (NOT `konghq.com`); no change expected — confirm the router tests still pass
 - [X] T025 Run `make test` and confirm all unit tests pass with no regressions
 - [X] T026 Run `make integration` and confirm all Kong integration tests pass
+
+---
+
+## Remediation: Gaps
+
+<!-- Discovered via /speckit-reconcile-run 2026-06-02 (gap report: "please check all the things"). -->
+
+Reconciliation found **documentation-only drift** — the shipped implementation already passes all gates (158 unit + 31 integration). No new executable tasks were required. The descriptive artifacts were corrected to match the as-built code:
+
+- Two selectors changed during implementation vs. the original plan and were synced into `plan.md`, `research.md`, `data-model.md`, and `contracts/extractor-contract.md`:
+  1. TOC strip is `.toc-wrap`, NOT `[class*=TableOfContents]` (that component wraps the whole body). Covered by `test_clean_html_strips_chrome_blocks`.
+  2. A new step strips all `.agent` "agent mode" spans (literal-Markdown duplicates). Covered by `test_clean_html_strips_agent_affordances`.
+- `spec.md` gained one edge case documenting the "agent mode" duplicate-content quirk.
+- `README.md`, `pyproject.toml` (→ 0.7.0), and `CLAUDE.md` were already synced during `/speckit-implement` (T021–T023).
 
 ---
 
