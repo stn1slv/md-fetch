@@ -29,10 +29,10 @@
 
 **Purpose**: Verify baseline and create file stubs.
 
-- [ ] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
-- [ ] T002 Create `src/mdfetch/providers/boomi.py` with module docstring `"""Boomi blog platform extractor."""`, `from __future__ import annotations`, and imports (`copy`, `BeautifulSoup`, `Tag`, `BaseExtractor`, `UnsupportedContentTypeError`, `register`)
-- [ ] T003 [P] Create `tests/unit/test_boomi_extractor.py` with module docstring, imports, and sample HTML fixtures (article with `div.post-content` > `section.wysiwyg-section` + `div.blog-nav`, plus an `<h1>` in a hero `section`)
-- [ ] T004 [P] Create `tests/integration/test_boomi_integration.py` with module docstring, imports, `SNAPSHOTS_DIR`, and the `BOOMI_TEST_CASES` list (3 reference URLs → snapshot filenames)
+- [X] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
+- [X] T002 Create `src/mdfetch/providers/boomi.py` with module docstring `"""Boomi blog platform extractor."""`, `from __future__ import annotations`, and imports (`copy`, `BeautifulSoup`, `Tag`, `BaseExtractor`, `UnsupportedContentTypeError`, `register`)
+- [X] T003 [P] Create `tests/unit/test_boomi_extractor.py` with module docstring, imports, and sample HTML fixtures (article with `div.post-content` > `section.wysiwyg-section` + `div.blog-nav`, plus an `<h1>` in a hero `section`)
+- [X] T004 [P] Create `tests/integration/test_boomi_integration.py` with module docstring, imports, `SNAPSHOTS_DIR`, and the `BOOMI_TEST_CASES` list (3 reference URLs → snapshot filenames)
 
 ---
 
@@ -42,9 +42,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T005 Add `BoomiExtractor(BaseExtractor)` to `src/mdfetch/providers/boomi.py` with `@register` decorator, `DOMAINS = frozenset({"boomi.com"})`, `MATCH_SUBDOMAINS = False` (default), and a `clean_html` stub raising `NotImplementedError`
-- [ ] T006 Confirm the module self-registers: `mdfetch.router._autodiscover_providers()` `pkgutil`-imports every module in `mdfetch.providers` at import time, so creating `boomi.py` with `@register` is sufficient — NO manual import in `src/mdfetch/providers/__init__.py` is needed (that file is intentionally empty)
-- [ ] T007 [P] Add routing unit test: verify `route("https://boomi.com/blog/some-slug/")` returns a `BoomiExtractor` instance, in `tests/unit/test_boomi_extractor.py`
+- [X] T005 Add `BoomiExtractor(BaseExtractor)` to `src/mdfetch/providers/boomi.py` with `@register` decorator, `DOMAINS = frozenset({"boomi.com"})`, `MATCH_SUBDOMAINS = False` (default), and a `clean_html` stub raising `NotImplementedError`
+- [X] T006 Confirm the module self-registers: `mdfetch.router._autodiscover_providers()` `pkgutil`-imports every module in `mdfetch.providers` at import time, so creating `boomi.py` with `@register` is sufficient — NO manual import in `src/mdfetch/providers/__init__.py` is needed (that file is intentionally empty)
+- [X] T007 [P] Add routing unit test: verify `route("https://boomi.com/blog/some-slug/")` returns a `BoomiExtractor` instance, in `tests/unit/test_boomi_extractor.py`
 
 **Checkpoint**: `make test` passes (stub present); routing is verified.
 
@@ -58,7 +58,7 @@
 
 ### Implementation for User Story 1
 
-- [ ] T008 [US1] Implement `clean_html(self, soup: BeautifulSoup) -> Tag` in `src/mdfetch/providers/boomi.py`:
+- [X] T008 [US1] Implement `clean_html(self, soup: BeautifulSoup) -> Tag` in `src/mdfetch/providers/boomi.py`:
   1. `body = soup.find("div", class_="post-content")`; if not a `Tag` → raise `UnsupportedContentTypeError("URL is not an article page — no article body element found")`
   2. Decompose every `div.blog-nav` descendant of `body` (prev/next chrome)
   3. `title_el = soup.find("h1")`; if a `Tag`, `body.insert(0, copy.copy(title_el))`
@@ -66,14 +66,14 @@
 
 ### Tests for User Story 1
 
-- [ ] T009 [P] [US1] Unit test in `tests/unit/test_boomi_extractor.py`: `clean_html` on the article fixture returns a `Tag` whose first child is the `<h1>` title and that no longer contains `div.blog-nav`
-- [ ] T010 [P] [US1] Unit test in `tests/unit/test_boomi_extractor.py`: end-to-end `extractor.convert_to_markdown(extractor.clean_html(soup))` (inherited convert) yields Markdown starting with `# <title>`, preserving a heading, list, blockquote, and an in-body image, with no 3+ blank-line runs
-- [ ] T011 [US1] Generate the 3 snapshots from real network calls (first 30 lines, blank lines preserved) into `tests/integration/snapshots/`:
+- [X] T009 [P] [US1] Unit test in `tests/unit/test_boomi_extractor.py`: `clean_html` on the article fixture returns a `Tag` whose first child is the `<h1>` title and that no longer contains `div.blog-nav`
+- [X] T010 [P] [US1] Unit test in `tests/unit/test_boomi_extractor.py`: end-to-end `extractor.convert_to_markdown(extractor.clean_html(soup))` (inherited convert) yields Markdown starting with `# <title>`, preserving a heading, list, blockquote, and an in-body image, with no 3+ blank-line runs
+- [X] T011 [US1] Generate the 3 snapshots from real network calls (first 30 lines, blank lines preserved) into `tests/integration/snapshots/`:
   - `boomi-gartner-magic-quadrant-ipaas-2026.md`
   - `boomi-real-time-vs-batch-data-integration.md`
   - `boomi-data-consistency-saas-on-prem.md`
   - Command: `uv run python -c "from mdfetch import extract; c=extract('<url>'); open('tests/integration/snapshots/<name>.md','w',encoding='utf-8').write('\n'.join(c.split('\n')[:30]).rstrip())"`
-- [ ] T012 [US1] Add `@pytest.mark.integration` parametrized snapshot-containment test in `tests/integration/test_boomi_integration.py` (`assert expected in result`) over `BOOMI_TEST_CASES`, with a regenerate-snapshot hint in the assertion message
+- [X] T012 [US1] Add `@pytest.mark.integration` parametrized snapshot-containment test in `tests/integration/test_boomi_integration.py` (`assert expected in result`) over `BOOMI_TEST_CASES`, with a regenerate-snapshot hint in the assertion message
 
 **Checkpoint**: `make test` green; `make integration` passes for the 3 articles; User Story 1 is independently functional (MVP).
 
@@ -87,9 +87,9 @@
 
 ### Tests for User Story 2
 
-- [ ] T013 [P] [US2] Unit test in `tests/unit/test_boomi_extractor.py`: HTML lacking `div.post-content` → `clean_html` raises `UnsupportedContentTypeError` (note: the `/blog/` index has a `wysiwyg-section` but no `post-content`, so include a fixture with `wysiwyg-section` only to lock in this discriminator)
-- [ ] T014 [P] [US2] Unit test in `tests/unit/test_boomi_extractor.py`: `div.post-content` present but empty → `extract` path raises `EmptyContentError` (via inherited `convert_to_markdown`)
-- [ ] T015 [US2] Add `@pytest.mark.integration` test in `tests/integration/test_boomi_integration.py`: `extract("https://boomi.com/blog/", retries=1, retry_delay=0.0)` raises `UnsupportedContentTypeError`
+- [X] T013 [P] [US2] Unit test in `tests/unit/test_boomi_extractor.py`: HTML lacking `div.post-content` → `clean_html` raises `UnsupportedContentTypeError` (note: the `/blog/` index has a `wysiwyg-section` but no `post-content`, so include a fixture with `wysiwyg-section` only to lock in this discriminator)
+- [X] T014 [P] [US2] Unit test in `tests/unit/test_boomi_extractor.py`: `div.post-content` present but empty → `extract` path raises `EmptyContentError` (via inherited `convert_to_markdown`)
+- [X] T015 [US2] Add `@pytest.mark.integration` test in `tests/integration/test_boomi_integration.py`: `extract("https://boomi.com/blog/", retries=1, retry_delay=0.0)` raises `UnsupportedContentTypeError`
 
 **Checkpoint**: User Stories 1 AND 2 both verified independently.
 
@@ -99,12 +99,12 @@
 
 **Purpose**: Final quality gate across all new files.
 
-- [ ] T016 [P] Run `uv run mypy src/` and fix any type errors in `src/mdfetch/providers/boomi.py`
-- [ ] T017 [P] Run `make format` then `make lint`; fix any ruff violations in new files
-- [ ] T018 [P] Add a `Boomi | boomi.com` row to the Supported platforms table in `README.md` (and a usage example line if appropriate)
-- [ ] T019 Verify `tests/unit/test_router.py` unsupported-domain fixture still uses `wordpress.com` (NOT `boomi.com`); no change expected — confirm the router tests still pass
-- [ ] T020 Run `make test` and confirm all unit tests pass with no regressions
-- [ ] T021 Run `make integration` and confirm all Boomi integration tests pass
+- [X] T016 [P] Run `uv run mypy src/` and fix any type errors in `src/mdfetch/providers/boomi.py`
+- [X] T017 [P] Run `make format` then `make lint`; fix any ruff violations in new files
+- [X] T018 [P] Add a `Boomi | boomi.com` row to the Supported platforms table in `README.md` (and a usage example line if appropriate)
+- [X] T019 Verify `tests/unit/test_router.py` unsupported-domain fixture still uses `wordpress.com` (NOT `boomi.com`); no change expected — confirm the router tests still pass
+- [X] T020 Run `make test` and confirm all unit tests pass with no regressions
+- [X] T021 Run `make integration` and confirm all Boomi integration tests pass
 
 ---
 
