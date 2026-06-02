@@ -21,7 +21,6 @@ from mdfetch.router import supported_domains, supported_platforms
 @click.option(
     "--list-platforms",
     is_flag=True,
-    is_eager=True,
     default=False,
     help="List all supported platforms and exit.",
 )

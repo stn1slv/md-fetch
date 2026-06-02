@@ -84,7 +84,7 @@ router.supported_platforms() -> list[tuple[str, bool]]:
   )                                  # sorted by domain (tuple natural order)
 
 cli.main:
-  add option: --list-platforms (is_flag=True, is_eager=True)
+  add option: --list-platforms (is_flag=True)
   make `url` argument required=False
   body:
     if list_platforms:

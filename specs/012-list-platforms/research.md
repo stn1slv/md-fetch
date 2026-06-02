@@ -3,15 +3,16 @@
 ## R1 — How to expose the operation without breaking `md-fetch <URL>`
 
 **Decision**: Make the `url` Click argument `required=False` and add a `--list-platforms`
-boolean flag (`is_flag=True`, `is_eager=True`). When the flag is present, print the
+boolean flag (`is_flag=True`). When the flag is present, print the
 list and `return` (exit 0) before any URL handling. When the flag is absent and
 `url` is `None`, emit a usage error to stderr and exit with code 2 (Click's
 conventional usage-error code), mirroring what Click does today for a missing
 required argument.
 
 **Rationale**: Click does not natively support "required unless another flag is
-set", so the requiredness is enforced manually. `is_eager` ensures the flag is
-parsed regardless of argument position. This preserves the existing
+set", so the requiredness is enforced manually. The flag's value is read in the
+command body, which checks `list_platforms` before `url`, so the list takes
+precedence regardless of argument position. This preserves the existing
 `md-fetch <URL>` contract (FR-001a) with the smallest possible change.
 
 **Alternatives considered**:
