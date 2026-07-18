@@ -134,6 +134,8 @@ class BaseExtractor(ABC):
                 **self._markdownify_kwargs(),
             },
         )
+        md = md.replace("\xa0", " ")
+        md = "\n".join(line.rstrip() for line in md.split("\n"))
         md = md.strip()
         md = re.sub(r"\n{3,}", "\n\n", md)
 

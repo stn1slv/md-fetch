@@ -189,6 +189,21 @@ def test_convert_to_markdown_preserves_links(extractor: TheNewStackExtractor) ->
     assert "[link text](https://example.com)" in md
 
 
+def test_convert_to_markdown_normalizes_spaces(extractor: TheNewStackExtractor) -> None:
+    html = """
+    <html><body>
+      <div id="tns-post-body-content">
+        <p>Paragraph with non-breaking&nbsp;space and trailing spaces.   </p>
+      </div>
+    </body></html>
+    """
+    soup = BeautifulSoup(html, "lxml")
+    tag = extractor.clean_html(soup)
+    md = extractor.convert_to_markdown(tag)
+    assert "non-breaking space" in md
+    assert md.endswith("trailing spaces.")
+
+
 # ---------------------------------------------------------------------------
 # US2 — Non-article pages (T014, T015)
 # ---------------------------------------------------------------------------
