@@ -2,7 +2,7 @@
 
 The right API management solution should combine traditional API management capabilities with an event-driven architecture.
 
-WSO2 sponsored this post.
+WSO2 sponsored this post.
 
 [![](https://cdn.thenewstack.io/media/2021/03/8cc7ce46-1597916168571.jpeg)
 

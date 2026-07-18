@@ -6,6 +6,13 @@ JSON Schema is essential for grounding unpredictable AI outputs. Discover why th
 
 There’s a good chance you’re already using [JSON Schema](https://json-schema.org), but you might not know it.
 
+window.adthrive = window.adthrive || { cmd: [] };
+adthrive.cmd.push(function() {
+googletag.cmd.push(function() {
+googletag.display("div-gpt-ad-native-sidebar-1-mobile");
+});
+});
+
 It quietly underpins the validation logic in your API gateway, sits inside the pipeline your team uses to publish microservices, and lives inside the IDE plugin your developers installed without giving it a second thought. Most people encounter it as a necessary detail to get right before moving on to the ‘real’ work. But while you might have come across it as infrastructure plumbing, its core purpose is validating structured data.
 
 ## A long and winding road
@@ -21,9 +28,3 @@ What’s more, adoption continues to grow because the problem JSON Schema solves
 ## What validation actually does
 
 To understand why JSON Schema matters now more than ever, it helps to be precise about what validation means in practice. In [an earlier article in this series](https://thenewstack.io/map-your-api-landscape-to-prevent-agentic-ai-disaster/), we talked about the importance of ubiquitous language.
-
-When you define a JSON Schema for, say, a postal address, you’re making a statement that both machines and humans can read: this is what we mean when we say “address.” Is it an address for the US or somewhere else? Does it require a zip code in a specific format? Can it have a second line? A well-constructed schema answers all of those questions and more, encoding the collective understanding of a team or even an entire organization into something that a gateway, a pipeline, or an IDE can enforce automatically.
-
-“It’s not just for systems,” Lane explains. “The validation is mostly for people. If you don’t have people aligned on what those standards are — what an address is, what PII means, what an invoice looks like — and you haven’t agreed on that as a JSON Schema in a registry, it just doesn’t have the impact it could.”
-
-> “If you don’t have people aligned on what those standards are… and you haven’t agreed on that as a JSON Schema in a registry, it just doesn’t have the impact it could.”
