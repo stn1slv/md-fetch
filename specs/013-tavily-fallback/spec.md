@@ -20,8 +20,8 @@ As a user, I want to extract content from URLs that don't belong to any supporte
 
 **Acceptance Scenarios**:
 
-1. **Given** `TAVILY_API_KEY` is set in the environment, **When** content extraction is requested for an unsupported URL, **Then** it fetches content via Tavily and returns it as Markdown.
-2. **Given** `TAVILY_API_KEY` is not set, **When** content extraction is requested for an unsupported URL, **Then** it raises an error indicating the platform is unsupported.
+1. **Given** `TAVILY_API_KEY` is set in the environment AND the fallback CLI flag is provided, **When** content extraction is requested for an unsupported URL, **Then** it fetches content via Tavily and returns it as Markdown.
+2. **Given** the fallback CLI flag is not provided (regardless of `TAVILY_API_KEY`), **When** content extraction is requested for an unsupported URL, **Then** it raises an error indicating the platform is unsupported.
 
 ---
 
@@ -35,8 +35,8 @@ As a user, I want the system to fall back to Tavily if the dedicated provider fo
 
 **Acceptance Scenarios**:
 
-1. **Given** `TAVILY_API_KEY` is set, **When** extraction by a supported provider fails, **Then** it fetches content via Tavily and returns it as Markdown.
-2. **Given** `TAVILY_API_KEY` is not set, **When** extraction by a supported provider fails, **Then** the original provider's error is propagated.
+1. **Given** `TAVILY_API_KEY` is set AND the fallback CLI flag is provided, **When** extraction by a supported provider fails, **Then** it fetches content via Tavily and returns it as Markdown.
+2. **Given** the fallback CLI flag is not provided, **When** extraction by a supported provider fails, **Then** the original provider's error is propagated.
 
 ### Edge Cases
 
@@ -51,9 +51,9 @@ As a user, I want the system to fall back to Tavily if the dedicated provider fo
 
 - **FR-001**: The system MUST implement a fallback mechanism that is triggered when a URL is not matched to any registered provider OR when a registered provider fails during extraction.
 - **FR-002**: The fallback mechanism MUST utilize the `tavily-python` integration to extract article content.
-- **FR-003**: The fallback mechanism MUST be enabled only if the `TAVILY_API_KEY` environment variable is present and non-empty.
-- **FR-004**: If `TAVILY_API_KEY` is missing and a URL is not matched to a provider, the system MUST behave as it did previously (e.g., raise an error indicating the platform is unsupported).
-- **FR-005**: If `TAVILY_API_KEY` is missing and a registered provider fails, the system MUST propagate the provider's original error.
+- **FR-003**: The fallback mechanism MUST be enabled ONLY if explicitly requested via a CLI flag AND the `TAVILY_API_KEY` environment variable is present and non-empty.
+- **FR-004**: If the fallback CLI flag is not provided and a URL is not matched to a provider, the system MUST behave as it did previously (e.g., raise an error indicating the platform is unsupported).
+- **FR-005**: If the fallback CLI flag is not provided and a registered provider fails, the system MUST propagate the provider's original error.
 - **FR-006**: When using the Tavily fallback, the system MUST extract the main content and return it as clean Markdown.
 - **FR-007**: The system MUST handle Tavily API errors gracefully, wrapping them in appropriate domain-specific errors.
 
@@ -65,9 +65,9 @@ As a user, I want the system to fall back to Tavily if the dedicated provider fo
 
 ### Measurable Outcomes
 
-- **SC-001**: An unsupported platform URL successfully returns Markdown content when `TAVILY_API_KEY` is present.
-- **SC-002**: A supported platform URL where the provider is intentionally forced to fail successfully returns Markdown content via Tavily when `TAVILY_API_KEY` is present.
-- **SC-003**: When `TAVILY_API_KEY` is missing, the system correctly raises exceptions for unsupported platforms and provider failures without attempting to call the fallback mechanism.
+- **SC-001**: An unsupported platform URL successfully returns Markdown content when the fallback CLI flag is provided and `TAVILY_API_KEY` is present.
+- **SC-002**: A supported platform URL where the provider is intentionally forced to fail successfully returns Markdown content via Tavily when the fallback CLI flag is provided and `TAVILY_API_KEY` is present.
+- **SC-003**: When the fallback CLI flag is missing, the system correctly raises exceptions for unsupported platforms and provider failures without attempting to call the fallback mechanism.
 - **SC-004**: The system uses the `tavily-python` library for the fallback extraction process.
 
 ## Clarifications
