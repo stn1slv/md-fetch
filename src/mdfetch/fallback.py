@@ -11,7 +11,8 @@ def tavily_extract(url: str, timeout: float = 30.0) -> str:
         from tavily import TavilyClient  # type: ignore[import-untyped]
     except ImportError as e:
         raise MissingAPIKeyError(
-            f"tavily-python package is not installed. Please install it to use the fallback feature. {e}"
+            "tavily-python package is not installed. Please install it "
+            f"to use the fallback feature. {e}"
         ) from e
 
     try:
