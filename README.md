@@ -29,6 +29,10 @@ md-fetch https://medium.com/example/article
 # Fetch and save Markdown to a file
 md-fetch https://dev.to/example/article --output article.md
 
+# Fallback to Tavily API if the primary extractor fails (requires TAVILY_API_KEY)
+export TAVILY_API_KEY="tvly-..."
+md-fetch https://example.com/unsupported-blog --tavily-fallback
+
 # List all supported platforms (no URL or network needed)
 md-fetch --list-platforms
 ```
@@ -46,6 +50,9 @@ markdown = extract("https://thenewstack.io/article-slug")
 markdown = extract("https://dzone.com/articles/article-slug")
 markdown = extract("https://boomi.com/blog/article-slug")
 markdown = extract("https://konghq.com/blog/category/article-slug")
+
+# Fallback to Tavily API if the primary extractor fails (requires TAVILY_API_KEY env var)
+markdown = extract("https://example.com/unsupported-blog", tavily_fallback=True)
 print(markdown)
 ```
 
@@ -60,6 +67,7 @@ from mdfetch import (
     FetchError,
     HTTPStatusError,
     EmptyContentError,
+    MissingAPIKeyError,
 )
 
 url = "https://medium.com/some-publication/article-slug-abc123"
@@ -78,6 +86,8 @@ except FetchError as e:
     print(f"Network error: {e.message}")
 except EmptyContentError as e:
     print(f"No content: {e.message}")
+except MissingAPIKeyError as e:
+    print(f"Missing API Key: {e.message}")
 ```
 
 ## Supported platforms
