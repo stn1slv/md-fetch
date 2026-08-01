@@ -12,7 +12,7 @@ from mdfetch.fallback import tavily_extract
 
 
 class TestTavilyExtract:
-    @patch("mdfetch.fallback.TavilyClient")
+    @patch("tavily.TavilyClient")
     def test_basic_depth_success(self, mock_tavily_client: MagicMock) -> None:
         mock_instance = mock_tavily_client.return_value
         mock_instance.extract.return_value = {"results": [{"raw_content": "# Hello"}]}
@@ -24,7 +24,7 @@ class TestTavilyExtract:
             urls=["https://example.com"], extract_depth="basic"
         )
 
-    @patch("mdfetch.fallback.TavilyClient")
+    @patch("tavily.TavilyClient")
     def test_fallback_to_advanced_on_empty(self, mock_tavily_client: MagicMock) -> None:
         mock_instance = mock_tavily_client.return_value
         # First call fails (empty), second call succeeds
@@ -41,7 +41,7 @@ class TestTavilyExtract:
             urls=["https://example.com"], extract_depth="advanced"
         )
 
-    @patch("mdfetch.fallback.TavilyClient")
+    @patch("tavily.TavilyClient")
     def test_fallback_to_advanced_on_exception(self, mock_tavily_client: MagicMock) -> None:
         mock_instance = mock_tavily_client.return_value
         # First call raises exception, second call succeeds
@@ -55,7 +55,7 @@ class TestTavilyExtract:
         assert result == "# Advanced"
         assert mock_instance.extract.call_count == 2
 
-    @patch("mdfetch.fallback.TavilyClient")
+    @patch("tavily.TavilyClient")
     def test_advanced_failure_raises_fetch_error(self, mock_tavily_client: MagicMock) -> None:
         mock_instance = mock_tavily_client.return_value
         mock_instance.extract.side_effect = Exception("API Error")
