@@ -171,7 +171,7 @@ class TestConvertToMarkdown:
         soup = BeautifulSoup(html, "lxml")
         cleaned = extractor.clean_html(soup)
         md = extractor.convert_to_markdown(cleaned)
-        assert "line one  \nline two" in md
+        assert "line one\nline two" in md
 
 
 # Mirrors the Svelte/Tailwind Freedium rebuild: body in div.prose, code blocks

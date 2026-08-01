@@ -35,7 +35,9 @@ def test_retries_flag(mocker: pytest_mock.MockerFixture, runner: CliRunner) -> N
     mock_extract = mocker.patch("mdfetch.cli.extract", return_value="# Test")
     result = runner.invoke(main, ["https://dev.to/test", "--retries", "5", "--retry-delay", "0.5"])
     assert result.exit_code == 0
-    mock_extract.assert_called_once_with("https://dev.to/test", retries=5, retry_delay=0.5)
+    mock_extract.assert_called_once_with(
+        "https://dev.to/test", retries=5, retry_delay=0.5, tavily_fallback=False
+    )
 
 
 def test_unsupported_domain_error_message(runner: CliRunner) -> None:

@@ -28,6 +28,7 @@ dependencies = [
     "lxml>=5.0",
     "markdownify>=0.13",
     "click>=8.1",
+    "tavily-python>=0.7.27",
 ]
 
 [project.scripts]

@@ -51,6 +51,12 @@ from mdfetch.router import supported_domains, supported_platforms
     default=False,
     help="Overwrite the output file if it already exists",
 )
+@click.option(
+    "--tavily-fallback",
+    is_flag=True,
+    default=False,
+    help="Use tavily-python as a fallback for unsupported platforms or extraction failures",
+)
 def main(
     url: str | None,
     list_platforms: bool,
@@ -58,6 +64,7 @@ def main(
     retries: int,
     retry_delay: float,
     force: bool,
+    tavily_fallback: bool,
 ) -> None:
     """Fetch and extract Markdown from the given URL."""
     if list_platforms:
@@ -78,7 +85,12 @@ def main(
         )
         sys.exit(1)
     try:
-        content = extract(url, retries=retries, retry_delay=retry_delay)
+        content = extract(
+            url,
+            retries=retries,
+            retry_delay=retry_delay,
+            tavily_fallback=tavily_fallback,
+        )
 
         if output:
             with open(output, "w", encoding="utf-8") as f:
