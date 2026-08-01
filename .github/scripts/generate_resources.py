@@ -1,7 +1,6 @@
 import sys
 import json
 import urllib.request
-import re
 
 def generate():
     for line in sys.stdin:
@@ -34,21 +33,22 @@ def generate():
         url = f"https://pypi.org/pypi/{pkg}/{ver}/json"
         try:
             req = urllib.request.Request(url)
-            with urllib.request.urlopen(req) as resp:
+            with urllib.request.urlopen(req, timeout=15) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
         except Exception as e:
-            print(f"# ERROR fetching {pkg}: {e}", file=sys.stderr)
-            continue
+            print(f"ERROR: Failed fetching {pkg}: {e}", file=sys.stderr)
+            sys.exit(1)
         
         urls = data.get("urls", [])
         if not urls:
-            print(f"# ERROR {pkg} has no urls", file=sys.stderr)
-            continue
+            print(f"ERROR: {pkg} has no urls on PyPI", file=sys.stderr)
+            sys.exit(1)
             
-        # Prefer sdist (source tarball), fallback to first available wheel
+        # Require sdist (source tarball) to ensure architecture independence
         sdist = next((u for u in urls if u["packagetype"] == "sdist"), None)
         if not sdist:
-            sdist = urls[0]
+            print(f"ERROR: {pkg} has no sdist (source tarball) available on PyPI", file=sys.stderr)
+            sys.exit(1)
             
         print(f'  resource "{pkg}" do')
         print(f'    url "{sdist["url"]}"')
