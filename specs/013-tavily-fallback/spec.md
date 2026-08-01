@@ -45,6 +45,7 @@ As a user, I want the system to fall back to Tavily if the dedicated provider fo
 - What happens if Tavily itself returns an error or empty content? (System should raise an appropriate error indicating content could not be extracted).
 - Does the fallback mode respect the same timeout settings as primary providers? (It should respect the global or configured timeout).
 - If the original provider raises a timeout error, should it still fall back to Tavily? (Yes, any extraction failure should trigger the fallback).
+- What happens if Tavily extraction fails with `extract_depth="basic"`? (The system automatically retries the extraction using `extract_depth="advanced"` before finally failing).
 
 ## Requirements *(mandatory)*
 
@@ -57,7 +58,8 @@ As a user, I want the system to fall back to Tavily if the dedicated provider fo
 - **FR-005**: If the `--tavily-fallback` CLI flag is not provided and a URL is not matched to a provider, the system MUST behave as it did previously (e.g., raise an error indicating the platform is unsupported).
 - **FR-006**: If the `--tavily-fallback` CLI flag is not provided and a registered provider fails, the system MUST propagate the provider's original error.
 - **FR-007**: When using the Tavily fallback, the system MUST extract the main content and return it as clean Markdown.
-- **FR-008**: The system MUST handle Tavily API errors gracefully, wrapping them in appropriate domain-specific errors.
+- **FR-008**: The system MUST first attempt extraction using `extract_depth="basic"`. If this attempt is unsuccessful (returns an error or empty content), the system MUST automatically retry the extraction using `extract_depth="advanced"`.
+- **FR-009**: The system MUST handle Tavily API errors gracefully, wrapping them in appropriate domain-specific errors only after all depth retry attempts are exhausted.
 
 ### Key Entities
 
@@ -78,6 +80,7 @@ As a user, I want the system to fall back to Tavily if the dedicated provider fo
 
 - Q: If the fallback CLI flag is provided but the `TAVILY_API_KEY` environment variable is missing, how should the system behave? → A: Fail immediately with a configuration error (e.g., `MissingAPIKeyError`)
 - Q: What should be the exact name of the new CLI flag to enable the Tavily fallback? → A: `--tavily-fallback`
+- Q: What extraction depth should be used for Tavily? → A: Start with `extract_depth="basic"` and if unsuccessful, switch to `extract_depth="advanced"`
 
 ## Assumptions
 
