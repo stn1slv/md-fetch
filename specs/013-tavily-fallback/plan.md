@@ -99,10 +99,10 @@ extract(url, tavily_fallback=False):
   except Exception as e:
       if not tavily_fallback:
           raise e
-      return tavily_extract(url)
+      return tavily_extract(url, timeout=30.0)
 
-tavily_extract(url):
-  client = TavilyClient()
+tavily_extract(url, timeout):
+  client = TavilyClient(timeout=timeout)
   try:
       response = client.extract(urls=[url], extract_depth="basic")
       return parse_tavily_response(response)

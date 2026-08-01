@@ -40,12 +40,12 @@
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implement `tavily_extract(url: str) -> str` in `src/mdfetch/fallback.py`:
-  1. Initialize `TavilyClient()`
+- [ ] T009 [US1] Implement `tavily_extract(url: str, timeout: float = None) -> str` in `src/mdfetch/fallback.py`:
+  1. Initialize `TavilyClient(timeout=timeout)` using a timeout mapped from the library's global retries/delay.
   2. Attempt `client.extract(urls=[url], extract_depth="basic")`
   3. If exception or empty `raw_content`, attempt `client.extract(urls=[url], extract_depth="advanced")`
   4. Return `raw_content` or raise wrapped `FetchError`/`EmptyContentError`
-- [ ] T010 [US1] Update `extract()` in `src/mdfetch/__init__.py` to catch `UnsupportedPlatformError` from `route(url)` and call `tavily_extract(url)` if `tavily_fallback` is True.
+- [ ] T010 [US1] Update `extract()` in `src/mdfetch/__init__.py` to catch `UnsupportedPlatformError` from `route(url)` and call `tavily_extract(url, timeout=...)` if `tavily_fallback` is True, passing down the configured timeout.
 
 ### Tests for User Story 1
 
@@ -65,7 +65,7 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Update `extract()` in `src/mdfetch/__init__.py` to catch all exceptions (except `MissingAPIKeyError`, `InvalidURLError`) and call `tavily_extract(url)` if `tavily_fallback` is True. If fallback also fails, chain the exception.
+- [ ] T014 [US2] Update `extract()` in `src/mdfetch/__init__.py` to catch all exceptions (except `MissingAPIKeyError`, `InvalidURLError`) and call `tavily_extract(url, timeout=...)` if `tavily_fallback` is True, passing down the configured timeout. If fallback also fails, chain the exception.
 
 ### Tests for User Story 2
 
