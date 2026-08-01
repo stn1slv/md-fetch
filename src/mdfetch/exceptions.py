@@ -38,3 +38,7 @@ class HTTPStatusError(FetchError):
 
 class EmptyContentError(MdfetchError):
     """Raised when the article body yields no extractable text content."""
+
+
+class MissingAPIKeyError(MdfetchError):
+    """Raised when a feature requires an API key but it is missing."""

@@ -10,11 +10,11 @@
 
 **Purpose**: Verify baseline and create file stubs.
 
-- [ ] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
-- [ ] T002 Add `tavily-python` dependency via `uv add tavily-python` in `pyproject.toml`
-- [ ] T003 Create `src/mdfetch/fallback.py` with module docstring
-- [ ] T004 [P] Create `tests/unit/test_fallback.py` with module docstring
-- [ ] T005 [P] Create `tests/integration/test_fallback_integration.py` with module docstring
+- [x] T001 Run `make test` and confirm all existing unit tests pass (green baseline)
+- [x] T002 Add `tavily-python` dependency via `uv add tavily-python` in `pyproject.toml`
+- [x] T003 Create `src/mdfetch/fallback.py` with module docstring
+- [x] T004 [P] Create `tests/unit/test_fallback.py` with module docstring
+- [x] T005 [P] Create `tests/integration/test_fallback_integration.py` with module docstring
 
 ---
 
@@ -24,9 +24,9 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T006 Add `MissingAPIKeyError` class to `src/mdfetch/exceptions.py`
-- [ ] T007 Add `--tavily-fallback` boolean option to CLI in `src/mdfetch/cli.py`
-- [ ] T008 Add `tavily_fallback: bool = False` argument to `extract()` in `src/mdfetch/__init__.py` and raise `MissingAPIKeyError` if True and `TAVILY_API_KEY` is missing
+- [x] T006 Add `MissingAPIKeyError` class to `src/mdfetch/exceptions.py`
+- [x] T007 Add `--tavily-fallback` boolean option to CLI in `src/mdfetch/cli.py`
+- [x] T008 Add `tavily_fallback: bool = False` argument to `extract()` in `src/mdfetch/__init__.py` and raise `MissingAPIKeyError` if True and `TAVILY_API_KEY` is missing
 
 **Checkpoint**: `make test` passes; CLI recognizes `--tavily-fallback`.
 
@@ -45,13 +45,13 @@
   2. Attempt `client.extract(urls=[url], extract_depth="basic")`
   3. If exception or empty `raw_content`, attempt `client.extract(urls=[url], extract_depth="advanced")`
   4. Return `raw_content` or raise wrapped `FetchError`/`EmptyContentError`
-- [ ] T010 [US1] Update `extract()` in `src/mdfetch/__init__.py` to catch `UnsupportedPlatformError` from `route(url)` and call `tavily_extract(url, timeout=...)` if `tavily_fallback` is True, passing down the configured timeout.
+- [x] T010 [US1] Update `extract()` in `src/mdfetch/__init__.py` to catch `UnsupportedPlatformError` from `route(url)` and call `tavily_extract(url, timeout=...)` if `tavily_fallback` is True, passing down the configured timeout.
 
 ### Tests for User Story 1
 
-- [ ] T011 [P] [US1] Add unit tests for `tavily_extract` basic/advanced depth switching using mocked `TavilyClient` in `tests/unit/test_fallback.py`
-- [ ] T012 [P] [US1] Add unit tests for `extract()` routing `UnsupportedPlatformError` to fallback in `tests/unit/test_fallback.py`
-- [ ] T013 [US1] Add integration test for fallback on an unsupported blog URL in `tests/integration/test_fallback_integration.py` (requires `TAVILY_API_KEY`)
+- [x] T011 [P] [US1] Add unit tests for `tavily_extract` basic/advanced depth switching using mocked `TavilyClient` in `tests/unit/test_fallback.py`
+- [x] T012 [P] [US1] Add unit tests for `extract()` routing `UnsupportedPlatformError` to fallback in `tests/unit/test_fallback.py`
+- [x] T013 [US1] Add integration test for fallback on an unsupported blog URL in `tests/integration/test_fallback_integration.py` (requires `TAVILY_API_KEY`)
 
 **Checkpoint**: `make test` green; `make integration` passes; User Story 1 is independently functional.
 
@@ -65,12 +65,12 @@
 
 ### Implementation for User Story 2
 
-- [ ] T014 [US2] Update `extract()` in `src/mdfetch/__init__.py` to catch all exceptions (except `MissingAPIKeyError`, `InvalidURLError`) and call `tavily_extract(url, timeout=...)` if `tavily_fallback` is True, passing down the configured timeout. If fallback also fails, chain the exception.
+- [x] T014 [US2] Update `extract()` in `src/mdfetch/__init__.py` to catch all exceptions (except `MissingAPIKeyError`, `InvalidURLError`) and call `tavily_extract(url, timeout=...)` if `tavily_fallback` is True, passing down the configured timeout. If fallback also fails, chain the exception.
 
 ### Tests for User Story 2
 
-- [ ] T015 [P] [US2] Add unit tests verifying `extract()` intercepts provider exceptions (e.g. `FetchError`) and falls back in `tests/unit/test_fallback.py`
-- [ ] T016 [US2] Add integration test for a supported platform (e.g., Medium) but mock the initial extraction to fail, ensuring it succeeds via Tavily in `tests/integration/test_fallback_integration.py`
+- [x] T015 [P] [US2] Add unit tests verifying `extract()` intercepts provider exceptions (e.g. `FetchError`) and falls back in `tests/unit/test_fallback.py`
+- [x] T016 [US2] Add integration test for a supported platform (e.g., Medium) but mock the initial extraction to fail, ensuring it succeeds via Tavily in `tests/integration/test_fallback_integration.py`
 
 **Checkpoint**: User Stories 1 AND 2 both work independently.
 
@@ -80,10 +80,10 @@
 
 **Purpose**: Final quality gate across all new files.
 
-- [ ] T017 [P] Run `uv run mypy src/mdfetch/fallback.py src/mdfetch/cli.py src/mdfetch/__init__.py` and fix any type errors
-- [ ] T018 [P] Run `make lint` and fix any ruff violations in new files
-- [ ] T019 Run `make test` and confirm all unit tests pass with no regressions
-- [ ] T020 Run `make integration` and confirm all integration tests pass
+- [x] T017 [P] Run `uv run mypy src/mdfetch/fallback.py src/mdfetch/cli.py src/mdfetch/__init__.py` and fix any type errors
+- [x] T018 [P] Run `make lint` and fix any ruff violations in new files
+- [x] T019 Run `make test` and confirm all unit tests pass with no regressions
+- [x] T020 Run `make integration` and confirm all integration tests pass
 
 ---
 
