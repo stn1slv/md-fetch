@@ -2,18 +2,13 @@
 
 from __future__ import annotations
 
+from tavily import TavilyClient  # type: ignore[import-untyped]
+
 from mdfetch.exceptions import EmptyContentError, FetchError, MissingAPIKeyError
 
 
 def tavily_extract(url: str, timeout: float = 30.0) -> str:
     """Extract content using the Tavily API fallback."""
-    try:
-        from tavily import TavilyClient  # type: ignore[import-untyped]
-    except ImportError as e:
-        raise MissingAPIKeyError(
-            f"tavily-python package is not installed. Please install it to use the fallback feature. {e}"
-        ) from e
-
     try:
         client = TavilyClient()
     except Exception as e:
