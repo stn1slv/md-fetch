@@ -104,7 +104,11 @@ jobs:
 
       - name: Generate PyPI resource blocks
         run: |
-          uv export --no-dev --no-hashes --format requirements-txt | python3 .github/scripts/generate_resources.py > /tmp/resources.rb
+          # --python must match `depends_on "python@X.Y"` in Formula/md-fetch.rb,
+          # so environment markers are evaluated for the Python Homebrew uses.
+          uv export --no-dev --no-hashes --format requirements-txt \
+            | uv run --no-project --with packaging python .github/scripts/generate_resources.py --python 3.13 \
+            > /tmp/resources.rb
 
       - name: Clone homebrew-tap and update formula
         env:
