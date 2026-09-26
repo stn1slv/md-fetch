@@ -46,13 +46,15 @@ class MediumExtractor(BaseExtractor):
         ):
             button.decompose()
 
-        for element in article.find_all(attrs={"data-testid": "post-sidebar"}):
+        for element in article.find_all(None, attrs={"data-testid": "post-sidebar"}):
             element.decompose()
 
-        for element in article.find_all(attrs={"data-testid": re.compile(r"share", re.IGNORECASE)}):
+        for element in article.find_all(
+            None, attrs={"data-testid": re.compile(r"share", re.IGNORECASE)}
+        ):
             element.decompose()
 
-        for element in article.find_all(attrs={"data-testid": "post-footer"}):
+        for element in article.find_all(None, attrs={"data-testid": "post-footer"}):
             element.decompose()
 
         for section in article.find_all("section"):

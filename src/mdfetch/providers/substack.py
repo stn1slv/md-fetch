@@ -40,7 +40,7 @@ class SubstackExtractor(BaseExtractor):
         self._replace_embeds_with_links(
             [
                 e
-                for e in body.find_all(attrs={"data-component-name": True})
+                for e in body.find_all(None, attrs={"data-component-name": True})
                 if e.get("data-component-name") not in _safe_components
             ],
             soup,
