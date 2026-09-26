@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from mdfetch import extract
-from mdfetch.exceptions import FetchError, MissingAPIKeyError
+from mdfetch.exceptions import EmptyContentError, FetchError, MissingAPIKeyError
 from mdfetch.fallback import tavily_extract
 
 
@@ -21,7 +21,7 @@ class TestTavilyExtract:
 
         assert result == "# Hello"
         mock_instance.extract.assert_called_once_with(
-            urls=["https://example.com"], extract_depth="basic"
+            urls=["https://example.com"], extract_depth="basic", timeout=30.0
         )
 
     @patch("tavily.TavilyClient")
@@ -38,7 +38,7 @@ class TestTavilyExtract:
         assert result == "# Advanced"
         assert mock_instance.extract.call_count == 2
         mock_instance.extract.assert_any_call(
-            urls=["https://example.com"], extract_depth="advanced"
+            urls=["https://example.com"], extract_depth="advanced", timeout=30.0
         )
 
     @patch("tavily.TavilyClient")
@@ -62,6 +62,30 @@ class TestTavilyExtract:
 
         with pytest.raises(FetchError):
             tavily_extract("https://example.com")
+
+    @patch("tavily.TavilyClient")
+    def test_empty_advanced_after_basic_error_raises_empty_content(
+        self, mock_tavily_client: MagicMock
+    ) -> None:
+        mock_instance = mock_tavily_client.return_value
+        mock_instance.extract.side_effect = [
+            Exception("API Error"),
+            {"results": []},
+        ]
+
+        with pytest.raises(EmptyContentError):
+            tavily_extract("https://example.com")
+
+    @patch("tavily.TavilyClient")
+    def test_timeout_is_passed_to_tavily(self, mock_tavily_client: MagicMock) -> None:
+        mock_instance = mock_tavily_client.return_value
+        mock_instance.extract.return_value = {"results": [{"raw_content": "# Hello"}]}
+
+        tavily_extract("https://example.com", timeout=5.0)
+
+        mock_instance.extract.assert_called_once_with(
+            urls=["https://example.com"], extract_depth="basic", timeout=5.0
+        )
 
 
 class TestExtractRouting:
