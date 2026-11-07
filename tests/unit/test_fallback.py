@@ -110,7 +110,7 @@ class TestExtractRouting:
         with pytest.raises(MissingAPIKeyError):
             extract("https://example.com", tavily_fallback=True)
 
-    @patch("mdfetch.router.route")
+    @patch("mdfetch.route")
     @patch("mdfetch.tavily_extract")
     @patch.dict("os.environ", {"TAVILY_API_KEY": "fake-key"})
     def test_provider_failure_routes_to_fallback(
@@ -126,6 +126,7 @@ class TestExtractRouting:
 
         assert result == "# Fallback content"
         mock_tavily.assert_called_once_with("https://medium.com/test", timeout=30.0)
+        mock_provider.extract.assert_called_once()
 
     @patch("mdfetch.route")
     @patch("mdfetch.tavily_extract")
