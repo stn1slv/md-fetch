@@ -7,7 +7,12 @@ from unittest.mock import call, patch
 import httpx
 import pytest
 
-from mdfetch.exceptions import FetchError, HTTPStatusError, UnsupportedContentTypeError
+from mdfetch.exceptions import (
+    AccessBlockedError,
+    FetchError,
+    HTTPStatusError,
+    UnsupportedContentTypeError,
+)
 from mdfetch.providers.medium import MediumExtractor
 from tests.conftest import make_stream_mock
 
@@ -100,6 +105,43 @@ class TestFetchErrors:
 
         assert mock_sleep.call_count == 2  # 3 attempts → 2 sleeps
         assert mock_sleep.call_args_list == [call(1.0), call(1.0)]  # fixed delay, not exponential
+
+    def test_cloudflare_challenge_raises_access_blocked_error(
+        self, extractor: MediumExtractor
+    ) -> None:
+        mock = make_stream_mock(
+            status_code=403, is_success=False, headers={"cf-mitigated": "challenge"}
+        )
+        with patch("httpx.Client", return_value=mock):
+            with pytest.raises(AccessBlockedError, match="bot protection") as exc_info:
+                extractor.fetch_html("https://medium.com/article", retries=1)
+
+        assert exc_info.value.status_code == 403
+        assert isinstance(exc_info.value, HTTPStatusError)
+        assert isinstance(exc_info.value, FetchError)
+
+    def test_cloudflare_challenge_is_not_retried(self, extractor: MediumExtractor) -> None:
+        """A bot challenge cannot pass on retry, so it must raise without any sleep."""
+        mock = make_stream_mock(
+            status_code=503, is_success=False, headers={"cf-mitigated": "challenge"}
+        )
+        with patch("httpx.Client", return_value=mock):
+            with patch("mdfetch.base.time.sleep") as mock_sleep:
+                with pytest.raises(AccessBlockedError):
+                    extractor.fetch_html("https://medium.com/article", retries=3)
+
+        mock_sleep.assert_not_called()
+        assert mock.stream.call_count == 1
+
+    def test_403_without_challenge_header_is_plain_http_status_error(
+        self, extractor: MediumExtractor
+    ) -> None:
+        mock = make_stream_mock(status_code=403, is_success=False)
+        with patch("httpx.Client", return_value=mock):
+            with pytest.raises(HTTPStatusError) as exc_info:
+                extractor.fetch_html("https://medium.com/article", retries=1)
+
+        assert not isinstance(exc_info.value, AccessBlockedError)
 
     def test_raises_unsupported_content_type_for_json(self, extractor: MediumExtractor) -> None:
         mock = make_stream_mock(content_type="application/json")

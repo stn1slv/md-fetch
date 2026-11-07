@@ -36,6 +36,13 @@ class HTTPStatusError(FetchError):
         self.status_code = status_code
 
 
+class AccessBlockedError(HTTPStatusError):
+    """Raised when the site's bot protection (e.g. a Cloudflare challenge) blocks the request.
+
+    Retrying does not help: the site requires a real browser to pass the challenge.
+    """
+
+
 class EmptyContentError(MdfetchError):
     """Raised when the article body yields no extractable text content."""
 

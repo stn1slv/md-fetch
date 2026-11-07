@@ -12,6 +12,7 @@ def make_stream_mock(
     body: bytes = b"<html></html>",
     content_type: str = "text/html; charset=utf-8",
     stream_side_effect: Exception | None = None,
+    headers: dict[str, str] | None = None,
 ) -> MagicMock:
     """Build a mock httpx.Client whose .stream() behaves like a real streaming response."""
     mock_response = MagicMock()
@@ -19,7 +20,7 @@ def make_stream_mock(
     mock_response.status_code = status_code
     mock_response.encoding = "utf-8"
     mock_response.iter_bytes.side_effect = lambda: iter([body])
-    mock_response.headers = {"content-type": content_type}
+    mock_response.headers = {"content-type": content_type, **(headers or {})}
 
     mock_stream_ctx = MagicMock()
     mock_stream_ctx.__enter__ = MagicMock(return_value=mock_response)

@@ -5,6 +5,7 @@ from __future__ import annotations
 import os
 
 from mdfetch.exceptions import (
+    AccessBlockedError,
     EmptyContentError,
     FetchError,
     HTTPStatusError,
@@ -26,6 +27,7 @@ __all__ = [
     "UnsupportedContentTypeError",
     "FetchError",
     "HTTPStatusError",
+    "AccessBlockedError",
     "EmptyContentError",
     "MissingAPIKeyError",
 ]
@@ -43,7 +45,8 @@ def extract(
     On transient network failures (timeouts, connection errors, non-2xx responses) the
     request is attempted up to *retries* times total (so ``retries=3`` means one initial
     attempt plus two retries) with a fixed delay of *retry_delay* seconds between attempts.
-    Set ``retries=1`` to disable retries.
+    Set ``retries=1`` to disable retries. A bot-protection block (:class:`AccessBlockedError`)
+    is raised at once, without retries.
     """
     if tavily_fallback and not os.environ.get("TAVILY_API_KEY"):
         raise MissingAPIKeyError(

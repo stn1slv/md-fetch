@@ -66,6 +66,7 @@ from mdfetch import (
     UnsupportedContentTypeError,
     FetchError,
     HTTPStatusError,
+    AccessBlockedError,
     EmptyContentError,
     MissingAPIKeyError,
 )
@@ -80,6 +81,8 @@ except UnsupportedPlatformError as e:
     print(f"Platform not supported: {e.message}")
 except UnsupportedContentTypeError as e:
     print(f"Not an article page: {e.message}")
+except AccessBlockedError as e:  # subclass of HTTPStatusError, so catch it first
+    print(f"Blocked by bot protection: {e.message}")
 except HTTPStatusError as e:
     print(f"HTTP {e.status_code}: {e.message}")
 except FetchError as e:
@@ -97,7 +100,7 @@ except MissingAPIKeyError as e:
 | Medium   | `medium.com`, `*.medium.com` |
 | dev.to   | `dev.to` |
 | Substack | `substack.com`, `*.substack.com` |
-| The New Stack | `thenewstack.io` |
+| The New Stack | `thenewstack.io` (may be blocked by Cloudflare bot protection; raises `AccessBlockedError`) |
 | DZone | `dzone.com` |
 | Boomi | `boomi.com` |
 | Kong | `konghq.com` |

@@ -8,7 +8,7 @@ Python library that extracts article content from web platforms and returns it a
 src/mdfetch/
 ├── __init__.py       # extract() public API + exception re-exports
 ├── cli.py            # Command-line interface and argument parsing
-├── exceptions.py     # MdfetchError hierarchy (7 exception classes)
+├── exceptions.py     # MdfetchError hierarchy (8 exception classes)
 ├── base.py           # BaseExtractor ABC
 ├── router.py         # Domain-to-provider routing
 └── providers/
@@ -75,6 +75,11 @@ make typecheck    # type check
 **Issue:** VoxPop poll widgets (`div.tns-voxpop-screen`) appear to be inline article content but are actually page-level overlay modals.
 **Root Cause:** VoxPop is injected outside `div#tns-post-body-content` — confirmed via live DOM inspection across all 5 reference articles.
 **Prevention Rule:** Do not add VoxPop stripping to `TheNewStackExtractor.clean_html()`. If a future redesign moves VoxPop inside the body container, update `clean_html()` to decompose `div.tns-voxpop-screen`.
+
+### ⚠️ thenewstack.io is behind a Cloudflare bot challenge (since 2026-11)
+**Issue:** Every request from md-fetch to thenewstack.io gets HTTP 403 with `cf-mitigated: challenge` and a "Just a moment..." JS page. Weekly integration tests failed on it (issue #50).
+**Root Cause:** Site-side bot protection, not an HTML change. The block is deliberate, so md-fetch must not try to bypass it (no User-Agent tweaks, no headless browser).
+**Prevention Rule:** `BaseExtractor._do_fetch()` raises `AccessBlockedError` (subclass of `HTTPStatusError`) for any provider when `cf-mitigated: challenge` is present, and never retries it. The thenewstack integration tests `pytest.skip` on `AccessBlockedError`, so check the skip reasons in the weekly log to see when the block is lifted.
 
 ### ⚠️ Homebrew formula requires `uses_from_macos` for lxml
 **Issue:** `brew audit --strict --new Formula/md-fetch.rb` fails with missing system library declarations when `lxml` is a resource block.
