@@ -7,7 +7,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from mdfetch import extract
-from mdfetch.exceptions import EmptyContentError, FetchError, MissingAPIKeyError
+from mdfetch.exceptions import (
+    AccessBlockedError,
+    EmptyContentError,
+    FetchError,
+    MissingAPIKeyError,
+)
 from mdfetch.fallback import tavily_extract
 
 
@@ -121,3 +126,20 @@ class TestExtractRouting:
 
         assert result == "# Fallback content"
         mock_tavily.assert_called_once_with("https://medium.com/test", timeout=30.0)
+
+    @patch("mdfetch.route")
+    @patch("mdfetch.tavily_extract")
+    @patch.dict("os.environ", {"TAVILY_API_KEY": "fake-key"})
+    def test_access_blocked_routes_to_fallback(
+        self, mock_tavily: MagicMock, mock_route: MagicMock
+    ) -> None:
+        url = "https://thenewstack.io/article"
+        mock_tavily.return_value = "# Fallback content"
+        mock_route.return_value.extract.side_effect = AccessBlockedError(
+            "blocked", status_code=403, url=url
+        )
+
+        result = extract(url, tavily_fallback=True)
+
+        assert result == "# Fallback content"
+        mock_tavily.assert_called_once_with(url, timeout=30.0)

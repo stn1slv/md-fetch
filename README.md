@@ -51,7 +51,8 @@ markdown = extract("https://dzone.com/articles/article-slug")
 markdown = extract("https://boomi.com/blog/article-slug")
 markdown = extract("https://konghq.com/blog/category/article-slug")
 
-# Fallback to Tavily API if the primary extractor fails (requires TAVILY_API_KEY env var)
+# Fallback to Tavily API if the primary extractor fails (requires TAVILY_API_KEY env var).
+# This also covers sites that block md-fetch with bot protection (AccessBlockedError).
 markdown = extract("https://example.com/unsupported-blog", tavily_fallback=True)
 print(markdown)
 ```

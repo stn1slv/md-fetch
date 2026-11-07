@@ -85,7 +85,8 @@ class BaseExtractor(ABC):
         try:
             with client.stream("GET", url, headers=headers) as response:
                 if not response.is_success:
-                    if response.headers.get("cf-mitigated") == "challenge":
+                    cf_mitigated = (response.headers.get("cf-mitigated") or "").strip().lower()
+                    if cf_mitigated == "challenge":
                         raise AccessBlockedError(
                             f"HTTP {response.status_code} fetching {url}: access blocked by "
                             "the site's bot protection (Cloudflare challenge)",
