@@ -120,6 +120,16 @@ class TestFetchErrors:
         assert isinstance(exc_info.value, HTTPStatusError)
         assert isinstance(exc_info.value, FetchError)
 
+    def test_cloudflare_challenge_value_is_matched_case_insensitively(
+        self, extractor: MediumExtractor
+    ) -> None:
+        mock = make_stream_mock(
+            status_code=403, is_success=False, headers={"cf-mitigated": " Challenge "}
+        )
+        with patch("httpx.Client", return_value=mock):
+            with pytest.raises(AccessBlockedError):
+                extractor.fetch_html("https://medium.com/article", retries=1)
+
     def test_cloudflare_challenge_is_not_retried(self, extractor: MediumExtractor) -> None:
         """A bot challenge cannot pass on retry, so it must raise without any sleep."""
         mock = make_stream_mock(
