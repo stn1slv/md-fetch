@@ -7,9 +7,13 @@ from pathlib import Path
 import pytest
 
 from mdfetch import extract
-from mdfetch.exceptions import UnsupportedContentTypeError
+from mdfetch.exceptions import AccessBlockedError, UnsupportedContentTypeError
 
 SNAPSHOTS_DIR = Path(__file__).parent / "snapshots"
+
+# Since 2026-11 thenewstack.io serves a Cloudflare bot challenge to non-browser
+# clients. Skip instead of failing so the weekly run still reports other providers.
+BLOCKED_REASON = "thenewstack.io blocked by Cloudflare bot challenge"
 
 THENEWSTACK_TEST_CASES: list[tuple[str, str]] = [
     (
@@ -45,7 +49,10 @@ def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
     requiring an exact match, making tests resilient to minor structural changes.
     """
     expected = (SNAPSHOTS_DIR / snapshot).read_text(encoding="utf-8")
-    result = extract(url, retries=3, retry_delay=2.0)
+    try:
+        result = extract(url, retries=3, retry_delay=2.0)
+    except AccessBlockedError:
+        pytest.skip(f"{BLOCKED_REASON}: {url}")
     assert expected in result, (
         f"Extracted content for {snapshot!r} does not contain the stored snapshot body.\n"
         f"To regenerate the snapshot, run:\n"
@@ -60,5 +67,10 @@ def test_extract_contains_snapshot(url: str, snapshot: str) -> None:
 @pytest.mark.integration
 def test_homepage_raises_unsupported_content_type_error() -> None:
     """US2: A thenewstack.io homepage raises UnsupportedContentTypeError."""
-    with pytest.raises(UnsupportedContentTypeError):
+    try:
         extract("https://thenewstack.io/", retries=1, retry_delay=0.0)
+    except AccessBlockedError:
+        pytest.skip(f"{BLOCKED_REASON}: https://thenewstack.io/")
+    except UnsupportedContentTypeError:
+        return
+    pytest.fail("Expected UnsupportedContentTypeError for the thenewstack.io homepage")

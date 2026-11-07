@@ -14,6 +14,7 @@ from bs4.element import Tag
 from markdownify import markdownify
 
 from mdfetch.exceptions import (
+    AccessBlockedError,
     EmptyContentError,
     FetchError,
     HTTPStatusError,
@@ -55,9 +56,10 @@ class BaseExtractor(ABC):
         Makes up to *retries* total attempts on transient :class:`FetchError` (network
         errors, timeouts, non-2xx responses) with a fixed delay of *retry_delay* seconds
         between attempts.  Status codes listed in :attr:`_no_retry_status_codes` are
-        raised immediately without any retry or sleep.  Pass ``_no_retry_codes`` to
-        override the class-level set for this call only (used internally for per-call
-        overrides).
+        raised immediately without any retry or sleep, and so is
+        :class:`AccessBlockedError` (a bot challenge cannot pass on retry).  Pass
+        ``_no_retry_codes`` to override the class-level set for this call only (used
+        internally for per-call overrides).
         """
         no_retry = self._no_retry_status_codes if _no_retry_codes is None else _no_retry_codes
         last_exc: FetchError | None = None
@@ -66,7 +68,9 @@ class BaseExtractor(ABC):
                 try:
                     return self._do_fetch(url, client)
                 except FetchError as exc:
-                    if isinstance(exc, HTTPStatusError) and exc.status_code in no_retry:
+                    if isinstance(exc, AccessBlockedError) or (
+                        isinstance(exc, HTTPStatusError) and exc.status_code in no_retry
+                    ):
                         raise
                     last_exc = exc
                     if attempt < retries - 1:
@@ -81,6 +85,13 @@ class BaseExtractor(ABC):
         try:
             with client.stream("GET", url, headers=headers) as response:
                 if not response.is_success:
+                    if response.headers.get("cf-mitigated") == "challenge":
+                        raise AccessBlockedError(
+                            f"HTTP {response.status_code} fetching {url}: access blocked by "
+                            "the site's bot protection (Cloudflare challenge)",
+                            status_code=response.status_code,
+                            url=url,
+                        )
                     raise HTTPStatusError(
                         f"HTTP {response.status_code} fetching {url}",
                         status_code=response.status_code,
